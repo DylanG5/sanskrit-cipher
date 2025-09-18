@@ -39,23 +39,97 @@ Date2 & Name(s) & Description of changes\\
 information.}
 
 \subsection{Problem}
+The textual history of Indian Buddhism is fragmented across thousands of manuscript folios, preserved only in partial, damaged, or scattered forms. Traditionally, scholars reconstruct these texts manually through palaeographic study, transcription, and content comparison; a slow and error-prone process. While some existing computational tools exist for pattern recognition and Optical Pattern Recognition (OCR) none can tackle this problem as they are not designed for irregular, damaged, or arbitrarily oriented manuscript fragments. 
+
+The lack of computational tools available for this problem significantly limits progress in reconstructing Buddhist textual history. Scholars need a tool that automates the detection, matching, and transcription of manuscript fragments, thereby reducing manual effort and time; enabling large-scale reconstruction.
 
 \subsection{Inputs and Outputs}
+
+
+\begin{itemize}
+  \item \textbf{Inputs:}
+    \begin{itemize}
+      \item High quality images of manuscript fragments (approximately 21{,}000 images from collections)
+      \item Metadata (collection identifiers, orientation, partial transcriptions if available)
+    \end{itemize}
+
+  \item \textbf{Outputs:}
+    \begin{itemize}
+      \item Probabilistic matches between fragments based on shape/edge/damage features (i.e., list of fragments most likely related to an input fragment image)
+      \item Enhanced Metadata:
+        \begin{itemize}
+          \item Suggested transcriptions of fragment text
+        \end{itemize}
+      \item Searchable/sortable database containing fragment attributes and relationships
+    \end{itemize}
+\end{itemize}
 
 \wss{Characterize the problem in terms of ``high level'' inputs and outputs.  
 Use abstraction so that you can avoid details.}
 
 \subsection{Stakeholders}
+\begin{itemize}
+    \item \textbf{Primary Stakeholders:}
+    \begin{itemize} 
+        \item Scholars of Buddhist textual history (religious studies, philology, palaeography)
+        \item Supervisors and domain experts (e.g., Dr. Shayne Clarke, McMaster Religious Studies)
+    \end{itemize}
+
+    \item \textbf{Secondary Stakeholders:}
+    \begin{itemize} 
+        \item Computer science researchers in AI, image processing
+        \item Humanities researchers studying textual transmission and manuscript culture
+
+    \end{itemize}
+    
+    \item \textbf{End Users:}
+    \begin{itemize} 
+        \item Academic researchers using the software to assemble fragments
+        \item Graduate students seeking computational support in philological research
+    \end{itemize}
+\end{itemize}
 
 \subsection{Environment}
+\begin{itemize}
+    \item \textbf{Hardware:}
+    \begin{itemize} 
+        \item Development laptops/workstations with GPU support for ML tasks
+    \end{itemize}
 
+    \item \textbf{Software:}
+    \begin{itemize} 
+        \item VScode
+        \item Coding Libraries
+        \item Database
+        \item GitHub repository for version control and CI/CD
+    \end{itemize}
+\end{itemize}
 \wss{Hardware and Software Environment}
 
 \section{Goals}
-
+\begin{itemize}
+    \item Develop a tool that:
+    \begin{itemize} 
+        \item Detects edges, shapes, and damage patterns in fragments.
+        \item Matches fragments based on similarity measures (probabilistic scoring).
+        \item Identifies palaeographic script of fragments.
+        \item Performs preliminary transcription using OCR tuned to Sanskrit scripts.
+        \item Builds a searchable database linking fragments with metadata and probable matches.
+        \item Provides a user interface for scholars to view suggested fragment matches and confirm/annotate them.
+    \end{itemize}
+\end{itemize}
 \section{Stretch Goals}
+\begin{itemize}
+  \item Expand support to Tibetan and Chinese manuscript fragments.
+  \item Incorporate semantic content matching with.
+  \item Improve transcription accuracy with AI-assisted error correction.
+\end{itemize}
 
 \section{Extras}
+\begin{itemize}
+  \item \textbf{User Documentation:} Write user-friendly guides for scholars with limited technical expertise.
+  \item \textbf{Use Case Video:} Make a Video on how to use the tool so that we can minimize the learning curve for the intended user
+\end{itemize}
 
 \wss{For CAS 741: State whether the project is a research project. This
 designation, with the approval (or request) of the instructor, can be modified
