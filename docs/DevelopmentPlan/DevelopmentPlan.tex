@@ -106,17 +106,26 @@ for deadlines.}
 
 \subsection{Main Risks for Project Success}
 
-The most significant risk for our Buddhist manuscript fragment reconstruction platform is the complexity of developing reliable computer vision algorithms that can accurately detect and match irregular fragment edges, damage patterns, and script similarities. Unlike standard OCR applications that work with uniform, complete text pages, our system must handle fragments with varying orientations, lighting conditions, and preservation states.
+The most significant risks for our Buddhist manuscript fragment reconstruction platform are:
+
+\begin{itemize}
+\item \textbf{Inconsistent OCR Performance}: OCR accuracy varies dramatically across different manuscript conditions, script styles, and image quality. Ancient Buddhist texts often contain deteriorated characters, non-standard orthography, and multiple script variations that challenge standard OCR engines.
+
+
+\item \textbf{Lack of Positive Training Examples}: The absence of confirmed fragment matches creates a training data challenge. Without verified examples of fragments that belong together, we will need to explore unsupervised learning approaches and develop alternative validation strategies for our matching algorithms.
+\end{itemize}
+
+These are risks because they directly impact the core functionality of our system - the ability to accurately identify which fragments belong together.
 
 \subsection{Implementation Challenges}
 
 The most challenging aspects of implementation will be:
 
 \begin{itemize}
-\item \textbf{Computer Vision Pipeline}: Developing robust edge detection and pattern matching algorithms that work reliably across diverse fragment conditions, lighting, and image quality.
-\item \textbf{AI Model Training}: Creating and training machine learning models for fragment similarity matching when we may have limited training data initially.
+\item \textbf{OCR Integration and Consistency}: Implementing OCR engines that can handle Sanskrit manuscript variations while maintaining consistent output across different image conditions and script styles.
+\item \textbf{AI Model Training Without Ground Truth}: Creating and training machine learning models for fragment similarity matching without access to verified positive examples of matched fragments. The final model will need to combine multiple features (OCR text, edge patterns, damage signatures) into confidence scores, which presents challenges for training validation. We plan to explore unsupervised learning approaches to address this challenge.
 \item \textbf{Interactive Canvas}: Building a responsive, intuitive drag-and-drop interface that can handle potentially hundreds of fragment images while maintaining performance.
-\item \textbf{Multi-scale Matching}: Implementing algorithms that can suggest matches at different confidence levels for users with varying expertise (students vs. experts).
+\item \textbf{Multi-scale Matching}: Implementing algorithms that can suggest matches at different confidence levels.
 \end{itemize}
 
 \subsection{Testing Difficulties}
@@ -132,37 +141,25 @@ Testing will present unique challenges because:
 
 \subsection{Library and Technology Risks}
 
-Several specialized libraries may present installation challenges:
-
-\begin{itemize}
-\item \textbf{Computer Vision Libraries}: OpenCV, scikit-image, or similar packages may have complex dependencies, especially for GPU acceleration.
-\item \textbf{Machine Learning Frameworks}: TensorFlow or PyTorch installations can be environment-specific and require proper GPU drivers.
-\item \textbf{Image Processing}: Large-scale image processing may require specialized libraries with system-specific optimizations.
-\item \textbf{Web Framework Dependencies}: Real-time collaborative features may require WebSocket libraries and associated infrastructure.
-\end{itemize}
-
 \subsection{Hardware and Infrastructure Concerns}
 
 \begin{itemize}
-\item \textbf{Processing Power}: Computer vision and AI algorithms may require substantial CPU/GPU resources for real-time performance.
-\item \textbf{Memory Requirements}: Loading and processing large batches of high-resolution images simultaneously.
-\item \textbf{Network Bandwidth}: Uploading and sharing large image collections across research institutions.
-\item \textbf{Storage Scalability}: Managing growing collections of fragment images and associated metadata.
+\item \textbf{Processing Power}: Computer vision and AI algorithms may require substantial CPU/GPU resources for model training.
 \end{itemize}
 
 \subsection{Demonstration Plan}
 
-To address these risks and demonstrate feasibility, our POC will focus on:
+To address these risks and demonstrate feasibility, our POC will focus on proving that the core technical challenges can be overcome:
 
 \begin{itemize}
-\item \textbf{Basic Image Upload and Display}: Demonstrate the ability to upload fragment images and display them in an interactive workspace.
-\item \textbf{Simple Edge Detection}: Show basic computer vision algorithms working on sample fragment images to detect edges and key features.
-\item \textbf{Prototype Matching}: Implement a simplified similarity matching algorithm that can suggest potential fragment connections.
-\item \textbf{Interactive Interface}: Create a basic drag-and-drop canvas where users can manipulate fragment images to test potential matches.
-\item \textbf{Performance Baseline}: Demonstrate the system can handle a small batch of fragment images without significant performance issues.
+\item \textbf{OCR Functionality Demonstration}: Show OCR engines successfully extracting text from sample manuscript fragments with varying quality levels. We will demonstrate text extraction from both clear and degraded fragments to validate OCR consistency approaches.
+\item \textbf{Image Segmentation and Normalization}: Demonstrate fragment segmentation algorithms that can isolate individual fragments from composite images and normalize them for consistent analysis (rotation correction, standardization).
+\item \textbf{Basic Feature Extraction}: Show extraction of key features from fragments including edges, text content, and damage patterns that could be used for matching.
+\item \textbf{Prototype Similarity Metrics}: Implement basic similarity algorithms that compare normalized fragments and provide confidence scores, acknowledging the limitation that it will be difficult to validate accuracy without ground truth data.
+\item \textbf{Interactive Workspace}: Create a basic interface where users can upload fragments, view OCR results, and see preliminary similarity suggestions.
 \end{itemize}
 
-This focused demonstration will validate that the core technical challenges can be overcome while providing a foundation for the full system implementation.
+This demonstration will prove the technical feasibility of the core components. The POC focuses on demonstrating that our technical approach can extract and compare the right types of features for fragment matching. While the absence of ground truth data presents challenges, we will explore unsupervised learning techniques and develop validation approaches that can work with the available data.
 
 \section{Expected Technology}
 
