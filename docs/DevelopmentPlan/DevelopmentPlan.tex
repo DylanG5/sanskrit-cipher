@@ -104,9 +104,62 @@ for deadlines.}
 
 \section{Proof of Concept Demonstration Plan}
 
-What is the main risk, or risks, for the success of your project?  What will you
-demonstrate during your proof of concept demonstration to convince yourself that
-you will be able to overcome this risk?
+\subsection{Main Risks for Project Success}
+
+The most significant risks for our Buddhist manuscript fragment reconstruction platform are:
+
+\begin{itemize}
+\item \textbf{Inconsistent OCR Performance}: OCR accuracy varies dramatically across different manuscript conditions, script styles, and image quality. Ancient Buddhist texts often contain deteriorated characters, non-standard orthography, and multiple script variations that challenge standard OCR engines.
+
+
+\item \textbf{Lack of Positive Training Examples}: The absence of confirmed fragment matches creates a training data challenge. Without verified examples of fragments that belong together, we will need to explore unsupervised learning approaches and develop alternative validation strategies for our matching algorithms.
+\end{itemize}
+
+These are risks because they directly impact the core functionality of our system - the ability to accurately identify which fragments belong together.
+
+\subsection{Implementation Challenges}
+
+The most challenging aspects of implementation will be:
+
+\begin{itemize}
+\item \textbf{OCR Integration and Consistency}: Implementing OCR engines that can handle Sanskrit manuscript variations while maintaining consistent output across different image conditions and script styles.
+\item \textbf{AI Model Training Without Ground Truth}: Creating and training machine learning models for fragment similarity matching without access to verified positive examples of matched fragments. The final model will need to combine multiple features (OCR text, edge patterns, damage signatures) into confidence scores, which presents challenges for training validation. We plan to explore unsupervised learning approaches to address this challenge.
+\item \textbf{Interactive Canvas}: Building a responsive, intuitive drag-and-drop interface that can handle potentially hundreds of fragment images while maintaining performance.
+\item \textbf{Multi-scale Matching}: Implementing algorithms that can suggest matches at different confidence levels.
+\end{itemize}
+
+\subsection{Testing Difficulties}
+
+Testing will present unique challenges because:
+
+\begin{itemize}
+\item \textbf{Ground Truth}: We need access to known fragment matches from Buddhist Studies scholars to validate our algorithms, which may be limited initially.
+\item \textbf{Subjective Validation}: Fragment matching often involves scholarly interpretation, making automated testing metrics challenging to define.
+\item \textbf{Performance Testing}: Testing the system with large batches of high-resolution fragment images will require substantial computational resources.
+\item \textbf{User Experience Testing}: The interface must be intuitive for scholars with varying technical backgrounds, requiring extensive usability testing.
+\end{itemize}
+
+\subsection{Library and Technology Risks}
+
+\subsection{Hardware and Infrastructure Concerns}
+
+\begin{itemize}
+\item \textbf{Processing Power}: Computer vision and AI algorithms may require substantial CPU/GPU resources for model training.
+\end{itemize}
+
+\subsection{Demonstration Plan}
+
+To address these risks and demonstrate feasibility, our POC will focus on proving that the core technical challenges can be overcome:
+
+\begin{itemize}
+\item \textbf{OCR Functionality Demonstration}: Show OCR engines successfully extracting text from sample manuscript fragments with varying quality levels. We will demonstrate text extraction from both clear and degraded fragments to validate OCR consistency approaches.
+\item \textbf{Image Segmentation and Normalization}: Demonstrate fragment segmentation algorithms that can isolate individual fragments from composite images and normalize them for consistent analysis (rotation correction, standardization).
+\item \textbf{Basic Feature Extraction}: Show extraction of key features from fragments including edges, text content, and damage patterns that could be used for matching.
+\item \textbf{Prototype Similarity Metrics}: Implement basic similarity algorithms that compare normalized fragments and provide confidence scores, acknowledging the limitation that it will be difficult to validate accuracy without ground truth data.
+\item \textbf{Interactive Workspace}: Create a basic interface where users can upload fragments, view OCR results, and see preliminary similarity suggestions.
+\end{itemize}
+
+This demonstration will prove the technical feasibility of the core components. The POC focuses on demonstrating that our technical approach can extract and compare the right types of features for fragment matching. While the absence of ground truth data presents challenges, we will explore unsupervised learning techniques and develop validation approaches that can work with the available data.
 
 \section{Expected Technology}
 
