@@ -85,10 +85,76 @@ likely change throughout the year.}
 \section{Workflow Plan}
 
 \begin{itemize}
-	\item How will you be using git, including branches, pull request, etc.?
-	\item How will you be managing issues, including template issues, issue
-	classification, etc.?
-  \item Use of CI/CD
+    \item \textbf{Version Control \& Workflow:}
+    \begin{itemize}
+        \item We will be making use of GitHub with a feature-branch workflow. Each task/issue will get its own branch.
+        \item All code changes require a pull request and at least one approval from a reviewer before a merge to the master branch.
+        \begin{itemize}
+            \item All PRs must follow a standardized naming convention:
+            \begin{itemize}
+                \item [Issue \#] Name of feature
+            \end{itemize}
+            \item All PRs must also contain a standardized description outlining the details of the change:
+            \begin{itemize}
+                \item  What?
+                \item  Why?
+                \item  How?
+                \item  Testing?
+                \item  Screenshots (optional)
+                \item  Anything Else
+                \item Refer to \url{https://arc.net/l/quote/touaacbp}
+            \end{itemize}
+        \end{itemize}
+        \item Commit messages must contain a short description of the change being added to the feature branch.
+    \end{itemize}
+
+    \item \textbf{Issues \& Project Tracking Boards:}
+    \begin{itemize}
+        \item We will be making use of a Kanban board on GitHub to track our project’s progress.
+        \item This Kanban board will contain Issues and will overall be split up into 4 separate categories:
+        \begin{itemize}
+            \item To-Do
+            \item In Progress
+            \item Pending Review
+            \item Done
+        \end{itemize}
+        \item Issues will be used with templates for things like bugs and tasks.
+        \item We will also be making use of Labels:
+        \begin{itemize}
+            \item Bug, enhancement, documentation
+            \item Easy
+            \item Needs design (design discussion required)
+            \item Due By \dots
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Milestones:}
+    \begin{itemize}
+        \item We will be creating milestones in GitHub corresponding to all major deliverables:
+        \begin{itemize}
+            \item POC
+            \item Rev0
+            \item Rev1
+            \item Final
+        \end{itemize}
+        \item Each issue will be linked to a milestone.
+    \end{itemize}
+
+    \item \textbf{Continuous Integration / Continuous Deployment:}
+    \begin{itemize}
+        \item We will be making use of GitHub Actions to trigger a CI pipeline.
+        \item Each push and pull request will trigger:
+        \begin{itemize}
+            \item Build automation:
+            \begin{itemize}
+                \item Utilizing makefiles to compile all modules
+                \item \textbf{(ALREADY COMPLETED)} automatically build .tex files into PDFs
+            \end{itemize}
+            \item Some sort of linter for style compliance
+            \item Unit test suite
+            \item Deployment
+        \end{itemize}
+    \end{itemize}
 \end{itemize}
 
 \section{Project Decomposition and Scheduling}
