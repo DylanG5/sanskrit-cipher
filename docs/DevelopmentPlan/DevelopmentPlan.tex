@@ -217,37 +217,70 @@ you will be able to overcome this risk?
 
 \section{Expected Technology}
 
-\wss{What programming language or languages do you expect to use?  What external
-libraries?  What frameworks?  What technologies.  Are there major components of
-the implementation that you expect you will implement, despite the existence of
-libraries that provide the required functionality.  For projects with machine
-learning, will you use pre-trained models, or be training your own model?  }
+\noindent For our project, we will use a combination of programming languages, external libraries, dev tools and infrastructure for fragment processing, matching and analysis. While the exact implementation has not been finalized yet and may evolve, the following technologies are expected to be used:
 
-\wss{The implementation decisions can, and likely will, change over the course
-of the project.  The initial documentation should be written in an abstract way;
-it should be agnostic of the implementation choices, unless the implementation
-choices are project constraints.  However, recording our initial thoughts on
-implementation helps understand the challenge level and feasibility of a
-project.  It may also help with early identification of areas where project
-members will need to augment their training.}
-
-Topics to discuss include the following:
-
+\subsection*{Programming Languages}
 \begin{itemize}
-\item Specific programming language
-\item Specific libraries
-\item Pre-trained models
-\item Specific linter tool (if appropriate)
-\item Specific unit testing framework
-\item Investigation of code coverage measuring tools
-\item Specific plans for Continuous Integration (CI), or an explanation that CI
-  is not being done
-\item Specific performance measuring tools (like Valgrind), if
-  appropriate
-\item Tools you will likely be using?
+    \item Python -- primary language for image preprocessing, data pipelines and model integration
+    \item C++ (if required) -- will be utilized for performance-critical modules
+    \item JavaScript / TypeScript -- for frontend development
 \end{itemize}
 
-\wss{git, GitHub and GitHub projects should be part of your technology.}
+\subsection*{Libraries \& Frameworks}
+\begin{itemize}
+    \item OpenCV for image preprocessing, orientation correction, and edge detection
+    \item PyTorch / TensorFlow for machine learning models for script identification and OCR
+    \item scikit-learn for probabilistic fragment-matching algorithms
+    \item SQLAlchemy for database interaction (PostgreSQL or SQLite)
+    \item React for frontend framework to build the researcher-facing interface
+    \item Tailwind CSS for frontend styling libraries
+    \item Flask, FastAPI or Django for backend API layer to connect frontend and ML/database modules
+\end{itemize}
+
+\subsection*{Pre-trained Models}
+\begin{itemize}
+    \item We will be exploring OCR models for Sanskrit
+    \item We plan on training a lightweight model in the case that pre-trained models are not sufficient
+\end{itemize}
+
+\subsection*{IDE \& Dev Tools}
+\begin{itemize}
+    \item VSCode as the primary development environment
+    \item LaTeX/Markdown for documentation and deliverables
+    \item Doxygen for auto-generating API documentation
+    \item Postman to test backend endpoints
+\end{itemize}
+
+\subsection*{Testing and Code Quality Tools}
+\begin{itemize}
+    \item Pytest for backend unit testing
+    \begin{itemize}
+        \item Can utilize coverage.py to generate coverage reports
+    \end{itemize}
+    \item Combination of MyPy and Ruff for Python linting
+    \item Jest for frontend testing
+    \item ESLint and Prettier for frontend linting
+    \item Google C++ Style Guide if we develop modules in C++
+    \item Valgrind for C++ performance if we develop modules in C++
+\end{itemize}
+
+\subsection*{Build \& Automation Tools}
+\begin{itemize}
+    \item Makefiles for automated builds of modules and LaTeX documents
+    \item GitHub Actions as our CI/CD pipeline:
+    \begin{itemize}
+        \item Linting and style checks for frontend and backend
+        \item Unit and integration tests
+        \item Docker image builds
+        \item PDF generation from LaTeX docs
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Deployment}
+\begin{itemize}
+    \item Docker for containerized environments
+    \item Git and GitHub projects for version control and project management
+\end{itemize}
 
 \section{Coding Standard}
 
