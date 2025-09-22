@@ -284,7 +284,58 @@ you will be able to overcome this risk?
 
 \section{Coding Standard}
 
-\wss{What coding standard will you adopt?}
+\noindent The most important thing that we will be striving for is consistency throughout our project. This can only be possible by highlighting a clear set of rules and standards for development. These rules and standards have been listed below.
+
+\subsection*{General Rules}
+\begin{itemize}
+    \item Code reviews: 1+ review approval required before merge
+    \begin{itemize}
+        \item Approval depends on style as well as correctness of code
+    \end{itemize}
+    \item Commits and PRs must follow the standardized template established in the workflow plan
+    \item No sensitive data will be committed to the repository
+    \begin{itemize}
+        \item Credentials
+        \item Datasets with restrictions (fragment images)
+    \end{itemize}
+    \item Decisions regarding style, tech stack and others may evolve over time but must be documented in this document (Development Plan)
+\end{itemize}
+
+\subsection*{Python Rules and Standards}
+\begin{itemize}
+    \item Follow PEP8 guides for formatting and structure
+    \item Use Ruff for linting and rule enforcement
+    \item MyPy for typechecking
+    \item Write NumPy/SciPy-style docstrings for public functions, including data shapes and types
+    \item Implement tests with Pytest and measure coverage with coverage.py
+    \begin{itemize}
+        \item Aim to reach 80\% coverage
+    \end{itemize}
+\end{itemize}
+
+\subsection*{JavaScript/TypeScript Rules and Standards}
+\begin{itemize}
+    \item Follow Google JavaScript Style Guide with React/JSX convention
+    \item Use ESLint for static analysis and Prettier for consistent formatting
+    \item Standardize styling with Tailwind CSS
+    \item Test frontend code with Jest and aim to reach 80\% coverage
+    \item Avoid the \texttt{any} type
+\end{itemize}
+
+\subsection*{API and Documentation Standards}
+\begin{itemize}
+    \item Define request and response schemas using \texttt{pydantic} models and TypeScript interfaces
+    \item Use proper HTTP status codes as well as versioned endpoints
+    \item Use consistent routing for endpoints
+    \item Generate API documentation
+\end{itemize}
+
+\subsection*{CI Enforcement}
+\begin{itemize}
+    \item Run Ruff, MyPy and Pytest for backend code
+    \item Run ESLint, Prettier and Jest for frontend code
+    \item Block merges on failed lint, typecheck or test results
+\end{itemize}
 
 \newpage{}
 
