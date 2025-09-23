@@ -100,22 +100,130 @@ and distribute responsibility fairly among team members.
 \section{Workflow Plan}
 
 \begin{itemize}
-	\item How will you be using git, including branches, pull request, etc.?
-	\item How will you be managing issues, including template issues, issue
-	classification, etc.?
-  \item Use of CI/CD
+    \item \textbf{Version Control \& Workflow:}
+    \begin{itemize}
+        \item We will be making use of GitHub with a feature-branch workflow. Each task/issue will get its own branch.
+        \item All code changes require a pull request and at least one approval from a reviewer before a merge to the master branch.
+        \begin{itemize}
+            \item All PRs must follow a standardized naming convention:
+            \begin{itemize}
+                \item [Issue \#] Name of feature
+            \end{itemize}
+            \item All PRs must also contain a standardized description outlining the details of the change:
+            \begin{itemize}
+                \item  What?
+                \item  Why?
+                \item  How?
+                \item  Testing?
+                \item  Screenshots (optional)
+                \item  Anything Else
+                \item Refer to \url{https://arc.net/l/quote/touaacbp}
+            \end{itemize}
+        \end{itemize}
+        \item Commit messages must contain a short description of the change being added to the feature branch.
+    \end{itemize}
+
+    \item \textbf{Issues \& Project Tracking Boards:}
+    \begin{itemize}
+        \item We will be making use of a Kanban board on GitHub to track our project’s progress.
+        \item This Kanban board will contain Issues and will overall be split up into 5 separate categories:
+        \begin{itemize}
+            \item To-Do
+            \item In Progress
+            \item Pending Review
+            \item Reviewed
+            \item Done
+        \end{itemize}
+        \item Issues will be used with templates for things like bugs and tasks.
+        \item We will also be making use of Labels:
+        \begin{itemize}
+            \item Bug, enhancement, documentation
+            \item Easy
+            \item Needs design (design discussion required)
+            \item Due By \dots
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Milestones:}
+    \begin{itemize}
+        \item We will be creating milestones in GitHub corresponding to all major deliverables:
+        \begin{itemize}
+            \item POC
+            \item Rev0
+            \item Rev1
+            \item Final
+        \end{itemize}
+        \item Each issue will be linked to a milestone.
+    \end{itemize}
+
+    \item \textbf{Continuous Integration / Continuous Deployment:}
+    \begin{itemize}
+        \item We will be making use of GitHub Actions to trigger a CI pipeline.
+        \item Each push and pull request will trigger:
+        \begin{itemize}
+            \item Build automation:
+            \begin{itemize}
+                \item Utilizing makefiles to compile all modules
+                \item \textbf{(ALREADY COMPLETED)} automatically build .tex files into PDFs
+            \end{itemize}
+            \item Some sort of linter for style compliance
+            \item Unit test suite
+            \item Deployment
+        \end{itemize}
+    \end{itemize}
 \end{itemize}
 
 \section{Project Decomposition and Scheduling}
 
+
+As mentioned previously, we will be making use of a Kanban board through GitHub Projects to manage all of our tasks. Each task will be associated with an Issue and linked to milestones corresponding to all major deliverables (POC, Rev0, Rev1, Final). We plan on dividing tasks based on knowledge built through personal experiences as well as interest; however, each task will be reviewed cross-functionally to ensure shared knowledge.
+
+\noindent
+Each major milestone will contain deliverables within them.
+
+\subsection*{Major Milestones}
+\begin{enumerate}
+    \item Proof of Concept (POC)
+    \item Revision 0
+    \item Revision 1
+    \item Final
+\end{enumerate}
+
+\subsection*{Deliverables from Course Outline}
 \begin{itemize}
-  \item How will you be using GitHub projects?
-  \item Include a link to your GitHub project
+    \item Team Formed, Project Selected
+    \item Problem Statement, POC Plan, Development Plan
+    \item Requirements Doc and Hazard Analysis Revision 0
+    \item V\&V Plan Revision 0
+    \item Design Document Revision -1
+    \item Proof of Concept Demonstration
+    \item Design Document Revision 0
+    \item Revision 0 Demonstration
+    \item V\&V Report and Extras Revision 0
+    \item Final Demonstration (Revision 1)
+    \item EXPO Demonstration
+    \item Final Documentation (Revision 1)
 \end{itemize}
 
-\wss{How will the project be scheduled?  This is the big picture schedule, not
-details. You will need to reproduce information that is in the course outline
-for deadlines.}
+\subsection*{Task Decomposition}
+We plan on breaking down all tasks into features that can be completed in a few hours of work rather than days.
+
+Some examples would be:
+\begin{itemize}
+    \item Design database schema draft
+    \item Implement orientation correction function for fragments
+    \item Write test plan for OCR module for Sanskrit Input
+\end{itemize}
+
+\noindent
+We want to make sure that the tasks (Issues on GitHub) we create are specific and not open to much ambiguity. We also want to ensure that they are easy to test and estimated in hours. During our weekly meetings, we will be identifying large chunks of work and decomposing them into digestible chunks. This will be completed through discussion and trying to gain an understanding of the task at hand.
+
+\subsection*{Assigning Work}
+Initially, task assignment will be based on interest and strengths. However, as we move on, we plan on rotating tasks to prevent overspecialization and to ensure everyone has a chance to explore areas of interest. Each task will have both an assignee and a reviewer.
+
+\noindent
+Additionally, each team member will be expected to commit approximately 10 hours per week of work dedicated to this project. This includes meetings with peers or professors, tutorial time, and actual development time.
+
 
 \section{Proof of Concept Demonstration Plan}
 
@@ -178,41 +286,124 @@ This demonstration will prove the technical feasibility of the core components. 
 
 \section{Expected Technology}
 
-\wss{What programming language or languages do you expect to use?  What external
-libraries?  What frameworks?  What technologies.  Are there major components of
-the implementation that you expect you will implement, despite the existence of
-libraries that provide the required functionality.  For projects with machine
-learning, will you use pre-trained models, or be training your own model?  }
+\noindent For our project, we will use a combination of programming languages, external libraries, dev tools and infrastructure for fragment processing, matching and analysis. While the exact implementation has not been finalized yet and may evolve, the following technologies are expected to be used:
 
-\wss{The implementation decisions can, and likely will, change over the course
-of the project.  The initial documentation should be written in an abstract way;
-it should be agnostic of the implementation choices, unless the implementation
-choices are project constraints.  However, recording our initial thoughts on
-implementation helps understand the challenge level and feasibility of a
-project.  It may also help with early identification of areas where project
-members will need to augment their training.}
-
-Topics to discuss include the following:
-
+\subsection*{Programming Languages}
 \begin{itemize}
-\item Specific programming language
-\item Specific libraries
-\item Pre-trained models
-\item Specific linter tool (if appropriate)
-\item Specific unit testing framework
-\item Investigation of code coverage measuring tools
-\item Specific plans for Continuous Integration (CI), or an explanation that CI
-  is not being done
-\item Specific performance measuring tools (like Valgrind), if
-  appropriate
-\item Tools you will likely be using?
+    \item Python -- primary language for image preprocessing, data pipelines and model integration
+    \item C++ (if required) -- will be utilized for performance-critical modules
+    \item JavaScript / TypeScript -- for frontend development
 \end{itemize}
 
-\wss{git, GitHub and GitHub projects should be part of your technology.}
+\subsection*{Libraries \& Frameworks}
+\begin{itemize}
+    \item OpenCV for image preprocessing, orientation correction, and edge detection
+    \item PyTorch / TensorFlow for machine learning models for script identification and OCR
+    \item scikit-learn for probabilistic fragment-matching algorithms
+    \item SQLAlchemy for database interaction (PostgreSQL or SQLite)
+    \item React for frontend framework to build the researcher-facing interface
+    \item Tailwind CSS for frontend styling libraries
+    \item Flask, FastAPI or Django for backend API layer to connect frontend and ML/database modules
+\end{itemize}
+
+\subsection*{Pre-trained Models}
+\begin{itemize}
+    \item We will be exploring OCR models for Sanskrit
+    \item We plan on training a lightweight model in the case that pre-trained models are not sufficient
+\end{itemize}
+
+\subsection*{IDE \& Dev Tools}
+\begin{itemize}
+    \item VSCode as the primary development environment
+    \item LaTeX/Markdown for documentation and deliverables
+    \item Doxygen for auto-generating API documentation
+    \item Postman to test backend endpoints
+\end{itemize}
+
+\subsection*{Testing and Code Quality Tools}
+\begin{itemize}
+    \item Pytest for backend unit testing
+    \begin{itemize}
+        \item Can utilize coverage.py to generate coverage reports
+    \end{itemize}
+    \item Combination of MyPy and Ruff for Python linting
+    \item Jest for frontend testing
+    \item ESLint and Prettier for frontend linting
+    \item Google C++ Style Guide if we develop modules in C++
+    \item Valgrind for C++ performance if we develop modules in C++
+\end{itemize}
+
+\subsection*{Build \& Automation Tools}
+\begin{itemize}
+    \item Makefiles for automated builds of modules and LaTeX documents
+    \item GitHub Actions as our CI/CD pipeline:
+    \begin{itemize}
+        \item Linting and style checks for frontend and backend
+        \item Unit and integration tests
+        \item Docker image builds
+        \item PDF generation from LaTeX docs
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Deployment}
+\begin{itemize}
+    \item Docker for containerized environments
+    \item Git and GitHub projects for version control and project management
+\end{itemize}
 
 \section{Coding Standard}
 
-\wss{What coding standard will you adopt?}
+\noindent The most important thing that we will be striving for is consistency throughout our project. This can only be possible by highlighting a clear set of rules and standards for development. These rules and standards have been listed below.
+
+\subsection*{General Rules}
+\begin{itemize}
+    \item Code reviews: 1+ review approval required before merge
+    \begin{itemize}
+        \item Approval depends on style as well as correctness of code
+    \end{itemize}
+    \item Commits and PRs must follow the standardized template established in the workflow plan
+    \item No sensitive data will be committed to the repository
+    \begin{itemize}
+        \item Credentials
+        \item Datasets with restrictions (fragment images)
+    \end{itemize}
+    \item Decisions regarding style, tech stack and others may evolve over time but must be documented in this document (Development Plan)
+\end{itemize}
+
+\subsection*{Python Rules and Standards}
+\begin{itemize}
+    \item Follow PEP8 guides for formatting and structure
+    \item Use Ruff for linting and rule enforcement
+    \item MyPy for typechecking
+    \item Write NumPy/SciPy-style docstrings for public functions, including data shapes and types
+    \item Implement tests with Pytest and measure coverage with coverage.py
+    \begin{itemize}
+        \item Aim to reach 80\% coverage
+    \end{itemize}
+\end{itemize}
+
+\subsection*{JavaScript/TypeScript Rules and Standards}
+\begin{itemize}
+    \item Follow Google JavaScript Style Guide with React/JSX convention
+    \item Use ESLint for static analysis and Prettier for consistent formatting
+    \item Standardize styling with Tailwind CSS
+    \item Test frontend code with Jest and aim to reach 80\% coverage
+\end{itemize}
+
+\subsection*{API and Documentation Standards}
+\begin{itemize}
+    \item Define request and response schemas using \texttt{pydantic} models and TypeScript interfaces
+    \item Use proper HTTP status codes as well as versioned endpoints
+    \item Use consistent routing for endpoints
+    \item Generate API documentation
+\end{itemize}
+
+\subsection*{CI Enforcement}
+\begin{itemize}
+    \item Run Ruff, MyPy and Pytest for backend code
+    \item Run ESLint, Prettier and Jest for frontend code
+    \item Block merges on failed lint, typecheck or test results
+\end{itemize}
 
 \newpage{}
 
