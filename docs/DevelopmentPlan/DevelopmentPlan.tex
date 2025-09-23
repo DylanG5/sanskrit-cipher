@@ -46,6 +46,22 @@ for reflection and the team charter, which defines expectations, goals, and proc
 for effective collaboration. Together, these sections serve as a roadmap for ensuring
 the project is completed in a structured, transparent, and successful manner.
 
+\section{Project Goals}
+
+Our project aims to deliver measurable value to the Buddhist Studies scholarly community:
+
+\begin{itemize}
+\item \textbf{OCR Accuracy Goal}: Achieve 70\% character recognition accuracy on Sanskrit manuscript fragments, with consistent performance across varying image quality levels (measured on a test set of 100+ fragments).
+
+\item \textbf{Fragment Matching Capability}: Demonstrate successful identification of fragment matches with 70\% precision in top-5 suggestions, validated through expert scholar review (or synthetic test data).
+
+\item \textbf{Usability Achievement}: Enable non-technical Buddhist Studies scholars to successfully use the system with less than 15 minutes of training, measured through supervisor testing.
+
+\item \textbf{Technical Innovation}: Develop and document unsupervised learning approaches for fragment matching that can be applied to other manuscript reconstruction domains (tibetan, etc.).
+\end{itemize}
+
+These goals provide clear success criteria while advancing both the technical state-of-the-art and practical scholarly research capabilities in digital humanities.
+
 \section{Confidential Information?}
 
 The image fragments used to train the machine learning models in this project will be treated as confidential. The team has made a verbal agreement not to make the images of the fragments public, although no written agreement will be signed.
@@ -57,6 +73,8 @@ Since the team will be using a General Public License (GPL), there will be no IP
 \section{Copyright License}
 
 For this project, we will be using a General Public License (GPL) which will allow users to copy and modify the software. This will allow for greater collaboration and sharing of ideas within the open-source community.
+
+\textbf{GitHub Repository:} \url{https://github.com/DylanG5/sanskrit-cipher}
 
 \section{Team Meeting Plan}
 
@@ -79,6 +97,11 @@ Our team will adopt five rotating roles to help structure collaboration and ensu
 While specific members will not be permanently assigned, these roles will be shared and will
 rotate on a biweekly basis to balance responsibilities throughout the project.
 
+As project needs evolve, we maintain flexibility to adjust role assignments and create specialized roles
+(e.g., domain expertise for Buddhist Studies research, ML/AI specialization, UI/UX focus) to match
+emerging requirements. Team members can transition between roles based on project phases, personal
+interests, and skill development goals.
+
 \begin{itemize}
     \item \textbf{Leader} -- Oversees the overall project, monitors progress against milestones,
     and ensures that all deliverables are submitted on time.
@@ -97,7 +120,9 @@ rotate on a biweekly basis to balance responsibilities throughout the project.
 \end{itemize}
 
 These roles are intended to provide structure, improve efficiency,
-and distribute responsibility fairly among team members.
+and distribute responsibility fairly among team members. The rotating nature ensures
+no single member becomes overly specialized while building cross-functional expertise
+across the team.
 
 
 
@@ -145,6 +170,14 @@ and distribute responsibility fairly among team members.
             \item Easy
             \item Needs design (design discussion required)
             \item Due By \dots
+            \item Priority levels (High, Medium, Low)
+            \item Component tags (Backend, Frontend, ML, Documentation)
+        \end{itemize}
+        \item We will utilize GitHub Projects for streamlined project management:
+        \begin{itemize}
+            \item Kanban board automation with custom workflow rules
+            \item Automated issue progression using PR linking (e.g., "closes \#10" automatically moves issues to Done)
+            \item Integration between pull requests and issue tracking for seamless workflow
         \end{itemize}
     \end{itemize}
 
@@ -276,17 +309,29 @@ Testing will present unique challenges because:
 
 \subsection{Demonstration Plan}
 
-To address these risks and demonstrate feasibility, our POC will focus on proving that the core technical challenges can be overcome:
+To address these risks and demonstrate feasibility, our POC will focus on proving that the core technical challenges can be overcome. Each demonstration component directly targets our identified risks:
 
 \begin{itemize}
-\item \textbf{OCR Functionality Demonstration}: Show OCR engines successfully extracting text from sample manuscript fragments with varying quality levels. We will demonstrate text extraction from both clear and degraded fragments to validate OCR consistency approaches.
-\item \textbf{Image Segmentation and Normalization}: Demonstrate fragment segmentation algorithms that can isolate individual fragments from composite images and normalize them for consistent analysis (rotation correction, standardization).
-\item \textbf{Basic Feature Extraction}: Show extraction of key features from fragments including edges, text content, and damage patterns that could be used for matching.
-\item \textbf{Prototype Similarity Metrics}: Implement basic similarity algorithms that compare normalized fragments and provide confidence scores, acknowledging the limitation that it will be difficult to validate accuracy without ground truth data.
-\item \textbf{Interactive Workspace}: Create a basic interface where users can upload fragments, view OCR results, and see preliminary similarity suggestions.
+\item \textbf{OCR Functionality Demonstration} (\textit{Addresses: Inconsistent OCR Performance}): Show OCR engines successfully extracting text from sample manuscript fragments with varying quality levels. We will demonstrate text extraction from both clear and degraded fragments to validate OCR consistency approaches and prove we can handle the script variations and deteriorated characters typical in ancient Buddhist texts.
+
+\item \textbf{Image Segmentation and Normalization} (\textit{Addresses: OCR Integration Challenges}): Demonstrate fragment segmentation algorithms that can isolate individual fragments from composite images and normalize them for consistent analysis (rotation correction, standardization). This proves we can handle the multi-angle photography and irregular fragment shapes that challenge existing tools.
+
+\item \textbf{Basic Feature Extraction} (\textit{Addresses: AI Model Training Without Ground Truth}): Show extraction of key features from fragments including edges, text content, and damage patterns that could be used for matching. This demonstrates our unsupervised approach can identify meaningful similarity features without verified training examples.
+
+\item \textbf{Prototype Similarity Metrics} (\textit{Addresses: Lack of Positive Training Examples}): Implement basic similarity algorithms that compare normalized fragments and provide confidence scores. We will demonstrate multiple validation approaches including edge matching, damage pattern correlation, and text similarity that can work without confirmed fragment pairs.
+
+\item \textbf{Interactive Workspace} (\textit{Addresses: Usability and Interface Challenges}): Create a basic interface where users can upload fragments, view OCR results, and see preliminary similarity suggestions. This proves the system can handle the scholars' workflow requirements and maintain performance with multiple high-resolution images.
 \end{itemize}
 
 This demonstration will prove the technical feasibility of the core components. The POC focuses on demonstrating that our technical approach can extract and compare the right types of features for fragment matching. While the absence of ground truth data presents challenges, we will explore unsupervised learning techniques and develop validation approaches that can work with the available data.
+
+\textbf{Success Metrics for POC:}
+\begin{itemize}
+\item OCR extracts readable text from 60\% of test fragments
+\item Image normalization successfully corrects orientation in 95\% of test cases
+\item Feature extraction identifies edge patterns, damage signatures, and text regions
+\item Similarity algorithm produces consistent rankings across multiple runs
+\end{itemize}
 
 \section{Expected Technology}
 
