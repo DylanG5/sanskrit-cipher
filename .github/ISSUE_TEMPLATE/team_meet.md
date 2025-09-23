@@ -11,11 +11,11 @@ assignees: ''
 
 **Attendance**
 
-- [ ] team member1
-- [ ] team member2
-- [ ] team member3
-- [ ] team member4
-- [ ] team member5
+- [ ] Dylan Garner
+- [ ] Aswin Kuganesan
+- [ ] Umar Khan
+- [ ] Omar El Aref
+- [ ] Yousef Shahin
 
 **Agenda**
 

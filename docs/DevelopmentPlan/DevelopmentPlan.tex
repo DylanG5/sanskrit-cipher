@@ -22,129 +22,392 @@
 \toprule
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-Date1 & Name(s) & Description of changes\\
-Date2 & Name(s) & Description of changes\\
-... & ... & ...\\
+September 16th 2025 & Dylan Garner & Added initial POC plan\\
+September 17th 2025 & Yousef Shahin & added confidential information, IP to protect, copyright license, team meeting plan, team communication plan, and team member roles sections\\
+September 18th 2025 & Umar Khan & Added Workflow Plan and Project Decomposition and Scheduling\\
+September 21st 2025 & Umar Khan & Added Expected Technology and Coding Standard \\
+September 21st 2025 & Dylan Garner & Updated POC plan with more implementation details\\
+September 22nd 2025 & Aswin Kuganesan & Added Team Charter in Appendix\\
+
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \newpage{}
 
-\wss{Put your introductory blurb here.  Often the blurb is a brief roadmap of
-what is contained in the report.}
-
-\wss{Additional information on the development plan can be found in the
-\href{https://gitlab.cas.mcmaster.ca/courses/capstone/-/blob/main/Lectures/L02b_POCAndDevPlan/POCAndDevPlan.pdf?ref_type=heads}
-{lecture slides}.}
+This document presents the development plan for the capstone project
+\textit{Computational Puzzle-solving the Ancient Textual History of Indian Buddhism}.
+The plan outlines the organizational and technical strategies our team will follow
+throughout the project. It includes details on confidentiality and intellectual
+property considerations, team meeting and communication plans, member roles, workflow,
+and project scheduling. In addition, it describes our proof-of-concept demonstration
+strategy, expected technologies, and coding standards. The appendix provides space
+for reflection and the team charter, which defines expectations, goals, and processes
+for effective collaboration. Together, these sections serve as a roadmap for ensuring
+the project is completed in a structured, transparent, and successful manner.
 
 \section{Confidential Information?}
 
-\wss{State whether your project has confidential information from industry, or
-not.  If there is confidential information, point to the agreement you have in
-place.}
+The image fragments used to train the machine learning models in this project will be treated as confidential. The team has made a verbal agreement not to make the images of the fragments public, although no written agreement will be signed.
 
-\wss{For most teams this section will just state that there is no confidential
-information to protect.}
 \section{IP to Protect}
 
-\wss{State whether there is IP to protect.  If there is, point to the agreement.
-All students who are working on a project that requires an IP agreement are also
-required to sign the ``Intellectual Property Guide Acknowledgement.''}
 
+Since the team will be using a General Public License (GPL), there will be no IP to protect in this project.
 \section{Copyright License}
 
-\wss{What copyright license is your team adopting.  Point to the license in your
-repo.}
+For this project, we will be using a General Public License (GPL) which will allow users to copy and modify the software. This will allow for greater collaboration and sharing of ideas within the open-source community.
 
 \section{Team Meeting Plan}
 
-\wss{How often will you meet? where?}
+The team will meet weekly in person on campus. If conflicts arise, the meeting will be held virtually. Meetings will be planned in advance by the organizer and led by the chair. During these meetings, the team will discuss progress, issues, and next steps.
 
-\wss{If the meeting is a physical location (not virtual), out of an abundance of
-caution for safety reasons you shouldn't put the location online}
-
-\wss{How often will you meet with your industry advisor?  when?  where?}
-
-\wss{Will meetings be virtual?  At least some meetings should likely be
-in-person.}
-
-\wss{How will the meetings be structured?  There should be a chair for all meetings.  There should be an agenda for all meetings.}
+The team will also meet with the industry advisor biweekly, in person, with the option to meet more frequently if needed. These meetings will last 30–60 minutes, be planned by the organizer, and led by the chair. During advisor meetings, the team will ask questions for clarification and receive feedback on project progress.
 
 \section{Team Communication Plan}
 
-\wss{Issues on GitHub should be part of your communication plan.}
+The team will use Discord as the primary platform for communication, including day-to-day
+discussion, coordination, and sharing of resources. For urgent matters, team members will
+use SMS messaging to ensure timely responses. Communication with the industry advisor will
+be conducted through email to maintain a professional channel for updates, questions, and
+meeting arrangements. In addition, GitHub Issues will be used to track project-related tasks,
+bugs, and feature requests, ensuring transparency and accountability in the development process.
 
 \section{Team Member Roles}
 
-\wss{You should identify the types of roles you anticipate, like notetaker,
-leader, meeting chair, reviewer.  Assigning specific people to those roles is
-not necessary at this stage.  In a student team the role of the individuals will
-likely change throughout the year.}
+Our team will adopt five rotating roles to help structure collaboration and ensure accountability.
+While specific members will not be permanently assigned, these roles will be shared and will
+rotate on a biweekly basis to balance responsibilities throughout the project.
+
+\begin{itemize}
+    \item \textbf{Leader} -- Oversees the overall project, monitors progress against milestones,
+    and ensures that all deliverables are submitted on time.
+
+    \item \textbf{Organizer} -- Prepares meeting agendas by identifying key discussion items
+    and tasks that require team input.
+
+    \item \textbf{Meeting Chair} -- Facilitates meetings, keeping discussions on track
+    and ensuring all agenda items are addressed.
+
+    \item \textbf{Note Taker} -- Records detailed notes during meetings, including decisions,
+    action items, and deadlines, and circulates them to the team afterward.
+
+    \item \textbf{Reviewer} -- Reviews the team’s work for accuracy, clarity, and completeness
+    before submission or presentation.
+\end{itemize}
+
+These roles are intended to provide structure, improve efficiency,
+and distribute responsibility fairly among team members.
+
+
 
 \section{Workflow Plan}
 
 \begin{itemize}
-	\item How will you be using git, including branches, pull request, etc.?
-	\item How will you be managing issues, including template issues, issue
-	classification, etc.?
-  \item Use of CI/CD
+    \item \textbf{Version Control \& Workflow:}
+    \begin{itemize}
+        \item We will be making use of GitHub with a feature-branch workflow. Each task/issue will get its own branch.
+        \item All code changes require a pull request and at least one approval from a reviewer before a merge to the master branch.
+        \begin{itemize}
+            \item All PRs must follow a standardized naming convention:
+            \begin{itemize}
+                \item [Issue \#] Name of feature
+            \end{itemize}
+            \item All PRs must also contain a standardized description outlining the details of the change:
+            \begin{itemize}
+                \item  What?
+                \item  Why?
+                \item  How?
+                \item  Testing?
+                \item  Screenshots (optional)
+                \item  Anything Else
+                \item Refer to \url{https://arc.net/l/quote/touaacbp}
+            \end{itemize}
+        \end{itemize}
+        \item Commit messages must contain a short description of the change being added to the feature branch.
+    \end{itemize}
+
+    \item \textbf{Issues \& Project Tracking Boards:}
+    \begin{itemize}
+        \item We will be making use of a Kanban board on GitHub to track our project’s progress.
+        \item This Kanban board will contain Issues and will overall be split up into 5 separate categories:
+        \begin{itemize}
+            \item To-Do
+            \item In Progress
+            \item Pending Review
+            \item Reviewed
+            \item Done
+        \end{itemize}
+        \item Issues will be used with templates for things like bugs and tasks.
+        \item We will also be making use of Labels:
+        \begin{itemize}
+            \item Bug, enhancement, documentation
+            \item Easy
+            \item Needs design (design discussion required)
+            \item Due By \dots
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Milestones:}
+    \begin{itemize}
+        \item We will be creating milestones in GitHub corresponding to all major deliverables:
+        \begin{itemize}
+            \item POC
+            \item Rev0
+            \item Rev1
+            \item Final
+        \end{itemize}
+        \item Each issue will be linked to a milestone.
+    \end{itemize}
+
+    \item \textbf{Continuous Integration / Continuous Deployment:}
+    \begin{itemize}
+        \item We will be making use of GitHub Actions to trigger a CI pipeline.
+        \item Each push and pull request will trigger:
+        \begin{itemize}
+            \item Build automation:
+            \begin{itemize}
+                \item Utilizing makefiles to compile all modules
+                \item \textbf{(ALREADY COMPLETED)} automatically build .tex files into PDFs
+            \end{itemize}
+            \item Some sort of linter for style compliance
+            \item Unit test suite
+            \item Deployment
+        \end{itemize}
+    \end{itemize}
 \end{itemize}
 
 \section{Project Decomposition and Scheduling}
 
+
+As mentioned previously, we will be making use of a Kanban board through GitHub Projects to manage all of our tasks. Each task will be associated with an Issue and linked to milestones corresponding to all major deliverables (POC, Rev0, Rev1, Final). We plan on dividing tasks based on knowledge built through personal experiences as well as interest; however, each task will be reviewed cross-functionally to ensure shared knowledge.
+
+\noindent
+Each major milestone will contain deliverables within them.
+
+\subsection*{Major Milestones}
+\begin{enumerate}
+    \item Proof of Concept (POC)
+    \item Revision 0
+    \item Revision 1
+    \item Final
+\end{enumerate}
+
+\subsection*{Deliverables from Course Outline}
 \begin{itemize}
-  \item How will you be using GitHub projects?
-  \item Include a link to your GitHub project
+    \item Team Formed, Project Selected
+    \item Problem Statement, POC Plan, Development Plan
+    \item Requirements Doc and Hazard Analysis Revision 0
+    \item V\&V Plan Revision 0
+    \item Design Document Revision -1
+    \item Proof of Concept Demonstration
+    \item Design Document Revision 0
+    \item Revision 0 Demonstration
+    \item V\&V Report and Extras Revision 0
+    \item Final Demonstration (Revision 1)
+    \item EXPO Demonstration
+    \item Final Documentation (Revision 1)
 \end{itemize}
 
-\wss{How will the project be scheduled?  This is the big picture schedule, not
-details. You will need to reproduce information that is in the course outline
-for deadlines.}
+\subsection*{Task Decomposition}
+We plan on breaking down all tasks into features that can be completed in a few hours of work rather than days.
+
+Some examples would be:
+\begin{itemize}
+    \item Design database schema draft
+    \item Implement orientation correction function for fragments
+    \item Write test plan for OCR module for Sanskrit Input
+\end{itemize}
+
+\noindent
+We want to make sure that the tasks (Issues on GitHub) we create are specific and not open to much ambiguity. We also want to ensure that they are easy to test and estimated in hours. During our weekly meetings, we will be identifying large chunks of work and decomposing them into digestible chunks. This will be completed through discussion and trying to gain an understanding of the task at hand.
+
+\subsection*{Assigning Work}
+Initially, task assignment will be based on interest and strengths. However, as we move on, we plan on rotating tasks to prevent overspecialization and to ensure everyone has a chance to explore areas of interest. Each task will have both an assignee and a reviewer.
+
+\noindent
+Additionally, each team member will be expected to commit approximately 10 hours per week of work dedicated to this project. This includes meetings with peers or professors, tutorial time, and actual development time.
+
 
 \section{Proof of Concept Demonstration Plan}
 
-What is the main risk, or risks, for the success of your project?  What will you
-demonstrate during your proof of concept demonstration to convince yourself that
-you will be able to overcome this risk?
+\subsection{Main Risks for Project Success}
+
+The most significant risks for our Buddhist manuscript fragment reconstruction platform are:
+
+\begin{itemize}
+\item \textbf{Inconsistent OCR Performance}: OCR accuracy varies dramatically across different manuscript conditions, script styles, and image quality. Ancient Buddhist texts often contain deteriorated characters, non-standard orthography, and multiple script variations that challenge standard OCR engines.
+
+
+\item \textbf{Lack of Positive Training Examples}: The absence of confirmed fragment matches creates a training data challenge. Without verified examples of fragments that belong together, we will need to explore unsupervised learning approaches and develop alternative validation strategies for our matching algorithms.
+\end{itemize}
+
+These are risks because they directly impact the core functionality of our system - the ability to accurately identify which fragments belong together.
+
+\subsection{Implementation Challenges}
+
+The most challenging aspects of implementation will be:
+
+\begin{itemize}
+\item \textbf{OCR Integration and Consistency}: Implementing OCR engines that can handle Sanskrit manuscript variations while maintaining consistent output across different image conditions and script styles.
+\item \textbf{AI Model Training Without Ground Truth}: Creating and training machine learning models for fragment similarity matching without access to verified positive examples of matched fragments. The final model will need to combine multiple features (OCR text, edge patterns, damage signatures) into confidence scores, which presents challenges for training validation. We plan to explore unsupervised learning approaches to address this challenge.
+\item \textbf{Interactive Canvas}: Building a responsive, intuitive drag-and-drop interface that can handle potentially hundreds of fragment images while maintaining performance.
+\item \textbf{Multi-scale Matching}: Implementing algorithms that can suggest matches at different confidence levels.
+\end{itemize}
+
+\subsection{Testing Difficulties}
+
+Testing will present unique challenges because:
+
+\begin{itemize}
+\item \textbf{Ground Truth}: We need access to known fragment matches from Buddhist Studies scholars to validate our algorithms, which may be limited initially.
+\item \textbf{Subjective Validation}: Fragment matching often involves scholarly interpretation, making automated testing metrics challenging to define.
+\item \textbf{Performance Testing}: Testing the system with large batches of high-resolution fragment images will require substantial computational resources.
+\item \textbf{User Experience Testing}: The interface must be intuitive for scholars with varying technical backgrounds, requiring extensive usability testing.
+\end{itemize}
+
+\subsection{Library and Technology Risks}
+
+\subsection{Hardware and Infrastructure Concerns}
+
+\begin{itemize}
+\item \textbf{Processing Power}: Computer vision and AI algorithms may require substantial CPU/GPU resources for model training.
+\end{itemize}
+
+\subsection{Demonstration Plan}
+
+To address these risks and demonstrate feasibility, our POC will focus on proving that the core technical challenges can be overcome:
+
+\begin{itemize}
+\item \textbf{OCR Functionality Demonstration}: Show OCR engines successfully extracting text from sample manuscript fragments with varying quality levels. We will demonstrate text extraction from both clear and degraded fragments to validate OCR consistency approaches.
+\item \textbf{Image Segmentation and Normalization}: Demonstrate fragment segmentation algorithms that can isolate individual fragments from composite images and normalize them for consistent analysis (rotation correction, standardization).
+\item \textbf{Basic Feature Extraction}: Show extraction of key features from fragments including edges, text content, and damage patterns that could be used for matching.
+\item \textbf{Prototype Similarity Metrics}: Implement basic similarity algorithms that compare normalized fragments and provide confidence scores, acknowledging the limitation that it will be difficult to validate accuracy without ground truth data.
+\item \textbf{Interactive Workspace}: Create a basic interface where users can upload fragments, view OCR results, and see preliminary similarity suggestions.
+\end{itemize}
+
+This demonstration will prove the technical feasibility of the core components. The POC focuses on demonstrating that our technical approach can extract and compare the right types of features for fragment matching. While the absence of ground truth data presents challenges, we will explore unsupervised learning techniques and develop validation approaches that can work with the available data.
 
 \section{Expected Technology}
 
-\wss{What programming language or languages do you expect to use?  What external
-libraries?  What frameworks?  What technologies.  Are there major components of
-the implementation that you expect you will implement, despite the existence of
-libraries that provide the required functionality.  For projects with machine
-learning, will you use pre-trained models, or be training your own model?  }
+\noindent For our project, we will use a combination of programming languages, external libraries, dev tools and infrastructure for fragment processing, matching and analysis. While the exact implementation has not been finalized yet and may evolve, the following technologies are expected to be used:
 
-\wss{The implementation decisions can, and likely will, change over the course
-of the project.  The initial documentation should be written in an abstract way;
-it should be agnostic of the implementation choices, unless the implementation
-choices are project constraints.  However, recording our initial thoughts on
-implementation helps understand the challenge level and feasibility of a
-project.  It may also help with early identification of areas where project
-members will need to augment their training.}
-
-Topics to discuss include the following:
-
+\subsection*{Programming Languages}
 \begin{itemize}
-\item Specific programming language
-\item Specific libraries
-\item Pre-trained models
-\item Specific linter tool (if appropriate)
-\item Specific unit testing framework
-\item Investigation of code coverage measuring tools
-\item Specific plans for Continuous Integration (CI), or an explanation that CI
-  is not being done
-\item Specific performance measuring tools (like Valgrind), if
-  appropriate
-\item Tools you will likely be using?
+    \item Python -- primary language for image preprocessing, data pipelines and model integration
+    \item C++ (if required) -- will be utilized for performance-critical modules
+    \item JavaScript / TypeScript -- for frontend development
 \end{itemize}
 
-\wss{git, GitHub and GitHub projects should be part of your technology.}
+\subsection*{Libraries \& Frameworks}
+\begin{itemize}
+    \item OpenCV for image preprocessing, orientation correction, and edge detection
+    \item PyTorch / TensorFlow for machine learning models for script identification and OCR
+    \item scikit-learn for probabilistic fragment-matching algorithms
+    \item SQLAlchemy for database interaction (PostgreSQL or SQLite)
+    \item React for frontend framework to build the researcher-facing interface
+    \item Tailwind CSS for frontend styling libraries
+    \item Flask, FastAPI or Django for backend API layer to connect frontend and ML/database modules
+\end{itemize}
+
+\subsection*{Pre-trained Models}
+\begin{itemize}
+    \item We will be exploring OCR models for Sanskrit
+    \item We plan on training a lightweight model in the case that pre-trained models are not sufficient
+\end{itemize}
+
+\subsection*{IDE \& Dev Tools}
+\begin{itemize}
+    \item VSCode as the primary development environment
+    \item LaTeX/Markdown for documentation and deliverables
+    \item Doxygen for auto-generating API documentation
+    \item Postman to test backend endpoints
+\end{itemize}
+
+\subsection*{Testing and Code Quality Tools}
+\begin{itemize}
+    \item Pytest for backend unit testing
+    \begin{itemize}
+        \item Can utilize coverage.py to generate coverage reports
+    \end{itemize}
+    \item Combination of MyPy and Ruff for Python linting
+    \item Jest for frontend testing
+    \item ESLint and Prettier for frontend linting
+    \item Google C++ Style Guide if we develop modules in C++
+    \item Valgrind for C++ performance if we develop modules in C++
+\end{itemize}
+
+\subsection*{Build \& Automation Tools}
+\begin{itemize}
+    \item Makefiles for automated builds of modules and LaTeX documents
+    \item GitHub Actions as our CI/CD pipeline:
+    \begin{itemize}
+        \item Linting and style checks for frontend and backend
+        \item Unit and integration tests
+        \item Docker image builds
+        \item PDF generation from LaTeX docs
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Deployment}
+\begin{itemize}
+    \item Docker for containerized environments
+    \item Git and GitHub projects for version control and project management
+\end{itemize}
 
 \section{Coding Standard}
 
-\wss{What coding standard will you adopt?}
+\noindent The most important thing that we will be striving for is consistency throughout our project. This can only be possible by highlighting a clear set of rules and standards for development. These rules and standards have been listed below.
+
+\subsection*{General Rules}
+\begin{itemize}
+    \item Code reviews: 1+ review approval required before merge
+    \begin{itemize}
+        \item Approval depends on style as well as correctness of code
+    \end{itemize}
+    \item Commits and PRs must follow the standardized template established in the workflow plan
+    \item No sensitive data will be committed to the repository
+    \begin{itemize}
+        \item Credentials
+        \item Datasets with restrictions (fragment images)
+    \end{itemize}
+    \item Decisions regarding style, tech stack and others may evolve over time but must be documented in this document (Development Plan)
+\end{itemize}
+
+\subsection*{Python Rules and Standards}
+\begin{itemize}
+    \item Follow PEP8 guides for formatting and structure
+    \item Use Ruff for linting and rule enforcement
+    \item MyPy for typechecking
+    \item Write NumPy/SciPy-style docstrings for public functions, including data shapes and types
+    \item Implement tests with Pytest and measure coverage with coverage.py
+    \begin{itemize}
+        \item Aim to reach 80\% coverage
+    \end{itemize}
+\end{itemize}
+
+\subsection*{JavaScript/TypeScript Rules and Standards}
+\begin{itemize}
+    \item Follow Google JavaScript Style Guide with React/JSX convention
+    \item Use ESLint for static analysis and Prettier for consistent formatting
+    \item Standardize styling with Tailwind CSS
+    \item Test frontend code with Jest and aim to reach 80\% coverage
+\end{itemize}
+
+\subsection*{API and Documentation Standards}
+\begin{itemize}
+    \item Define request and response schemas using \texttt{pydantic} models and TypeScript interfaces
+    \item Use proper HTTP status codes as well as versioned endpoints
+    \item Use consistent routing for endpoints
+    \item Generate API documentation
+\end{itemize}
+
+\subsection*{CI Enforcement}
+\begin{itemize}
+    \item Run Ruff, MyPy and Pytest for backend code
+    \item Run ESLint, Prettier and Jest for frontend code
+    \item Block merges on failed lint, typecheck or test results
+\end{itemize}
 
 \newpage{}
 
@@ -175,74 +438,75 @@ Topics to discuss include the following:
 
 \section*{Appendix --- Team Charter}
 
-\wss{borrows from
-\href{https://engineering.up.edu/industry_partnerships/files/team-charter.pdf}
-{University of Portland Team Charter}}
 
 \subsection*{External Goals}
 
-\wss{What are your team's external goals for this project? These are not the
-goals related to the functionality or quality fo the project.  These are the
-goals on what the team wishes to achieve with the project.  Potential goals are
-to win a prize at the Capstone EXPO, or to have something to talk about in
-interviews, or to get an A+, etc.}
+Our project will contribute to the field of religious studies by providing valuable manuscripts that have been lost due to the fragmentation of the texts. We will also develop our knowledge 
+of machine learning and computer vision through this project which we will helpful for our future professional development. Our tool will be able to be used by anyone studying 
+religious studies so that they can create their own texts, which will lower the barrier required to provide valuable information to the field.
 
 \subsection*{Attendance}
 
 \subsubsection*{Expectations}
 
-\wss{What are your team's expectations regarding meeting attendance (being on
-time, leaving early, missing meetings, etc.)?}
+Our team expects all team members to arrive on time for team meetings unless they are late due to an acceptable excuse. All team members must be present for the entire meeting unless they have an reason for leaving early. 
+Team members are expected to be prepared for the meeting and participate in the discussions to provide their viewpoint on the topics. Team members are expected to attend every meeting unless an acceptable excuse is given.
 
 \subsubsection*{Acceptable Excuse}
 
-\wss{What constitutes an acceptable excuse for missing a meeting or a deadline?
-What types of excuses will not be considered acceptable?}
+An acceptable excuse for missing meetings or deadlines includes family emergencies such as a death in the family or serious illness. Medical emergencies such as illness or doctor appointments will also be acceptable. 
+If there is a conflicting class or midterm/exam taking place during the meeting, the team member will be allowed to attend the event, but we will try to avoid planning meetings during these events. 
+
+Poor time management or missing meetings due to other commitments will not be tolerated, and team members are expected to notify the entire team about their reason for missing the meeting as soon as possible so that the team can plan in advance.
 
 \subsubsection*{In Case of Emergency}
 
-\wss{What process will team members follow if they have an emergency and cannot
-attend a team meeting or complete their individual work promised for a team
-deliverable?}
+In an emergency situation, team members must notify the team and provide the emergency details. They must coordinate with the team to fill the gap in coverage so that the work will be able to finished.
+They must let the team know the approximate length of time required for the emergency, or keep the team updated during the emergency so that they can plan ahead if necessary. If possible, provide any work 
+that is in progress to the team so that they can continue working on it. If this emergency happens over a long period of time, we will notify the instructor.
 
 \subsection*{Accountability and Teamwork}
 
 \subsubsection*{Quality} 
 
-\wss{What are your team's expectations regarding the quality
-of team members' preparation for team meetings and the quality of the
-deliverables that members bring to the team?}
+All team members must come to meetings with meeting topics and questions prepared, and all necessary tasks must be completed prior to the meeting. All team members must also read the agenda and meeting notes. 
+Our documentation must satisfy the course requirements and be easy to understand, so that we can easily reference it. We aim for our code to have high readability and maintainability. Furthermore, our code 
+will be tested rigourously through unit testing for basic coverage and regression testing to ensure that the new code does not cause any defects, and all code will be code reviewed to reduce technical debt.
+We will also ensure that our deliverables are cited properly and peer reviewed.
 
 \subsubsection*{Attitude}
 
-\wss{What are your team's expectations regarding team members' ideas,
-interactions with the team, cooperation, attitudes, and anything else regarding
-team member contributions?  Do you want to introduce a code of conduct?  Do you
-want a conflict resolution plan?  Can adopt existing codes of conduct.}
+Our team must communicate in a respect manner with each other, and include everyone in group discussions. We will work collaborately by providing feedback to improve the quality of the work and through 
+knowledge sharing. We will also focus on having a positive attitude when dealing with problems and we will be receptive to new ideas to maximize our creative potential.
+
+
+Code of Conduct: 
+\begin{itemize}
+    \item Effectively communicate and collaborate with each other
+    \item Be respectful to all team members
+    \item Avoid using personal attacks or harsh language
+    \item Violating the code will result in further consequences
+\end{itemize}
 
 \subsubsection*{Stay on Track}
 
-\wss{What methods will be used to keep the team on track? How will your team
-ensure that members contribute as expected to the team and that the team
-performs as expected? How will your team reward members who do well and manage
-members whose performance is below expectations?  What are the consequences for
-someone not contributing their fair share?}
-
-\wss{You may wish to use the project management metrics collected for the TA and
-instructor for this.}
-
-\wss{You can set target metrics for attendance, commits, etc.  What are the
-consequences if someone doesn't hit their targets?  Do they need to bring the
-coffee to the next team meeting?  Does the team need to make an appointment with
-their TA, or the instructor?  Are there incentives for reaching targets early?}
+We will incentivize good performance by keeping track of metrics such as the number of pull requests, so team members feel more motivated to increase their number of pull requests. Furthermore, we will 
+keep track of how team members are performing outside of the milestones which includes team member roles such as creating the agenda and meeting minutes. Some performance targets includes participation 
+in all meetings, completion of tasks before the deadline and participation in code reviewing and giving feedback. If any team members are underperforming, we will first discuss this in a meeting to 
+ensure that they are aware that they are not performing well. If their performance does not improve, we will bring this issue up in a TA meeting so that the TA can give feedback to the team member. 
+If the team member is still not performing well, we will get the instructor involved in the discussion. Finishing your tasks early will give team members the opportunity to provide more feedback to 
+others, and they will be able to get started on the next milestone earlier.
 
 \subsubsection*{Team Building}
 
-\wss{How will you build team cohesion (fun time, group rituals, etc.)? }
+We will build team cohesion from establishing a friendly team environment by discussing topics unrelated to the project occasionally and by getting to know each other. Furthermore, we will acknowledge 
+each other accomplishments and promote working together on problems to build team chemistry. Team members will be encouraged to spend time together outside of time spent working on the project. Also, since we 
+are enrolled in the same courses, team members will be encouraged to collaborate on team projects or labs in other courses. 
 
 \subsubsection*{Decision Making} 
 
-\wss{How will you make decisions in your group? Consensus?  Vote? How will you
-handle disagreements? }
+Since our group has 5 team members, we are able to make decisions based on majority vote. The team leader will be responsible for mediating during disagreements, and we will keep voting anonymous to avoid bias 
+affecting the vote. Before the vote, we will have a discussion involving all group members, and we will not be able to vote if all team members are not present, to prevent team members from being left out. 
+All team members will be able to bring up topics for decision making, but the team leader will be responsible for when the vote will be held to avoid spending too much or too little time making a decision.
 
 \end{document}
