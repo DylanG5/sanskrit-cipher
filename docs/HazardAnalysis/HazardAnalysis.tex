@@ -72,21 +72,59 @@ important library, these are also potential components.}
 
 \section{Critical Assumptions}
 
-\wss{These assumptions that are made about the software or system.  You should
-minimize the number of assumptions that remove potential hazards.  For instance,
-you could assume a part will never fail, but it is generally better to include
-this potential failure mode.}
+\begin{itemize}
+    \item Input images are provided in a usable format for the system and are not corrupted when uploaded
+    \item Resolution of fragment images is sufficient for meaningful feature extraction using edges and damage patterns
+    \item Users of the system are expected to understand the basic functionality of the system and be knowledgeable in religious studies
+    \item External APIs and libraries used (image processing/segmentation) will be supported throughout the entire project lifetime.
+    \item All images uploaded and stored in the database are images of ancient fragments that the user has been permitted to use
+\end{itemize}
 
 \section{Failure Mode and Effect Analysis}
 
-\wss{Include your FMEA table here. This is the most important part of this document.}
-\wss{The safety requirements in the table do not have to have the prefix SR.
-The most important thing is to show traceability to your SRS. You might trace to
-requirements you have already written, or you might need to add new
-requirements.}
-\wss{If no safety requirement can be devised, other mitigation strategies can be
-entered in the table, including strategies involving providing additional
-documentation, and/or test cases.}
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Failure Mode and Effects Analysis (FMEA) for Manuscript Recreation System}
+\begin{tabularx}{\textwidth}{p{2.5cm} X X X X}
+\toprule
+\textbf{Design Function} & \textbf{Failure Modes} & \textbf{Effects of Failure} & \textbf{Causes of Failure} & \textbf{Recommended Action} \\
+\midrule
+
+\multirow{7}{*}{\parbox[t]{2cm}{Manuscript \\ Recreation}}
+& Image upload fails or corrupted file is accepted 
+& Missing or unusable fragment in display
+& Invalid file format, incomplete upload, or corrupted image data 
+& Validate file format during upload and provide error messages to users \\
+
+& Misalignment tools produce incorrect rotation/zoom 
+& User arranges fragments inaccurately, leading to wrong conclusions 
+& Calibration error or algorithmic inaccuracy in transformation logic 
+& Allow users to undo and redo previous action \\
+
+& Unauthorized user gains access 
+& Data breach or unauthorized edits to manuscripts 
+& Weak password, unencrypted session, or bypassed authentication 
+& Enforce strong passwords and 2 factor authentication \\
+
+& Data corruption or loss 
+& User progress and annotations are lost 
+& Database write failure or transaction interruption 
+& Perform daily backups, implement transaction rollback and recovery mechanisms \\
+
+& False positives in edge similarity 
+& Incorrect fragment matches suggested to user 
+& Overfitting or poor training data distribution 
+& Require human validation, display probability percentages and match explanations \\
+
+& User loses connection during upload or save 
+& Session progress lost 
+& Network interruption or unstable client connection 
+& Autosave state locally, synchronize data once the connection is restored \\
+
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \section{Safety and Security Requirements}
 
