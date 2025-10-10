@@ -187,41 +187,47 @@ important library, these are also potential components.}
 \centering
 \scriptsize
 \caption{Failure Mode and Effects Analysis (FMEA) for Manuscript Recreation System}
-\begin{tabularx}{\textwidth}{p{2.5cm} X X X X}
+\begin{tabularx}{\textwidth}{p{2.5cm} X X X X 1}
 \toprule
-\textbf{Design Function} & \textbf{Failure Modes} & \textbf{Effects of Failure} & \textbf{Causes of Failure} & \textbf{Recommended Action} \\
+\textbf{Design Function} & \textbf{Failure Modes} & \textbf{Effects of Failure} & \textbf{Causes of Failure} & \textbf{Recommended Action} & \textbf{SR} \\
 \midrule
 
 \multirow{7}{*}{\parbox[t]{2cm}{Manuscript \\ Recreation}}
 & Image upload fails or corrupted file is accepted 
 & Missing or unusable fragment in display
 & Invalid file format, incomplete upload, or corrupted image data 
-& Validate file format during upload and provide error messages to users \\
+& Validate file format during upload and provide error messages to users 
+& SR.1 \\
 
 & Misalignment tools produce incorrect rotation/zoom 
 & User arranges fragments inaccurately, leading to wrong conclusions 
 & Calibration error or algorithmic inaccuracy in transformation logic 
-& Allow users to undo and redo previous action \\
+& Allow users to undo and redo previous action 
+& SR.2 \\
 
 & Unauthorized user gains access 
 & Data breach or unauthorized edits to manuscripts 
 & Weak password, unencrypted session, or bypassed authentication 
-& Enforce strong passwords and 2 factor authentication \\
+& Enforce strong passwords and 2 factor authentication 
+& SR.3 \\
 
 & Data corruption or loss 
 & User progress and annotations are lost 
 & Database write failure or transaction interruption 
-& Perform daily backups, implement transaction rollback and recovery mechanisms \\
+& Perform daily backups, implement transaction rollback and recovery mechanisms 
+& SR.4 \\
 
 & False positives in edge similarity 
 & Incorrect fragment matches suggested to user 
 & Overfitting or poor training data distribution 
-& Require human validation, display probability percentages and match explanations \\
+& Require human validation, display probability percentages and match explanations 
+& SR.6 \\
 
 & User loses connection during upload or save 
 & Session progress lost 
 & Network interruption or unstable client connection 
-& Autosave state locally, synchronize data once the connection is restored \\
+& Autosave state locally, synchronize data once the connection is restored 
+& SR.7 \\
 
 \bottomrule
 \end{tabularx}
