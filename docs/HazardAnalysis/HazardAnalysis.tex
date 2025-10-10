@@ -20,7 +20,7 @@
 
 \input{../Comments}
 \input{../Common}
-
+\usepackage{float}
 \begin{document}
 
 \maketitle
@@ -113,7 +113,7 @@ This hazard analysis identifies and evaluates potential risks associated with th
 
 Table~\ref{TblPotentialLosses} summarizes the potential losses that could occur from identified hazards in the system. These losses span data security, user experience, research productivity, and system reliability concerns.
 
-\begin{table}[htbf]
+\begin{table}[H]
 \caption{Potential Losses from System Hazards} \label{TblPotentialLosses}
 \begin{tabularx}{\textwidth}{lX}
 \toprule
@@ -228,7 +228,7 @@ See SRS Section~S.1 for the detailed component descriptions and interfaces. Note
 \centering
 \scriptsize
 \caption{Failure Mode and Effects Analysis (FMEA) for Manuscript Recreation System}
-\begin{tabularx}{\textwidth}{p{2.5cm} X X X X 1}
+\begin{tabularx}{\textwidth}{p{2.5cm} X X X X l}
 \toprule
 \textbf{Design Function} & \textbf{Failure Modes} & \textbf{Effects of Failure} & \textbf{Causes of Failure} & \textbf{Recommended Action} & \textbf{SR} \\
 \midrule
