@@ -168,6 +168,53 @@ ones.  For projects that involve hardware, the components will typically include
 each individual piece of hardware.  If your software will have a database, or an
 important library, these are also potential components.}
 
+This hazard analysis treats the system as four major component groups that interact to support scholarly reconstruction of manuscript fragments. (For full details, refer to the SRS, Section~S.1.)
+
+\subsection*{Major Component Groups}
+\begin{itemize}
+  \item \textbf{Front-end}: Scholar-facing web UI for secure login, batch image uploads, an interactive canvas (arrange/rotate/zoom fragments), match discovery display, and session/annotation saving. Quick list of smaller components:
+  \begin{itemize} 
+    \item User Authentication Interface
+    \item Fragment Upload Interface
+    \item Interactive Canvas Module
+    \item Match Discovery Module
+    \item Progress Management Module
+  \end{itemize}
+  \item \textbf{Backend}: API gateway, authentication/authorization, image preprocessing pipeline (normalization/orientation/format), database access layer, and a match-orchestration service coordinating analysis results. Concise breakdown of sub-components:
+   \begin{itemize} 
+    \item API Gateway
+    \item Authentication Service
+    \item Image Processing Service
+    \item Database Access Layer
+    \item Match Orchestration Service
+   \end{itemize}
+  \item \textbf{Data Storage}: Fragment image store (originals and derivatives with metadata), user accounts/permissions, and project records (arrangements, match history, confidence scores, session snapshots). Brief overview of minor elements:
+  \begin{itemize} 
+    \item Fragment Image Database
+    \item User Database
+    \item Project Database
+   \end{itemize}
+  \item \textbf{AI/ML}: Services/models for edge/damage matching, handwriting/script classification, OCR text extraction (with confidence), and content similarity/embedding comparisons. Summary of key smaller parts:
+  \begin{itemize} 
+    \item Edge Pattern Matching Model
+    \item Handwriting Style Classifier
+    \item Damage Pattern Recognition Model
+    \item Text Extraction Model
+    \item Content Similarity Model
+   \end{itemize}
+\end{itemize}
+
+\subsection*{Component Boundaries (Exclusions)}
+\begin{itemize}
+  \item \textbf{UI} presents results and collects inputs; it does not run ML models or make authoritative scholarly decisions.
+  \item \textbf{Preprocessing} only standardizes images; it does not judge correctness of reconstructions.
+  \item \textbf{Matching} produces scored suggestions; it does not auto-merge/link records without explicit user confirmation.
+  \item \textbf{OCR/Transcription} is machine-generated with confidence indicators; final text requires human review before being marked confirmed.
+  \item \textbf{Datastores} are system-of-record for this application only; they do not write back to external catalogues/corpora.
+\end{itemize}
+
+See SRS Section~S.1 for the detailed component descriptions and interfaces. Note that here I have separated the backend and data storage to make it a little clearer to visualize the components but data storage will be treated as backend for the project.
+
 \section{Critical Assumptions}
 
 \wss{These assumptions that are made about the software or system.  You should
