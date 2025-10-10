@@ -36,9 +36,12 @@
 \toprule
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-Date1 & Name(s) & Description of changes\\
-Date2 & Name(s) & Description of changes\\
-... & ... & ...\\
+October 2nd 2025 & Dylan Garner & Add Initial Hazards\\
+October 9th 2025 & Umar Khan & Added Safety and Security requirements in Hazards analysis\\
+October 9th 2025 & Omar El Aref & Added System Boundaries and Components\\
+October 9th 2025 & Yousef Shahin & Added Roadmap\\
+October 10th 2025 & Aswin Kuganesan & Added Critical Assumptions and Failure Mode and Effect Analysis table\\
+October 10th 2025 & Aswin Kuganesan & Added Reflection\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -140,21 +143,21 @@ Which requirements will be implemented in the future?}
 
 \section*{Appendix --- Reflection}
 
-\wss{Not required for CAS 741}
-
-\input{../Reflection.tex}
-
 \begin{enumerate}
-    \item What went well while writing this deliverable? 
-    \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
-    \item Which of your listed risks had your team thought of before this
-    deliverable, and which did you think of while doing this deliverable? For
-    the latter ones (ones you thought of while doing the Hazard Analysis), how
-    did they come about?
-    \item Other than the risk of physical harm (some projects may not have any
-    appreciable risks of this form), list at least 2 other types of risk in
-    software products. Why are they important to consider?
+    \item While writing this deliverable, the safety requirements were easy to create because the components were well defined. This allowed for us to determine the most likely hazards to occur based on the
+    components and their functions. Then, we were able to create safety requirements to prevent these hazards from occurring. We also were able to determine the critical assumptions easily because many of
+    them were assumed during the planning of the project and are assumptions that we have discussed in the past.
+    \item During this deliverable, we found that the FMEA table was difficult to complete because we had to think of multiple different ways the system could fail and the steps we would take to prevent these failures. This
+    required us to think more critically about the system rather than surface level thinking. Creating the roadmap also required us to consider future work and how we would implement the safety requirements. This required us
+    discussing the feasibility of implementing several safety features within the project timeline.
+    \item The more serious risks were considered first during project planning. This includes risks such as database corruption and image upload failure. These risks were considered first because they would have the most
+    significant impact on the user and the system. Our discussions with our supervisor about requirements led to us thinking about potential risks that we had not considered. This included the risks considered 
+    during this deliverable, specifically connection loss and false positives in the algorithm. These risks were considered because although they do not have as big of an impact as the more serious risks, they 
+    could still cause the user to experience dissatisfaction with the system. 
+    \item Many software applications store user data and rely on this data for their application to personalize the experience for the user. This means that a large amount of user data is stored in databases which need to
+    be protected to prevent data breaches. Bad actors may try to gain access to this data for malicious purposes. This is why security is a major concern for software applications. Furthermore, software applications store
+    important data that users do not want to lose. Data loss can lead to users losing progress on their work which can have devastating consequences. This is why data integrity needs to be considered when designing a 
+    software application. 
 \end{enumerate}
 
 \end{document}
