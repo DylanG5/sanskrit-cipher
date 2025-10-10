@@ -36,7 +36,8 @@
 \toprule
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-October 9, 2025 & Muhammad Umar Khan & Adding Safety and Security Requirements\\
+October 10th, 2025 & Muhammad Umar Khan & Adding Safety and Security Requirements\\
+October 10th 2025 & Dylan Garner & Added initial hazard analysis\\
 Date2 & Name(s) & Description of changes\\
 ... & ... & ...\\
 \bottomrule
@@ -55,20 +56,159 @@ Date2 & Name(s) & Description of changes\\
 
 \section{Introduction}
 
-\wss{You can include your definition of what a hazard is here.}
+\subsection{Definition of Hazard}
+
+Following the definition from hazard analysis literature, a \textbf{hazard} is defined as a property or condition in the Sanskrit Manuscript Fragment Reconstruction Platform system together with a condition in the environment that has the potential to cause harm or damage (loss).
+
+\subsubsection{System Conditions}
+
+System conditions are properties or states of the software that create vulnerability or risk. Examples include:
+
+\begin{itemize}
+\item \textbf{Vulnerable database configuration}: Database exposed to unauthorized access attempts
+\item \textbf{Inaccurate Artificial Intelligence (AI) models}: Script classification model with low accuracy (<50\%)
+\item \textbf{Insufficient input validation}: System accepts malformed or malicious data
+\item \textbf{Poor error handling}: System crashes or enters unstable state on unexpected input
+\item \textbf{Inadequate session management}: Sessions persist beyond intended duration or lack proper isolation
+\item \textbf{Resource allocation issues}: Memory leaks, unbounded queries, or inefficient algorithms
+\item \textbf{Missing accessibility features}: Interface elements without keyboard navigation or screen reader support
+\end{itemize}
+
+\subsubsection{Environmental Conditions}
+
+Environmental conditions are external circumstances or user behaviors that, when combined with system conditions, can cause harm. Examples include:
+
+\begin{itemize}
+\item \textbf{User attempts unauthorized data access}: User tries to download entire database or access restricted content
+\item \textbf{User trusts inaccurate AI predictions}: Scholar bases research conclusions on low-confidence model outputs
+\item \textbf{Network interruptions during critical operations}: Connection lost while saving research data
+\item \textbf{Concurrent user access to shared resources}: Multiple researchers editing same fragment simultaneously
+\item \textbf{Users with varying technical expertise}: Non-technical users attempting complex system operations
+\item \textbf{Users with accessibility needs}: Users requiring assistive technologies to interact with system
+\end{itemize}
+
+\subsection{Project Context and Unique Hazard Considerations}
+
+The Sanskrit Manuscript Fragment Reconstruction Platform operates within a distinctive environment that creates unique user experience hazards not typically addressed in conventional software projects:
+
+\subsubsection{Diverse User Base with Varying Technical Skills}
+The system serves users ranging from graduate students learning paleography to expert scholars to archival staff, each with different technical comfort levels and research needs. Poor interface design or insensitive feature implementation could exclude or frustrate significant user groups, leading to abandonment of the tool or ineffective research workflows.
+
+\subsubsection{Research Workflow Integration Challenges}
+Scholars have established research methodologies and workspace preferences developed over years of practice. Software that disrupts familiar workflows, lacks intuitive navigation, or forces users to adapt to rigid system constraints can cause significant frustration and reduce research productivity. Poor performance or unreliable functionality breaks concentration and research flow.
+
+\subsubsection{Data Privacy and Confidentiality Concerns}
+Researchers work with sensitive data including unpublished discoveries, institutional collaborations, and potentially restricted manuscript materials. Unintended data exposure through system vulnerabilities, poor session management, or inadequate access controls could compromise ongoing research, violate institutional agreements, or expose confidential scholarly work to competitors.
+
 
 \section{Scope and Purpose of Hazard Analysis}
 
-\wss{You should say what \textbf{loss} could be incurred because of the
-hazards.}
+\subsection{Purpose}
+
+This hazard analysis identifies and evaluates potential risks associated with the Sanskrit Manuscript Fragment Reconstruction Platform to ensure safe, responsible deployment in academic research environments. The analysis focuses on protecting cultural heritage materials, maintaining scholarly integrity, and preventing negative impacts on Buddhist Studies research. Through systematic verification testing and validation processes, this analysis helps identify potential system failures and ensures that main functionalities operate safely and reliably before deployment.
+
+\subsection{Potential Losses}
+
+Table~\ref{TblPotentialLosses} summarizes the potential losses that could occur from identified hazards in the system. These losses span data security, user experience, research productivity, and system reliability concerns.
+
+\begin{table}[h]
+\caption{Potential Losses from System Hazards} \label{TblPotentialLosses}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Loss Category} & \textbf{Specific Losses}\\
+\midrule
+\textbf{Data Security} &
+\begin{itemize}
+\item Exposure of confidential research data
+\item Unauthorized access to manuscript database
+\item Unintended data sharing between users
+\item Violation of institutional data agreements
+\item Loss of competitive research advantage
+\end{itemize}\\
+\midrule
+\textbf{Research Productivity} &
+\begin{itemize}
+\item Lost research time due to crashes or slow performance
+\item Workflow disruption from poor interface design
+\item Research momentum loss requiring work restart
+\item Inefficient task completion from confusing navigation
+\end{itemize}\\
+\midrule
+\textbf{Data Integrity} &
+\begin{itemize}
+\item Data corruption compromising months of work
+\item Inadvertent modification of research data
+\item Loss of unsaved work due to system failures
+\item Incorrect fragment matches from inaccurate AI
+\end{itemize}\\
+\midrule
+\textbf{User Experience} &
+\begin{itemize}
+\item System unresponsiveness or freezing
+\item Frequent errors reducing user confidence
+\item Frustration from overly complex interfaces
+\item Inconsistent behavior across browsers/devices
+\end{itemize}\\
+\midrule
+\textbf{Accessibility \& Inclusion} &
+\begin{itemize}
+\item Exclusion of users with disabilities
+\item Frustration for non-technical users
+\item Reduced adoption by diverse user groups
+\item User abandonment from steep learning curve
+\end{itemize}\\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \section{System Boundaries and Components}
 
-\wss{Dividing the system into components will help you brainstorm the hazards.
-You shouldn't do a full design of the components, just get a feel for the major
-ones.  For projects that involve hardware, the components will typically include
-each individual piece of hardware.  If your software will have a database, or an
-important library, these are also potential components.}
+This hazard analysis treats the system as four major component groups that interact to support scholarly reconstruction of manuscript fragments. (For full details, refer to the SRS, Section~S.1.)
+
+\subsection*{Major Component Groups}
+\begin{itemize}
+  \item \textbf{Front-end}: Scholar-facing web UI for secure login, batch image uploads, an interactive canvas (arrange/rotate/zoom fragments), match discovery display, and session/annotation saving. Quick list of smaller components:
+  \begin{itemize} 
+    \item User Authentication Interface
+    \item Fragment Upload Interface
+    \item Interactive Canvas Module
+    \item Match Discovery Module
+    \item Progress Management Module
+  \end{itemize}
+  \item \textbf{Backend}: API gateway, authentication/authorization, image preprocessing pipeline (normalization/orientation/format), database access layer, and a match-orchestration service coordinating analysis results. Concise breakdown of sub-components:
+   \begin{itemize} 
+    \item API Gateway
+    \item Authentication Service
+    \item Image Processing Service
+    \item Database Access Layer
+    \item Match Orchestration Service
+   \end{itemize}
+  \item \textbf{Data Storage}: Fragment image store (originals and derivatives with metadata), user accounts/permissions, and project records (arrangements, match history, confidence scores, session snapshots). Brief overview of minor elements:
+  \begin{itemize} 
+    \item Fragment Image Database
+    \item User Database
+    \item Project Database
+   \end{itemize}
+  \item \textbf{AI/ML}: Services/models for edge/damage matching, handwriting/script classification, OCR text extraction (with confidence), and content similarity/embedding comparisons. Summary of key smaller parts:
+  \begin{itemize} 
+    \item Edge Pattern Matching Model
+    \item Handwriting Style Classifier
+    \item Damage Pattern Recognition Model
+    \item Text Extraction Model
+    \item Content Similarity Model
+   \end{itemize}
+\end{itemize}
+
+\subsection*{Component Boundaries (Exclusions)}
+\begin{itemize}
+  \item \textbf{UI} presents results and collects inputs; it does not run ML models or make authoritative scholarly decisions.
+  \item \textbf{Preprocessing} only standardizes images; it does not judge correctness of reconstructions.
+  \item \textbf{Matching} produces scored suggestions; it does not auto-merge/link records without explicit user confirmation.
+  \item \textbf{OCR/Transcription} is machine-generated with confidence indicators; final text requires human review before being marked confirmed.
+  \item \textbf{Datastores} are system-of-record for this application only; they do not write back to external catalogues/corpora.
+\end{itemize}
+
+See SRS Section~S.1 for the detailed component descriptions and interfaces. Note that here I have separated the backend and data storage to make it a little clearer to visualize the components but data storage will be treated as backend for the project.
 
 \section{Critical Assumptions}
 
