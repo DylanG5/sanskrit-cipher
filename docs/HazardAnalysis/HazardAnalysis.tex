@@ -42,7 +42,8 @@ October 10th 2025 & Aswin Kuganesan & Added Reflection\\
 October 10th 2025 & Dylan Garner & Added initial hazard analysis\\
 October 10th 2025 & Omar El Aref & Added System Boundaries and Components\\
 October 10th 2025 & Umar Khan & Added safety and security requirements\\
-... & ... & ...\\
+October 10th 2025 & Yousef Shahin & Created the roadmap\\
+
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -171,7 +172,7 @@ This hazard analysis treats the system as four major component groups that inter
 \subsection*{Major Component Groups}
 \begin{itemize}
   \item \textbf{Front-end}: Scholar-facing web UI for secure login, batch image uploads, an interactive canvas (arrange/rotate/zoom fragments), match discovery display, and session/annotation saving. Quick list of smaller components:
-  \begin{itemize} 
+  \begin{itemize}
     \item User Authentication Interface
     \item Fragment Upload Interface
     \item Interactive Canvas Module
@@ -179,7 +180,7 @@ This hazard analysis treats the system as four major component groups that inter
     \item Progress Management Module
   \end{itemize}
   \item \textbf{Backend}: API gateway, authentication/authorization, image preprocessing pipeline (normalization/orientation/format), database access layer, and a match-orchestration service coordinating analysis results. Concise breakdown of sub-components:
-   \begin{itemize} 
+   \begin{itemize}
     \item API Gateway
     \item Authentication Service
     \item Image Processing Service
@@ -187,13 +188,13 @@ This hazard analysis treats the system as four major component groups that inter
     \item Match Orchestration Service
    \end{itemize}
   \item \textbf{Data Storage}: Fragment image store (originals and derivatives with metadata), user accounts/permissions, and project records (arrangements, match history, confidence scores, session snapshots). Brief overview of minor elements:
-  \begin{itemize} 
+  \begin{itemize}
     \item Fragment Image Database
     \item User Database
     \item Project Database
    \end{itemize}
   \item \textbf{AI/ML}: Services/models for edge/damage matching, handwriting/script classification, OCR text extraction (with confidence), and content similarity/embedding comparisons. Summary of key smaller parts:
-  \begin{itemize} 
+  \begin{itemize}
     \item Edge Pattern Matching Model
     \item Handwriting Style Classifier
     \item Damage Pattern Recognition Model
@@ -235,40 +236,40 @@ See SRS Section~S.1 for the detailed component descriptions and interfaces. Note
 \midrule
 
 \multirow{7}{*}{\parbox[t]{2cm}{Manuscript \\ Recreation}}
-& Image upload fails or corrupted file is accepted 
+& Image upload fails or corrupted file is accepted
 & Missing or unusable fragment in display
-& Invalid file format, incomplete upload, or corrupted image data 
-& Validate file format during upload and provide error messages to users 
+& Invalid file format, incomplete upload, or corrupted image data
+& Validate file format during upload and provide error messages to users
 & SR.1 \\
 
-& Misalignment tools produce incorrect rotation/zoom 
-& User arranges fragments inaccurately, leading to wrong conclusions 
-& Calibration error or algorithmic inaccuracy in transformation logic 
-& Allow users to undo and redo previous action 
+& Misalignment tools produce incorrect rotation/zoom
+& User arranges fragments inaccurately, leading to wrong conclusions
+& Calibration error or algorithmic inaccuracy in transformation logic
+& Allow users to undo and redo previous action
 & SR.2 \\
 
-& Unauthorized user gains access 
-& Data breach or unauthorized edits to manuscripts 
-& Weak password, unencrypted session, or bypassed authentication 
-& Enforce strong passwords and 2 factor authentication 
+& Unauthorized user gains access
+& Data breach or unauthorized edits to manuscripts
+& Weak password, unencrypted session, or bypassed authentication
+& Enforce strong passwords and 2 factor authentication
 & SR.3 \\
 
-& Data corruption or loss 
-& User progress and annotations are lost 
-& Database write failure or transaction interruption 
-& Perform daily backups, implement transaction rollback and recovery mechanisms 
+& Data corruption or loss
+& User progress and annotations are lost
+& Database write failure or transaction interruption
+& Perform daily backups, implement transaction rollback and recovery mechanisms
 & SR.4 \\
 
-& False positives in edge similarity 
-& Incorrect fragment matches suggested to user 
-& Overfitting or poor training data distribution 
-& Require human validation, display probability percentages and match explanations 
+& False positives in edge similarity
+& Incorrect fragment matches suggested to user
+& Overfitting or poor training data distribution
+& Require human validation, display probability percentages and match explanations
 & SR.6 \\
 
-& User loses connection during upload or save 
-& Session progress lost 
-& Network interruption or unstable client connection 
-& Autosave state locally, synchronize data once the connection is restored 
+& User loses connection during upload or save
+& Session progress lost
+& Network interruption or unstable client connection
+& Autosave state locally, synchronize data once the connection is restored
 & SR.7 \\
 
 \bottomrule
@@ -360,8 +361,159 @@ The following safety and security requirements are derived from the identified h
 
 \section{Roadmap}
 
-\wss{Which safety requirements will be implemented as part of the capstone timeline?
-Which requirements will be implemented in the future?}
+\subsection{Requirements to be Implemented During Capstone Timeline}
+
+The following safety and security requirements will be implemented as part of the capstone project, organized by project phase:
+
+\subsubsection{Phase 1: Proof of Concept (Term 1, Weeks 1--6)}
+\begin{itemize}
+    \item \textbf{File Integrity and Upload Validation (Partial):}
+    \begin{itemize}
+        \item Validate uploaded files for acceptable formats (JPG, PNG)
+        \item Reject corrupted or incomplete files with basic error messages
+        \item This addresses the immediate need to handle fragment images reliably during POC demonstrations
+    \end{itemize}
+
+    \item \textbf{User Interaction Safety (Basic):}
+    \begin{itemize}
+        \item Implement basic undo functionality for manual fragment manipulation
+        \item This is critical for POC usability testing with non-technical scholars
+    \end{itemize}
+
+    \item \textbf{Model Transparency (Core):}
+    \begin{itemize}
+        \item Display confidence levels for model-generated fragment matching suggestions
+        \item Ensure human confirmation before accepting automated matches
+        \item This directly supports the scholarly validation workflow required for POC success metrics
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Phase 2: Revision 0 (Term 1, Weeks 7--13)}
+\begin{itemize}
+    \item \textbf{File Integrity and Upload Validation (Complete):}
+    \begin{itemize}
+        \item Implement checksum verification for uploaded images
+        \item Add comprehensive file validation and descriptive error feedback
+    \end{itemize}
+
+    \item \textbf{User Interaction Safety (Enhanced):}
+    \begin{itemize}
+        \item Add redo functionality to complement undo operations
+        \item Implement alignment guides or grid overlays for the interactive canvas
+        \item Maintain revision history for user adjustments (limited to current session)
+    \end{itemize}
+
+    \item \textbf{Service Reliability and Fault Tolerance (Basic):}
+    \begin{itemize}
+        \item Detect ML inference timeouts and provide user feedback
+        \item Implement basic error logging for failures and exceptions
+        \item Allow fallback to manual workflows when automated services fail
+        \item These are essential given the OCR performance risks identified in the development plan
+    \end{itemize}
+
+    \item \textbf{Network and Connectivity Safety (Basic):}
+    \begin{itemize}
+        \item Implement autosave functionality for workspace data every 60 seconds
+        \item Warn users of unsaved work before closing browser session
+        \item This addresses usability concerns for scholars working with large fragment collections
+    \end{itemize}
+
+    \item \textbf{Security of Stored and Transmitted Data (Basic):}
+    \begin{itemize}
+        \item Use HTTPS/TLS for all client--server communication
+        \item Implement basic input sanitization to prevent injection attacks
+        \item This is necessary given the confidential nature of manuscript fragments
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Phase 3: Revision 1 and Final (Term 2, Weeks 1--13)}
+\begin{itemize}
+    \item \textbf{Authentication and Access Control (Basic):}
+    \begin{itemize}
+        \item Implement secure user authentication with strong password policies
+        \item Store credentials in encrypted form
+        \item Log authentication events (login attempts, password resets)
+        \item Account lockout after multiple failed login attempts
+        \item Note: 2FA will be deferred to future work given time constraints
+    \end{itemize}
+
+    \item \textbf{Database Integrity and Recovery (Basic):}
+    \begin{itemize}
+        \item Implement automated daily backups of fragment metadata and user projects
+        \item Use atomic commits and transaction rollback for database operations
+        \item Maintain referential integrity across related tables
+        \item Note: Full administrative recovery mechanisms will be simplified for capstone scope
+    \end{itemize}
+
+    \item \textbf{Service Reliability and Fault Tolerance (Enhanced):}
+    \begin{itemize}
+        \item Add automatic retry with exponential backoff for failed ML inference requests
+        \item Implement failover handling for long-running fragment analysis processes
+    \end{itemize}
+
+    \item \textbf{Network and Connectivity Safety (Complete):}
+    \begin{itemize}
+        \item Implement automatic sync of unsaved data upon reconnection
+    \end{itemize}
+
+    \item \textbf{Model Transparency (Enhanced):}
+    \begin{itemize}
+        \item Add version control for model outputs to preserve validated results
+        \item Display similarity metrics alongside confidence levels for all suggestions
+    \end{itemize}
+
+    \item \textbf{Auditability and Traceability (Basic):}
+    \begin{itemize}
+        \item Maintain audit logs for critical operations (uploads, edits, deletions)
+        \item Associate changes with user identity and timestamp
+        \item Note: Administrative audit log interface will be simplified for capstone scope
+    \end{itemize}
+\end{itemize}
+
+\subsection{Requirements Deferred to Future Work}
+
+The following requirements are important for a production-ready system but are deferred beyond the capstone timeline due to scope constraints and project priorities:
+
+\begin{itemize}
+    \item \textbf{Authentication and Access Control:}
+    \begin{itemize}
+        \item Support optional two-factor authentication (2FA) for privileged or administrative accounts
+        \item Perform periodic security audits
+    \end{itemize}
+
+    \item \textbf{Database Integrity and Recovery:}
+    \begin{itemize}
+        \item Provide administrators with a verified recovery mechanism for restoring corrupted or lost data
+    \end{itemize}
+
+    \item \textbf{Security of Stored and Transmitted Data:}
+    \begin{itemize}
+        \item Encrypt sensitive data in storage
+        \item Segregate user data using role-based access to prevent unauthorized access or leakage
+    \end{itemize}
+
+    \item \textbf{Auditability and Traceability:}
+    \begin{itemize}
+        \item Provide administrators with a secure interface to review audit logs
+    \end{itemize}
+\end{itemize}
+
+
+\subsection{Rationale for Prioritization}
+
+The implementation roadmap prioritizes requirements that:
+
+\begin{enumerate}
+    \item \textbf{Support core project goals:} Requirements directly related to OCR accuracy, fragment matching, and usability for Buddhist Studies scholars take priority (e.g., model transparency, file validation, user interaction safety).
+
+    \item \textbf{Mitigate identified risks:} Given the POC demonstration plan's focus on OCR performance and lack of ground truth data, we prioritize service reliability and model transparency requirements.
+
+    \item \textbf{Enable iterative testing:} Basic safety features like undo/redo and autosave are essential for the usability testing required to meet the 15-minute training goal.
+
+    \item \textbf{Protect confidential data:} Since manuscript fragments are confidential (Section 2 of Development Plan), basic security measures (HTTPS, input sanitization, authentication) are implemented before final delivery.
+
+    \item \textbf{Fit within capstone timeline:} Advanced features requiring significant infrastructure work (2FA, distributed orchestration, comprehensive auditing) are deferred to ensure the team can deliver a functional system within two terms while maintaining approximately 10 hours per week per team member.
+\end{enumerate}
 
 \newpage{}
 
@@ -375,13 +527,13 @@ Which requirements will be implemented in the future?}
     required us to think more critically about the system rather than surface level thinking. Creating the roadmap also required us to consider future work and how we would implement the safety requirements. This required us
     discussing the feasibility of implementing several safety features within the project timeline.
     \item The more serious risks were considered first during project planning. This includes risks such as database corruption and image upload failure. These risks were considered first because they would have the most
-    significant impact on the user and the system. Our discussions with our supervisor about requirements led to us thinking about potential risks that we had not considered. This included the risks considered 
-    during this deliverable, specifically connection loss and false positives in the algorithm. These risks were considered because although they do not have as big of an impact as the more serious risks, they 
-    could still cause the user to experience dissatisfaction with the system. 
+    significant impact on the user and the system. Our discussions with our supervisor about requirements led to us thinking about potential risks that we had not considered. This included the risks considered
+    during this deliverable, specifically connection loss and false positives in the algorithm. These risks were considered because although they do not have as big of an impact as the more serious risks, they
+    could still cause the user to experience dissatisfaction with the system.
     \item Many software applications store user data and rely on this data for their application to personalize the experience for the user. This means that a large amount of user data is stored in databases which need to
     be protected to prevent data breaches. Bad actors may try to gain access to this data for malicious purposes. This is why security is a major concern for software applications. Furthermore, software applications store
-    important data that users do not want to lose. Data loss can lead to users losing progress on their work which can have devastating consequences. This is why data integrity needs to be considered when designing a 
-    software application. 
+    important data that users do not want to lose. Data loss can lead to users losing progress on their work which can have devastating consequences. This is why data integrity needs to be considered when designing a
+    software application.
 \end{enumerate}
 
 \end{document}
