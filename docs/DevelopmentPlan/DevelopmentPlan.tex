@@ -134,7 +134,7 @@ across the team.
         \item We will be making use of GitHub with a feature-branch workflow. Each task/issue will get its own branch.
         \item All code changes require a pull request and at least one approval from a reviewer before a merge to the master branch.
         \begin{itemize}
-            \item All PRs must follow a standardized naming convention:
+            \item All Pull Requests (PRs) must follow a standardized naming convention:
             \begin{itemize}
                 \item [Issue \#] Name of feature
             \end{itemize}
@@ -154,7 +154,7 @@ across the team.
 
     \item \textbf{Issues \& Project Tracking Boards:}
     \begin{itemize}
-        \item We will be making use of a Kanban board on GitHub to track our project’s progress.
+        \item We will be making use of a \href{https://github.com/users/DylanG5/projects/5}{Kanban board} on GitHub to track our project's progress.
         \item This Kanban board will contain Issues and will overall be split up into 5 separate categories:
         \begin{itemize}
             \item To-Do
@@ -176,8 +176,8 @@ across the team.
         \item We will utilize GitHub Projects for streamlined project management:
         \begin{itemize}
             \item Kanban board automation with custom workflow rules
-            \item Automated issue progression using PR linking (e.g., "closes \#10" automatically moves issues to Done)
-            \item Integration between pull requests and issue tracking for seamless workflow
+            \item Automated issue progression using PR linking (e.g., ``closes \#10'' automatically moves issues to Done)
+            \item Integration between PRs and issue tracking for seamless workflow
         \end{itemize}
     \end{itemize}
 
@@ -185,7 +185,7 @@ across the team.
     \begin{itemize}
         \item We will be creating milestones in GitHub corresponding to all major deliverables:
         \begin{itemize}
-            \item POC
+            \item PoC (Proof of Concept)
             \item Rev0
             \item Rev1
             \item Final
@@ -201,7 +201,7 @@ across the team.
             \item Build automation:
             \begin{itemize}
                 \item Utilizing makefiles to compile all modules
-                \item \textbf{(ALREADY COMPLETED)} automatically build .tex files into PDFs
+                \item Automatically build .tex files into PDFs (already completed)
             \end{itemize}
             \item Some sort of linter for style compliance
             \item Unit test suite
@@ -220,19 +220,19 @@ Each major milestone will contain deliverables within them.
 
 \subsection*{Major Milestones}
 \begin{enumerate}
-    \item Proof of Concept (POC)
-    \item Revision 0
-    \item Revision 1
+    \item PoC
+    \item Rev0
+    \item Rev1
     \item Final
 \end{enumerate}
 
 \subsection*{Deliverables from Course Outline}
 \begin{itemize}
     \item Team Formed, Project Selected
-    \item Problem Statement, POC Plan, Development Plan
+    \item Problem Statement, PoC Plan, Development Plan
     \item Requirements Doc and Hazard Analysis Revision 0
     \item V\&V Plan Revision 0
-    \item Design Document Revision -1
+    \item Design Document Revision 
     \item Proof of Concept Demonstration
     \item Design Document Revision 0
     \item Revision 0 Demonstration
@@ -243,7 +243,7 @@ Each major milestone will contain deliverables within them.
 \end{itemize}
 
 \subsection*{Task Decomposition}
-We plan on breaking down all tasks into features that can be completed in a few hours of work rather than days.
+We plan on breaking down all tasks into features that can be completed in a few hours of work rather than days. This approach ensures better progress tracking, reduces the risk of blocking other team members, and allows for more frequent feedback cycles that can catch issues early in development. 
 
 Some examples would be:
 \begin{itemize}
@@ -346,13 +346,13 @@ This demonstration will prove the technical feasibility of the core components. 
 
 \subsection*{Libraries \& Frameworks}
 \begin{itemize}
-    \item OpenCV for image preprocessing, orientation correction, and edge detection
-    \item PyTorch / TensorFlow for machine learning models for script identification and OCR
-    \item scikit-learn for probabilistic fragment-matching algorithms
-    \item SQLAlchemy for database interaction (PostgreSQL or SQLite)
-    \item React for frontend framework to build the researcher-facing interface
-    \item Tailwind CSS for frontend styling libraries
-    \item Flask, FastAPI or Django for backend API layer to connect frontend and ML/database modules
+    \item \href{https://opencv.org/}{OpenCV} for image preprocessing, orientation correction, and edge detection
+    \item \href{https://pytorch.org/}{PyTorch} / \href{https://www.tensorflow.org/}{TensorFlow} for machine learning models for script identification and OCR
+    \item \href{https://scikit-learn.org/}{scikit-learn} for probabilistic fragment-matching algorithms
+    \item \href{https://www.sqlalchemy.org/}{SQLAlchemy} for database interaction (PostgreSQL or SQLite)
+    \item \href{https://reactjs.org/}{React} for frontend framework to build the researcher-facing interface
+    \item \href{https://tailwindcss.com/}{Tailwind CSS} for frontend styling libraries
+    \item \href{https://flask.palletsprojects.com/}{Flask}, \href{https://fastapi.tiangolo.com/}{FastAPI} or \href{https://www.djangoproject.com/}{Django} for backend API layer to connect frontend and ML/database modules
 \end{itemize}
 
 \subsection*{Pre-trained Models}
@@ -363,34 +363,34 @@ This demonstration will prove the technical feasibility of the core components. 
 
 \subsection*{IDE \& Dev Tools}
 \begin{itemize}
-    \item VSCode as the primary development environment
-    \item LaTeX/Markdown for documentation and deliverables
-    \item Doxygen for auto-generating API documentation
-    \item Postman to test backend endpoints
+    \item \href{https://code.visualstudio.com/}{VSCode} as the primary development environment
+    \item \href{https://www.latex-project.org/}{\LaTeX{}}/\href{https://daringfireball.net/projects/markdown/}{Markdown} for documentation and deliverables
+    \item \href{https://www.doxygen.nl/}{Doxygen} for auto-generating API documentation
+    \item \href{https://www.postman.com/}{Postman} to test backend endpoints
 \end{itemize}
 
-\subsection*{Testing and Code Quality Tools}
+\subsection*{Testing \& Code Quality Tools}
 \begin{itemize}
-    \item Pytest for backend unit testing
+    \item \href{https://pytest.org/}{Pytest} for backend unit testing
     \begin{itemize}
-        \item Can utilize coverage.py to generate coverage reports
+        \item Can utilize \href{https://coverage.readthedocs.io/}{coverage.py} to generate coverage reports
     \end{itemize}
-    \item Combination of MyPy and Ruff for Python linting
-    \item Jest for frontend testing
-    \item ESLint and Prettier for frontend linting
-    \item Google C++ Style Guide if we develop modules in C++
-    \item Valgrind for C++ performance if we develop modules in C++
+    \item Combination of \href{https://mypy.readthedocs.io/}{MyPy} and \href{https://docs.astral.sh/ruff/}{Ruff} for Python linting
+    \item \href{https://jestjs.io/}{Jest} for frontend testing
+    \item \href{https://eslint.org/}{ESLint} and \href{https://prettier.io/}{Prettier} for frontend linting
+    \item \href{https://google.github.io/styleguide/cppguide.html}{Google C++ Style Guide} if we develop modules in C++
+    \item \href{https://valgrind.org/}{Valgrind} for C++ performance if we develop modules in C++
 \end{itemize}
 
 \subsection*{Build \& Automation Tools}
 \begin{itemize}
-    \item Makefiles for automated builds of modules and LaTeX documents
+    \item Makefiles for automated builds of modules and \LaTeX{} documents
     \item GitHub Actions as our CI/CD pipeline:
     \begin{itemize}
         \item Linting and style checks for frontend and backend
         \item Unit and integration tests
         \item Docker image builds
-        \item PDF generation from LaTeX docs
+        \item PDF generation from \LaTeX{} docs
     \end{itemize}
 \end{itemize}
 
@@ -421,27 +421,27 @@ This demonstration will prove the technical feasibility of the core components. 
 
 \subsection*{Python Rules and Standards}
 \begin{itemize}
-    \item Follow PEP8 guides for formatting and structure
-    \item Use Ruff for linting and rule enforcement
-    \item MyPy for typechecking
-    \item Write NumPy/SciPy-style docstrings for public functions, including data shapes and types
-    \item Implement tests with Pytest and measure coverage with coverage.py
+    \item Follow \href{https://pep8.org/}{PEP8} guides for formatting and structure
+    \item Use \href{https://docs.astral.sh/ruff/}{Ruff} for linting and rule enforcement
+    \item \href{https://mypy.readthedocs.io/}{MyPy} for typechecking
+    \item Write \href{https://numpy.org/doc/stable/dev/howto-docs.html}{NumPy}/\href{https://docs.scipy.org/doc/scipy/dev/contributor/adding_new.html}{SciPy}-style docstrings for public functions, including data shapes and types
+    \item Implement tests with \href{https://pytest.org/}{Pytest} and measure coverage with \href{https://coverage.readthedocs.io/}{coverage.py}
     \begin{itemize}
-        \item Aim to reach 80\% coverage
+        \item Aim to reach more than 80\% coverage
     \end{itemize}
 \end{itemize}
 
 \subsection*{JavaScript/TypeScript Rules and Standards}
 \begin{itemize}
-    \item Follow Google JavaScript Style Guide with React/JSX convention
-    \item Use ESLint for static analysis and Prettier for consistent formatting
-    \item Standardize styling with Tailwind CSS
-    \item Test frontend code with Jest and aim to reach 80\% coverage
+    \item Follow \href{https://google.github.io/styleguide/jsguide.html}{Google JavaScript Style Guide} with \href{https://reactjs.org/}{React}/\href{https://reactjs.org/docs/introducing-jsx.html}{JSX} convention
+    \item Use \href{https://eslint.org/}{ESLint} for static analysis and \href{https://prettier.io/}{Prettier} for consistent formatting
+    \item Standardize styling with \href{https://tailwindcss.com/}{Tailwind CSS}
+    \item Test frontend code with \href{https://jestjs.io/}{Jest} and aim to reach more than 80\% coverage
 \end{itemize}
 
 \subsection*{API and Documentation Standards}
 \begin{itemize}
-    \item Define request and response schemas using \texttt{pydantic} models and TypeScript interfaces
+    \item Define request and response schemas using \href{https://pydantic-docs.helpmanual.io/}{\texttt{pydantic}} models and \href{https://www.typescriptlang.org/}{TypeScript} interfaces
     \item Use proper HTTP status codes as well as versioned endpoints
     \item Use consistent routing for endpoints
     \item Generate API documentation
@@ -449,8 +449,8 @@ This demonstration will prove the technical feasibility of the core components. 
 
 \subsection*{CI Enforcement}
 \begin{itemize}
-    \item Run Ruff, MyPy and Pytest for backend code
-    \item Run ESLint, Prettier and Jest for frontend code
+    \item Run \href{https://docs.astral.sh/ruff/}{Ruff}, \href{https://mypy.readthedocs.io/}{MyPy} and \href{https://pytest.org/}{Pytest} for backend code
+    \item Run \href{https://eslint.org/}{ESLint}, \href{https://prettier.io/}{Prettier} and \href{https://jestjs.io/}{Jest} for frontend code
     \item Block merges on failed lint, typecheck or test results
 \end{itemize}
 
