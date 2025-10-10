@@ -36,7 +36,7 @@
 \toprule
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-Date1 & Name(s) & Description of changes\\
+October 9, 2025 & Muhammad Umar Khan & Adding Safety and Security Requirements\\
 Date2 & Name(s) & Description of changes\\
 ... & ... & ...\\
 \bottomrule
@@ -90,8 +90,77 @@ documentation, and/or test cases.}
 
 \section{Safety and Security Requirements}
 
-\wss{Newly discovered requirements.  These should also be added to the SRS.  (A
-rationale design process how and why to fake it.)}
+The following safety and security requirements are derived from the identified hazards and their recommended mitigations. Each requirement corresponds to one or more failure modes discussed in the previous section. The intent is to ensure that failures in individual services or user actions do not compromise data integrity, security, or scholarly validity.
+
+\begin{itemize}
+
+    \item \textbf{File Integrity and Upload Validation}
+    \begin{itemize}
+        \item The system shall validate all uploaded files for acceptable format (JPG, PNG) and integrity before ingestion.
+        \item The system shall reject corrupted or incomplete files and provide descriptive feedback to the user.
+        \item The system shall maintain a checksum for each uploaded image to prevent future corruption or mismatch.
+    \end{itemize}
+
+    \item \textbf{User Interaction Safety}
+    \begin{itemize}
+        \item The system shall include undo/redo functionality for all manual alignment or manipulation tools on the interactive canvas.
+        \item The system shall display alignment guides or grid overlays to minimize misplacement of fragments.
+        \item The system shall maintain a revision history of all user adjustments to allow recovery from accidental operations.
+    \end{itemize}
+
+    \item \textbf{Authentication and Access Control}
+    \begin{itemize}
+        \item The system shall enforce strong password policies, require secure session tokens, and store credentials in an encrypted manner.
+        \item The system shall support optional two-factor authentication (2FA) for privileged or administrative accounts.
+        \item The system shall log all authentication events (login, failed attempt, password reset) and perform periodic security audits.
+        \item The system shall automatically lock an account after multiple failed authentication attempts within a short time window.
+    \end{itemize}
+
+    \item \textbf{Database Integrity and Recovery}
+    \begin{itemize}
+        \item The system shall perform automated daily backups of all databases (fragment metadata, annotations, user projects).
+        \item The system shall implement transaction rollback and atomic commits to prevent partial data writes.
+        \item The system shall provide administrators with a verified recovery mechanism for restoring corrupted or lost data.
+        \item The system shall maintain referential integrity across related tables to prevent inconsistent state.
+    \end{itemize}
+
+    \item \textbf{Service Reliability and Fault Tolerance}
+    \begin{itemize}
+        \item The system shall detect service timeouts or crashes (e.g., ML inference, orchestration tasks) and automatically retry with exponential backoff.
+        \item The system shall provide user feedback when a service is unavailable and allow fallback to manual workflows.
+        \item The system shall implement failover handling for long-running processes to avoid complete job loss.
+        \item The system shall log all failures and exception traces for later analysis.
+    \end{itemize}
+
+    \item \textbf{Model Transparency and Scholarly Control}
+    \begin{itemize}
+        \item The system shall display confidence levels and similarity metrics for all model-generated suggestions (matching, classification, transcription).
+        \item The system shall require explicit human confirmation before accepting any automated fragment match.
+        \item The system shall maintain version control for model outputs, ensuring that updated models do not overwrite prior validated results.
+    \end{itemize}
+
+    \item \textbf{Network and Connectivity Safety}
+    \begin{itemize}
+        \item The system shall autosave the current workspace and session data locally every 60 seconds.
+        \item The system shall sync unsaved data automatically upon reconnection.
+        \item The system shall warn users of unsent uploads or unsynced work before closing the browser or session.
+    \end{itemize}
+
+    \item \textbf{Security of Stored and Transmitted Data}
+    \begin{itemize}
+        \item The system shall use TLS (Transport Layer Security) for all client–server communication and encrypt sensitive data in storage.
+        \item The system shall sanitize and validate all user inputs to prevent injection or cross-site scripting (XSS) attacks.
+        \item The system shall segregate user data using role-based access to prevent unauthorized access or leakage.
+    \end{itemize}
+
+    \item \textbf{Auditability and Traceability}
+    \begin{itemize}
+        \item The system shall maintain an audit log for all critical operations, including uploads, edits, deletions, and administrative actions.
+        \item The system shall associate every change with a user identity and timestamp.
+        \item The system shall provide administrators with a secure interface to review audit logs.
+    \end{itemize}
+
+\end{itemize}
 
 \section{Roadmap}
 
