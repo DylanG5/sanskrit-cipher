@@ -11,6 +11,7 @@
     urlcolor=blue
 }
 \usepackage[round]{natbib}
+\usepackage{adjustbox}
 
 \input{../Comments}
 \input{../Common}
@@ -142,14 +143,34 @@ how they relate to your VnV efforts.}
 
 \section{Plan}
 
-\wss{Introduce this section.  You can provide a roadmap of the sections to
-  come.}
+This section presents the overall strategy for Verification and Validation (V\&V) of the project. It outlines how we will organize people and activities, how key artifacts will be reviewed and tested, and how results will inform subsequent work. The goal is to provide a clear, practical roadmap for building confidence in the system from requirements through delivery.
+
 
 \subsection{Verification and Validation Team}
 
-\wss{Your teammates.  Maybe your supervisor.
-  You should do more than list names.  You should say what each person's role is
-  for the project's verification.  A table is a good way to summarize this information.}
+This subsection defines the project roles responsible for planning, executing, and reviewing V\&V activities. Each role has clear
+primary responsibilities and an assigned independent Reviewer to ensure separation of duties and objective appraisal.
+Roles may rotate by phase (requirements, design, implementation) to match expertise and workload, but accountability remains
+with the named owner for the current milestone. The table below summarizes the assignments.
+
+\begin{table}[h]
+\centering
+\caption{V\&V Roles and Responsibilities}
+\begin{adjustbox}{max width=\textwidth,center}
+\begin{tabular}{p{3.2cm} p{7.2cm} p{3cm} p{2cm}}
+\toprule
+\textbf{Role} & \textbf{Primary Responsibilities} & \textbf{Person} & \textbf{Reviewer}\\
+\midrule
+V\&V Lead & Manages the development and execution of the V\&V plan, oversees test protocols, ensures compliance, and leads root cause analysis for issues found during testing  & Dylan Garner & Aswin Kuganesan\\
+V\&V Manager & Defines the overall V\&V strategy, coordinates activities across the project, manages schedules and resources, and forecasts workloads & Yousef Shahin & Umar Khan \\
+Test Architect & Builds Req$\leftrightarrow$Test traceability; drafts system and NFR tests & Omar El-Aref & Yousef Shahin \\
+V\&V Engineer &  Develops and executes test plans and procedures, designs test cases, documents results, and troubleshoots issues.  & Umar Khan & Dylan Garner \\
+Quality Assurance & Often works closely with the V\&V team to ensure the product meets quality standards throughout the development lifecycle & Aswin Kuganesan & Omar El-Aref\\
+Supervisor &  External reviewer; approves SRS baselining and risk mitigations & Dr. Shayne &  \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
 
 \subsection{SRS Verification}
 
@@ -165,6 +186,64 @@ issue tracker?}
 
 \wss{Maybe create an SRS checklist?}
 
+This subsection defines how we will verify that the SRS is correct, complete, consistent, measurable, and feasible. We use three complementary approaches: guided reviews by TAs/peers, a supervisor-facing survey and interview that validate fundamentals in non-technical terms (translated into technical requirements), and continuous conformance checks during design/implementation against SRS use cases and fit criteria. Each approach includes instruments, process, and success metrics.
+
+\subsubsection*{TA/Peer Guided Review (Structured Feedback)}
+\textbf{Instrument.} A checklist-driven review by peers and TAs to ensure we are staying in line with the fundemntals of our requirements. Issues are filed in GitHub as feedback from TAs and peers as well as feedback on Avenue which is more detailed from the TA\\
+\textbf{Process.}
+\begin{enumerate}
+  \item After handing in the SRS document our peers go through the document and highlight areas to improve on.
+  \item Once our peers have given us feedback we are to address the feedback
+  \item The TA will also go through the SRS document and provide more in depth feedback to help with the document overall
+  \item Once we get the feedback for the TA we create an Issue in GitHub and address the feedback given to us
+\end{enumerate}
+\textbf{Success metrics.}
+\begin{itemize}
+  \item \textbf{Measurability coverage:} $\geq 100\%$ of feedback has been addressed
+  \item \textbf{Ambiguity count:} \(\leq 2\) open ambiguity items after rework.
+  \item \textbf{Defect turn-around time (TAT):} All feedback has been addressed within 72 hours of being given the feedback (with a grace period of 48 hours for the entire team)
+  \item \textbf{Link/xref errors:} $0$ build warnings for missing references.
+\end{itemize}
+
+\subsubsection*{Supervisor Validation via Survey plus Interview (Non-technical \textrightarrow{} Technical)}
+\textbf{Instrument.} A 10-question survey focused on \emph{fundamental product expectations}, followed by a 30\,min interview. Example survey items:
+\begin{enumerate}
+  \item ``The SRS describes how fragments will be \emph{prepared} (orientation/cleaning) before analysis.'' (1--5)
+  \item ``The SRS explains how \emph{candidate matches} will be presented for scholarly judgment.'' (1--5)
+  \item ``The SRS addresses \emph{trust signals} (e.g., confidence scores, overlays) for suggested matches.'' (1--5)
+  \item ``Privacy and access for \emph{unpublished images} are clearly described.'' (1--5)
+  \item Open: ``What essential research task is missing or under-specified?''
+\end{enumerate}
+\textbf{Process.}
+\begin{enumerate}
+  \item Send SRS and survey 48 hours in advance; collect responses.
+  \item Hold interview; capture clarifications and priorities (top~3 must-haves).
+  \item \emph{Translation step:} Requirements Analyst converts each non-technical concern into one or more technical requirements (G/S with Fit Criteria), files issues, updates traceability.
+\end{enumerate}
+\textbf{Success metrics.}
+\begin{itemize}
+  \item \textbf{Coverage score:} average score $\geq 4.0$ on survey.
+  \item \textbf{Gap closure:} 100\% of supervisor ``missing/under-specified'' items mapped to new/updated requirements within 1~week.
+  \item \textbf{Traceability updates:} new items appear in Req$\rightarrow$Test matrix with an assigned test type and owner.
+\end{itemize}
+
+\subsubsection*{C. Ongoing Conformance During Build (Design/Code \textrightarrow{} SRS)}
+\textbf{Instrument.} A checklist that is shared with the team and has each module mapped to a requirement. \\
+\textbf{Process.}
+\begin{enumerate}
+  \item For each S.4 scenario in the SRS, create at least one system test; link the implementing issue/PR.
+  \item On each PR, the author selects related requirement from the SRS document.
+  \item Monthly conformance audit: Each month the team will highlight what percentage of the requirements is done or being completed.
+  \item The team will also hihglight each month if they encountered a requirement that the SRS missed and make sure it is added within 48 hours of finding the missing requirement.
+  \item If code conflicts with SRS, open change request: either update SRS (with rationale) or refactor code.
+\end{enumerate}
+\textbf{Success metrics.}
+\begin{itemize}
+  \item \textbf{Traceability coverage:} $\geq 95\%$ of modules or requirments can be linked to code module.
+  \item \textbf{Use-case alignment:} 100\% of G.5 use cases have a corresponding S.4 detailed scenario and at least one test case.
+\end{itemize}
+
+
 \subsection{Design Verification}
 
 \wss{Plans for design verification}
@@ -172,6 +251,89 @@ issue tracker?}
 \wss{The review will include reviews by your classmates}
 
 \wss{Create a checklists?}
+
+This subsection defines how we will verify that the \emph{design} (architecture, detailed design, and model design) is
+\textbf{sound, implementable, and consistent} with the SRS. We use three complementary techniques with objective
+success criteria.
+
+\subsection*{DV-1: UML Design \texorpdfstring{$\leftrightarrow$}{↔} Code Modules}
+
+\textbf{Approach.} Maintain a living UML class diagram for core modules (front-end, backend services, AI/ML components).
+Verify code conformance on each milestone via static review (e.g., presence of classes/interfaces,
+key method signatures, dependency directions).
+\begin{itemize}
+  \item \textbf{Procedure:}
+  \begin{enumerate}
+    \item Identify \emph{must-exist} types and interfaces in the UML for the current milestone.
+    \item Map each UML element to its code module (file/path, namespace, class/interface name).
+    \item Keep a checklist of the modules that have been mapped and the ones that still need too get created.
+    \item As the design starts getting implemented we can start adjusting the UML diagram as needed.
+  \end{enumerate}
+  \item \textbf{Success metrics:}
+  \begin{itemize}
+    \item \emph{Coverage:} $\geq 95\%$ of \emph{must-exist} UML elements mapped to code modules.
+    \item \emph{Directional integrity:} $0$ violations of designated dependency rules.
+  \end{itemize}
+\end{itemize}
+
+\subsection*{DV-2: Structured Walkthroughs (Code/Design)}
+We will use lightweight, structured walkthroughs for code and design implementations
+\paragraph{Author}
+\begin{itemize}
+  \item \textbf{What they do:} Presents the change (PR), states intent, scope, and known risks; answers questions.
+  \item \textbf{How it works:} In a meeting they will share their screen and present the changes they made as well as the logic behind their changes
+  \item \textbf{Why it rotates:} The author is simply whoever made the change for that task; authorship necessarily varies by feature or document section.
+\end{itemize}
+
+\paragraph{Reviewer}
+\begin{itemize}
+  \item \textbf{What they do:} Performs the detailed critique using a checklist (correctness, testability, traceability, compliance).
+  \item \textbf{How it works:} Reviews asynchronously before the session; in the session, walks through findings; files issues or suggests concrete edits.
+  \item \textbf{Why it rotates:} Review expertise should match the change (e.g., ML for matching model code, accessibility for UI text), so the most relevant teammate reviews.
+\end{itemize}
+
+\paragraph{Walkthrough Lead}
+\begin{itemize}
+  \item \textbf{What they do:} Facilitates the session, keeps time, ensures the checklist is followed, resolves scope creep, and states clear outcomes.
+  \item \textbf{How it works:} Opens with goals and exit criteria; keeps discussion to evidence; confirms owner and due date for each action.
+  \item \textbf{Why it rotates:} Lead alternates between V\&V Lead and Test Architect depending on topic (documents vs.\ tests/code), ensuring domain-appropriate facilitation.
+\end{itemize}
+
+\paragraph{Audience / Notetaker}
+\begin{itemize}
+  \item \textbf{What they do:} Attends for situational awareness; the designated notetaker records decisions, action items, and deferments.
+  \item \textbf{How it works:} Notes are captured and action items become GitHub issues (\texttt{blocker/major/minor}) with assignees and deadlines.
+  \item \textbf{Why it rotates:} Anyone can take notes; rotating spreads context and avoids overloading a single person.
+\end{itemize}
+
+\vspace{0.5em}
+\noindent\textbf{Process (applies to both code and document walkthroughs).}
+\begin{enumerate}
+  \item \textbf{Prep (T\,$-$\,24h):} Author posts link(s) to PR , a 1--2 paragraph summary, and relevant checklists.
+  \item \textbf{Asynchronous review:} Reviewer annotates items and runs applicable checks.
+  \item \textbf{Session (30 minutes):} Lead states goals \& exit criteria; Author presents; Reviewer walks through findings; decisions and actions are recorded.
+  \item \textbf{Exit criteria:} All \emph{blocker/major} items assigned with due dates; PR updated or issues filed; next steps acknowledged by owners.
+  \item \textbf{Follow-up (72h):} Author closes items; Reviewer verifies fixes; Lead updates the review log.
+\end{enumerate}
+
+\vspace{0.25em}
+\noindent\textbf{Why roles change per task.}
+Changes originate in different parts of the system (UI, backend, AI/ML). The \emph{author} is the contributor for that change; the \emph{reviewer} is selected for the best subject-matter fit; the \emph{lead} alternates to match topic; the \emph{notetaker} rotates to share context. This rotation ensures expertise, fairness in workload, and higher defect detection while remaining lightweight and feasible.
+
+
+\subsection*{DV-3: ML Design Soundness (Regularization/Robustness)}
+\textbf{Approach.} Verify that AI/ML components are designed to generalize: regularization and robustness are evaluated with
+stress tests.
+\begin{itemize}
+  \item \textbf{Controls implemented:} dropout (or equivalent), data augmentation, early stopping, and (where applicable) ensembles.
+  \item \textbf{Ablation plan:} compare baseline vs.\ dropout, augmentation, ensemble; report mean$\pm$sd over $k$-fold Cross Validation.
+  \item \textbf{Robustness:} evaluate on mildly perturbed inputs (rotation, illumination, small occlusion); report metric deltas.
+  \item \textbf{Success metrics:}
+    \begin{itemize}
+      \item Will mainly be measured by if we found a better more robust model. Regardless of the outcome it will be a success since we have tested the models ability to generalize.
+    \end{itemize}
+  \item \textbf{Design outcome:} if criteria fail, document change in an ADR (e.g., add augmentation X, adjust dropout $p$, switch loss) and retest.
+\end{itemize}
 
 \subsection{Verification and Validation Plan Verification}
 
@@ -181,6 +343,38 @@ verified.  Techniques for this include review and mutation testing.}
 \wss{The review will include reviews by your classmates}
 
 \wss{Create a checklists?}
+
+The V\&V plan is itself an artifact that must be verified and improved over time. We will use
+peer/TA reviews, a structured test-plan walkthrough \& retrospective focused on functional and nonfunctional tests
+
+\subsection*{PV-1: Classmate and TA Reviews}
+\textbf{What:} External review by classmates and a course TA to assess clarity, completeness, and feasibility. \\
+\textbf{How:}
+\begin{itemize}
+  \item Have a completed version of the V\&V plan submitted.
+  \item Class peers review the plan and give feedback in an Issue on the GitHub.
+  \item TA reviews the plan and confirms scope, grading-aligned expectations, and missing evidence.
+  \item Each team memeber will create an Issue on the GitHub and fix the comments they were given on their respective parts.
+\end{itemize}
+\textbf{Success:} $\geq 95\%$ of actions from peer/TA reviews closed within 7 days.
+
+\subsection*{PV-2: Test-Plan Walkthrough \& Retrospective (Functional \& Nonfunctional)}
+\textbf{What:} A structured meeting to walk through current system tests (functional) and NFR tests (accessibility, privacy, performance, usability), emphasizing what has worked, what has not, and how to adapt. This will be quite similar to the walkthrough mentioned ion susection 3.1. \\
+\textbf{Inputs:} Current test catalog, pass/fail history, known pain points, and a walkthrough checklist covering: specificity of steps/data, pass/fail criteria, traceability to SRS Req IDs, reusability, and stakeholder relevance. \\
+\textbf{How:}
+\begin{enumerate}
+  \item Lead presents the V\&V Plan document and walks through the sections asking if the team has any doubts with the currecnt section.
+  \item If a team member does have doubts about a section they would then specify. (If not the Lead moves on to the next section).
+  \item The team comes up with a solution to address the doubt and clear up any misunderstadning.
+  \item Team records adjustments in an Issue on the GitHub with owner and due date.
+\end{enumerate}
+\textbf{Success:}
+\begin{itemize}
+  \item Executability: 100\% of sampled tests can be executed by a third party without clarification after fixes.
+  \item Specificity: Each test specifies input data, exact steps, expected outputs, and pass thresholds.
+  \item Adaptation throughput: $\geq 95\%$ of improvement actions closed by next walkthrough.
+\end{itemize}
+
 
 \subsection{Implementation Verification}
 
