@@ -252,6 +252,7 @@ This set of tests verifies that the authentication system satisfies requirements
 \textbf{Expected Output:} User successfully authenticated and directed to dashboard.\\
 \textbf{Test Case Derivation:} Confirms secure credential verification using backend authentication service.\\
 \textbf{How test will be performed:} Automated UI test verifying successful login and redirection.\\
+\textbf{Success criteria:} User receives a valid session token and is redirected to the dashboard within 2 s; authentication response is HTTP 200 and no error message is shown.\\
 \textbf{Requirement addressed:} The system shall authenticate users through a secure login interface and only allow authorized access.\\
 
 \item 
@@ -260,6 +261,7 @@ This set of tests verifies that the authentication system satisfies requirements
 \textbf{Input:} Invalid username and/or password.\\
 \textbf{Expected Output:} Access denied; error message displayed ``Invalid username or password.''\\
 \textbf{How test will be performed:} Automated UI test submitting incorrect credentials.\\
+\textbf{Success criteria:} Login attempts with invalid credentials return HTTP 401/403 and display the correct error message; no session is created.\\
 \textbf{Requirement addressed:} Invalid credentials must be rejected.\\
 \end{enumerate}
 
@@ -276,6 +278,7 @@ These tests ensure that the system fulfills requirements S.4.2 of the SRS, cover
 \textbf{Expected Output:} File successfully uploaded and preprocessing begins.\\
 \textbf{Test Case Derivation:} Confirms compliance with supported file formats and upload limits.\\
 \textbf{How test will be performed:} Automated API and UI tests with sample image files.\\
+\textbf{Success criteria:} Server accepts the file (HTTP 200/201), file is stored in the expected location, and the preprocessing pipeline is invoked within 5 s of upload.\\
 \textbf{Requirement addressed:} The system shall allow users to upload images (JPG, PNG, TIFF) for processing.\\
 
 \item 
@@ -283,9 +286,10 @@ These tests ensure that the system fulfills requirements S.4.2 of the SRS, cover
 \textbf{Control:} Automatic\\
 \textbf{Initial State:} Uploaded image with random rotation.\\
 \textbf{Input:} Rotated manuscript image.\\
-\textbf{Expected Output:} Processed image aligned horizontally; confidence score $\geq 0.9$.\\
+\textbf{Expected Output:} Processed image aligned horizontally; confidence score $\\geq 0.9$.\\
 \textbf{How test will be performed:} Compare processed image orientation using OpenCV-based angle detection.\\
-\textbf{Requirement addressed:} The system shall automatically regularize image orientation within $\pm$5°.\\
+\textbf{Success criteria:} The corrected image orientation is within $\\pm$5\\deg of horizontal and the orientation confidence score is $\\geq 0.9$.\\
+\textbf{Requirement addressed:} The system shall automatically regularize image orientation within $\\pm$5\\deg.\\
 \end{enumerate}
 
 \subsubsection{Area of Testing 3 — Fragment Matching and Reconstruction}
@@ -301,6 +305,7 @@ This section addresses requirements S.4.3 of the SRS, ensuring that the system c
 \textbf{Expected Output:} Ranked list of at least three probable matches with similarity scores.\\
 \textbf{Test Case Derivation:} Validates integration between AI/ML cluster and backend orchestration service.\\
 \textbf{How test will be performed:} Automated backend tests with known fragment pairs; check if top match $>$ 0.8 accuracy.\\
+\textbf{Success criteria:} At least three candidate matches are returned, the top-ranked match has similarity score $>$ 0.8, and results are returned within the expected latency (e.g., 5 s).\\
 \textbf{Requirement addressed:} The system shall generate ranked match suggestions for fragments based on edge, damage, and content similarity.\\
 
 \item
@@ -310,6 +315,7 @@ This section addresses requirements S.4.3 of the SRS, ensuring that the system c
 \textbf{Input:} Drag-and-drop fragments onto canvas.\\
 \textbf{Expected Output:} Fragments move and snap to nearby edges; arrangement saved to session.\\
 \textbf{How test will be performed:} Manual verification during demonstration; supplemented with UI automation for drag-drop response $<$ 200 ms.\\
+\textbf{Success criteria:} Fragments snap correctly to compatible edges, the arrangement is persisted to the session store and can be reloaded, and UI drag/drop feedback latency is under 200 ms.\\
 \textbf{Requirement addressed:} The system shall allow scholars to visually arrange fragments in an interactive workspace.\\
 \end{enumerate}
 
@@ -324,17 +330,19 @@ The following tests verify that the system meets requirements S.4.4 and S.4.5 fr
 \textbf{Control:} Automatic\\
 \textbf{Initial State:} Uploaded fragment with visible text.\\
 \textbf{Input:} Image containing text of known script.\\
-\textbf{Expected Output:} Script classification with $\geq$ 70\% confidence.\\
+\textbf{Expected Output:} Script classification with $\\geq$ 70\\% confidence.\\
 \textbf{Test Case Derivation:} Validates accuracy of handwriting classification model.\\
 \textbf{How test will be performed:} Model tested on labeled dataset of fragments; results compared to ground truth.\\
+\textbf{Success criteria:} The model assigns the correct script label with confidence $\\geq$ 70\\% on at least 90\\% of the test samples drawn from the labeled dataset.\\
 \textbf{Requirement addressed:} The system shall identify the paleographic script type (e.g., Gupta, Tibetan, Chinese).\\
 
 \item
 \textbf{Test ID:} test-fr-script-identification-2\\
 \textbf{Control:} Automatic\\
 \textbf{Input:} Fragment image with legible text.\\
-\textbf{Expected Output:} Generated text file with $\geq$ 70\% character accuracy.\\
+\textbf{Expected Output:} Generated text file with $\\geq$ 70\\% character accuracy.\\
 \textbf{How test will be performed:} Compare OCR output to manually transcribed ground truth using Levenshtein distance metric.\\
+\textbf{Success criteria:} OCR output achieves character accuracy $\\geq$ 70\\% when measured against the ground truth using Levenshtein distance; output file is saved and retrievable.\\
 \textbf{Requirement addressed:} The system shall perform OCR transcription tuned for Sanskrit manuscripts.\\
 \end{enumerate}
 
@@ -351,6 +359,7 @@ These tests correspond to requirements S.4.6 of the SRS, which specify functiona
 \textbf{Expected Output:} Filtered result set within 3 s response time.\\
 \textbf{Test Case Derivation:} Validates search performance and accuracy against known dataset.\\
 \textbf{How test will be performed:} API testing using Postman and performance profiling with JMeter.\\
+\textbf{Success criteria:} Query returns the correct filtered set and response time is under 3 s for the test dataset; results match the expected ground-truth set.\\
 \textbf{Requirement addressed:} The system shall enable multi-criteria search and filtering (by script type, line count, fragment size).\\
 
 \item
@@ -360,6 +369,7 @@ These tests correspond to requirements S.4.6 of the SRS, which specify functiona
 \textbf{Input:} Click ``Export''.\\
 \textbf{Expected Output:} Downloaded CSV file containing fragment metadata.\\
 \textbf{How test will be performed:} Manual verification of downloaded file structure.\\
+\textbf{Success criteria:} Exported CSV conforms to the documented schema, contains the filtered results, and downloads without error in common browsers.\\
 \textbf{Requirement addressed:} The system shall support exporting query results to CSV or PDF.\\
 \end{enumerate}
 
