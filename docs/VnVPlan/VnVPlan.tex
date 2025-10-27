@@ -239,116 +239,227 @@ the contents of the subsections.}
 
 \subsection{Tests for Functional Requirements}
 
-\wss{Subsets of the tests may be in related, so this section is divided into
-  different areas.  If there are no identifiable subsets for the tests, this
-  level of document structure can be removed.}
-
-\wss{Include a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.}
-
-\subsubsection{Area of Testing1}
-
-\wss{It would be nice to have a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.  If a section
-  covers tests for input constraints, you should reference the data constraints
-  table in the SRS.}
-		
-\paragraph{Title for Test}
-
-\begin{enumerate}
-
-\item{test-id1\\}
-
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs.  Output is not how you
-are going to return the results of the test.  The output is the expected
-result.}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-					
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-
-\end{enumerate}
-
-\subsubsection{Area of Testing2}
-
-...
-
 \subsection{Tests for Nonfunctional Requirements}
 
-\wss{The nonfunctional requirements for accuracy will likely just reference the
-  appropriate functional tests from above.  The test cases should mention
-  reporting the relative error for these tests.  Not all projects will
-  necessarily have nonfunctional requirements related to accuracy.}
+\subsubsection{System Performance Testing}
 
-\wss{For some nonfunctional tests, you won't be setting a target threshold for
-passing the test, but rather describing the experiment you will do to measure
-the quality for different inputs.  For instance, you could measure speed versus
-the problem size.  The output of the test isn't pass/fail, but rather a summary
-table or graph.}
-
-\wss{Tests related to usability could include conducting a usability test and
-  survey.  The survey will be in the Appendix.}
-
-\wss{Static tests, review, inspections, and walkthroughs, will not follow the
-format for the tests given below.}
-
-\wss{If you introduce static tests in your plan, you need to provide details.
-How will they be done?  In cases like code (or document) walkthroughs, who will
-be involved? Be specific.}
-
-\subsubsection{Area of Testing1}
-		
-\paragraph{Title for Test}
+\paragraph{Collection Processing Performance}
 
 \begin{enumerate}
 
-\item{test-id1\\}
+\item \textbf{test-nfr-perf-1}
 
-Type: Functional, Dynamic, Manual, Static etc.
+\textbf{Type:} Dynamic, Automated, Performance
 					
-Initial State: 
+\textbf{Initial State:} System deployed with empty database; British Library collection dataset (21,000 fragments) prepared for ingestion
 					
-Input/Condition: 
+\textbf{Input/Condition:} Execute bulk fragment processing pipeline with full British Library collection; monitor processing time, resource utilization, and completion rate
 					
-Output/Result: 
+\textbf{Output/Result:} Processing completes within 48 hours; all 21,000 fragments successfully processed with metadata extracted; system logs show no critical errors; database populated with fragment data
 					
-How test will be performed: 
-					
-\item{test-id2\\}
+\textbf{How test will be performed:} Automated script will initiate the bulk processing workflow. Performance monitoring tools will track execution time, CPU usage, memory consumption, and I/O operations. Upon completion, validation queries will verify that all fragments are searchable with extracted metadata. Test will be considered passed if processing time ≤48 hours and success rate ≥99\%.
 
-Type: Functional, Dynamic, Manual, Static etc.
+\item \textbf{test-nfr-perf-2}
+
+\textbf{Type:} Dynamic, Manual, Load Testing
 					
-Initial State: 
+\textbf{Initial State:} System fully operational with British Library collection loaded; monitoring tools configured
 					
-Input: 
+\textbf{Input/Condition:} Simulate 15 concurrent users performing typical research workflows (searches, filtering, canvas operations) over a 60-minute period
 					
-Output: 
+\textbf{Output/Result:} System maintains responsiveness throughout test period; search queries return results within 3 seconds; canvas operations respond within 200ms; no user sessions experience timeouts or errors
 					
-How test will be performed: 
+\textbf{How test will be performed:} Load testing tool (e.g., Apache JMeter or Locust) will simulate 15 concurrent users executing randomized but realistic research workflows. Test scenarios include: fragment searches by ID and metadata filters, canvas workspace creation and manipulation, session save/restore operations. System performance metrics (response times, error rates, resource utilization) will be logged. Test passes if 95\% of operations meet specified response time thresholds and no critical errors occur.
 
 \end{enumerate}
 
-\subsubsection{Area of Testing2}
+\subsubsection{AI Matching Assistance Quality}
+
+\paragraph{Matching Suggestion Utility}
+
+\begin{enumerate}
+
+\item \textbf{test-nfr-ai-1}
+
+\textbf{Type:} Dynamic, Manual, Expert Evaluation
+					
+\textbf{Initial State:} System operational with AI matching model trained and deployed; test set of 50 known fragment pairs prepared (25 true matches, 25 non-matches)
+					
+\textbf{Input/Condition:} For each test fragment, request AI matching suggestions; record top 10 suggestions and their confidence scores
+					
+\textbf{Output/Result:} Evaluation report showing precision, recall, and utility metrics; expert researchers rate suggestions as "useful for research workflow" in ≥60\% of cases
+					
+\textbf{How test will be performed:} Three Buddhist Studies researchers will independently evaluate AI matching suggestions for the 50-fragment test set. For each fragment, they will assess whether suggested matches merit scholarly investigation. Researchers will complete a standardized evaluation form rating suggestion utility on a 5-point scale and providing qualitative feedback. Results will be aggregated to determine if the 60\% utility threshold is met. Statistical analysis will include inter-rater reliability measures.
+
+\item \textbf{test-nfr-ai-2}
+
+\textbf{Type:} Functional, Dynamic, Automated
+					
+\textbf{Initial State:} AI model deployed; validation dataset of 100 fragment pairs with ground truth labels available
+					
+\textbf{Input/Condition:} Execute batch prediction on validation dataset; compare model predictions against ground truth
+					
+\textbf{Output/Result:} Model performance metrics calculated: precision ≥70\%, recall ≥65\%, F1-score ≥67\%; confusion matrix and ROC curve generated for analysis
+					
+\textbf{How test will be performed:} Automated test script will process the validation dataset through the AI matching pipeline. Predictions will be compared against ground truth labels to calculate standard classification metrics. Results will be documented in a test report including: confusion matrix, precision-recall curves, distribution of confidence scores, and analysis of false positives/negatives. Test passes if performance meets or exceeds specified thresholds.
+
+\end{enumerate}
+
+\subsubsection{Usability Testing}
+
+\paragraph{Research Workflow Task Completion}
+
+\begin{enumerate}
+
+\item \textbf{test-nfr-usability-1}
+
+\textbf{Type:} Dynamic, Manual, User Testing
+					
+\textbf{Initial State:} System fully operational; test participants (5-7 Buddhist Studies researchers) recruited; standardized task scenarios prepared
+					
+\textbf{Input/Condition:} Each participant performs 8-10 representative research tasks: searching fragments by metadata, applying multi-criteria filters, creating canvas workspaces, arranging fragments, saving and restoring sessions
+					
+\textbf{Output/Result:} Task completion rate ≥80\% across all participants and tasks; average time-on-task within acceptable ranges; System Usability Scale (SUS) score ≥70
+					
+\textbf{How test will be performed:} Participants will complete tasks in a moderated usability testing session (60-90 minutes). Sessions will be recorded (with consent) for later analysis. For each task, observers will record: completion status (success/fail), time-on-task, number of errors, and assistance required. Post-test, participants will complete the SUS questionnaire and a custom satisfaction survey. Qualitative feedback will be collected through semi-structured interviews. Test passes if overall task completion rate ≥80\% and SUS score ≥70.
+
+\item \textbf{test-nfr-usability-2}
+
+\textbf{Type:} Static, Manual, Heuristic Evaluation
+					
+\textbf{Initial State:} System interface fully implemented and accessible for evaluation
+					
+\textbf{Input/Condition:} Three UX experts independently evaluate the interface against Nielsen's 10 usability heuristics
+					
+\textbf{Output/Result:} Consolidated report identifying usability issues categorized by severity (critical, major, minor); prioritized list of recommended improvements
+					
+\textbf{How test will be performed:} Each evaluator will spend 2-3 hours exploring the interface and documenting violations of usability heuristics. Issues will be rated by severity (0-4 scale) and likelihood of occurrence. Evaluators will meet to consolidate findings, resolve disagreements, and prioritize issues. A final report will document all identified issues with recommendations. Critical and major issues must be addressed before deployment; minor issues will be tracked for future iterations.
+
+\end{enumerate}
+
+\subsubsection{System Availability and Reliability}
+
+\paragraph{Uptime and Availability Testing}
+
+\begin{enumerate}
+
+\item \textbf{test-nfr-reliability-1}
+
+\textbf{Type:} Dynamic, Automated, Reliability Testing
+					
+\textbf{Initial State:} System deployed to production environment; monitoring and alerting configured
+					
+\textbf{Input/Condition:} Continuous operation over 30-day period with automated health checks every 5 minutes; simulated user activity maintained throughout period
+					
+\textbf{Output/Result:} System availability ≥95\% during operational hours (defined as 8:00 AM - 10:00 PM Eastern Time, Monday-Sunday); mean time between failures (MTBF) ≥168 hours; mean time to recovery (MTTR) ≤30 minutes for non-critical failures
+					
+\textbf{How test will be performed:} Monitoring system (e.g., Prometheus with Grafana) will track system availability, response times, and error rates. Automated health checks will verify core functionality: API endpoints responding, database connectivity, search operations, authentication services. All downtime incidents will be logged with root cause analysis. Monthly availability report will be generated showing uptime percentage, incident summary, and adherence to service level objectives. Test is continuous and evaluated monthly.
+
+\item \textbf{test-nfr-reliability-2}
+
+\textbf{Type:} Dynamic, Manual, Disaster Recovery
+					
+\textbf{Initial State:} System operational with full dataset; backup procedures configured
+					
+\textbf{Input/Condition:} Simulate critical failure scenario (e.g., database corruption, server failure); initiate disaster recovery procedures
+					
+\textbf{Output/Result:} System restored to operational state within 4 hours; no data loss for user sessions and collections; all functionality verified post-recovery
+					
+\textbf{How test will be performed:} Disaster recovery test will be conducted in a controlled manner during scheduled maintenance window. Test will simulate a critical failure, and the team will execute documented recovery procedures. Recovery time will be measured from failure detection to full service restoration. Post-recovery verification will include: database integrity checks, search functionality validation, user session restoration, and comparison of dataset checksums. Test documentation will include timeline of recovery actions and lessons learned.
+
+\end{enumerate}
+
+\subsubsection{Data Integrity and Security}
+
+\paragraph{Data Preservation and Attribution}
+
+\begin{enumerate}
+
+\item \textbf{test-nfr-data-1}
+
+\textbf{Type:} Functional, Automated, Data Validation
+					
+\textbf{Initial State:} British Library collection metadata and user-submitted images loaded into system
+					
+\textbf{Input/Condition:} Execute comprehensive data validation checks across entire collection
+					
+\textbf{Output/Result:} 100\% of fragments retain original British Library catalog information (shelfmark, collection, provenance); all user-submitted images maintain uploaded attribution; no corruption or loss of metadata fields
+					
+\textbf{How test will be performed:} Automated validation script will query all fragments in the database and verify: (1) presence of required metadata fields, (2) consistency with source British Library catalog data, (3) preservation of user attribution for uploaded images, (4) referential integrity of relational data. Script will generate exception report for any discrepancies. Manual spot-checking of 100 randomly selected fragments will verify accuracy. Test passes with 100\% preservation of provenance and catalog information.
+
+\item \textbf{test-nfr-data-2}
+
+\textbf{Type:} Static, Manual, Code Review
+					
+\textbf{Initial State:} Data handling code modules identified for review; reviewers assigned
+					
+\textbf{Input/Condition:} Security-focused code review of data handling, authentication, and authorization modules
+					
+\textbf{Output/Result:} Review checklist completed; no critical security vulnerabilities identified; best practices for data protection verified
+					
+\textbf{How test will be performed:} Two senior developers will conduct a thorough code review focusing on: input validation and sanitization, SQL injection prevention, authentication mechanisms, authorization controls, data encryption at rest and in transit, and secure API design. Review will use OWASP security guidelines as reference. All findings will be documented with severity ratings. Critical and high-severity issues must be resolved before deployment. Review documentation will be maintained for audit purposes.
+
+\end{enumerate}
+
+\subsubsection{Scalability Testing}
+
+\paragraph{Fragment Collection Scalability}
+
+\begin{enumerate}
+
+\item \textbf{test-nfr-scale-1}
+
+\textbf{Type:} Dynamic, Automated, Stress Testing
+					
+\textbf{Initial State:} System operational with British Library collection (21,000 fragments)
+					
+\textbf{Input/Condition:} Incrementally add synthetic fragment data to test system behavior at 50,000, 100,000, and 200,000 fragments
+					
+\textbf{Output/Result:} Performance degradation versus collection size documented in summary table and graphs; search response time increases no more than linearly with collection size; system remains stable at 200,000 fragments
+					
+\textbf{How test will be performed:} Synthetic fragment data will be generated with realistic metadata distributions. For each collection size, standardized performance tests will be executed: simple searches, complex multi-filter queries, and canvas operations. Response times, memory usage, and query execution plans will be recorded. Results will be presented as tables and graphs showing performance metrics versus collection size. Test provides quantitative data for future scaling decisions rather than pass/fail criteria.
+
+\end{enumerate}
+
+\subsubsection{Cross-Browser and Device Compatibility}
+
+\paragraph{Interface Compatibility Testing}
+
+\begin{enumerate}
+
+\item \textbf{test-nfr-compat-1}
+
+\textbf{Type:} Manual, Dynamic, Compatibility Testing
+					
+\textbf{Initial State:} System deployed and accessible via URL
+					
+\textbf{Input/Condition:} Access system and perform core workflows on multiple browser and device combinations: Chrome, Firefox, Safari (desktop); Chrome, Safari (mobile); tablets
+					
+\textbf{Output/Result:} All core functionality (search, filter, canvas) operates correctly across tested platforms; visual layout renders appropriately; no critical browser-specific bugs identified
+					
+\textbf{How test will be performed:} Test team will execute a standardized test suite covering critical user paths on each browser/device combination. Testing will verify: page rendering, responsive design behavior, drag-and-drop functionality, session persistence, image loading. Cross-browser testing tool (e.g., BrowserStack) may be used to expand coverage. Issues will be documented with severity ratings and browser-specific details. Critical issues preventing core functionality must be resolved; minor visual inconsistencies will be tracked for future improvements.
+
+\end{enumerate}
+
+\subsubsection{Performance Benchmarking}
+
+\paragraph{Response Time Measurement}
+
+\begin{enumerate}
+
+\item \textbf{test-nfr-bench-1}
+
+\textbf{Type:} Dynamic, Automated, Benchmark Testing
+					
+\textbf{Initial State:} System operational with full British Library collection
+					
+\textbf{Input/Condition:} Execute standardized set of operations with varying complexity and problem sizes: simple fragment ID lookups, 1-criterion filters, 3-criterion filters, 5-criterion filters, canvas operations with 10, 50, 100 fragments
+					
+\textbf{Output/Result:} Comprehensive performance report documenting response times for each operation type and complexity level; summary table showing min, max, mean, median, and 95th percentile response times; performance graphs illustrating trends
+					
+\textbf{How test will be performed:} Automated benchmark suite will execute each operation type 100 times, recording response times. Tests will run during low-activity periods to establish baseline performance. Results will be analyzed statistically, removing outliers. Performance data will be presented in summary tables and visualization graphs (response time vs. operation complexity, response time distributions). This benchmark establishes performance baselines for regression testing and capacity planning rather than enforcing rigid pass/fail thresholds.
+
+\end{enumerate}
 
 ...
 
