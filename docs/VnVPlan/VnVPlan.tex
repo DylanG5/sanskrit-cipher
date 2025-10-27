@@ -239,7 +239,7 @@ the contents of the subsections.}
 
 \subsection{Tests for Functional Requirements}
 
-\subsection{Tests for Nonfunctional Requirements - test}
+\subsection{Tests for Nonfunctional Requirements}
 
 \subsubsection{System Performance Testing}
 
@@ -257,7 +257,7 @@ the contents of the subsections.}
 					
 \textbf{Output/Result:} Processing completes within 48 hours; all 21,000 fragments successfully processed with metadata extracted; system logs show no critical errors; database populated with fragment data
 					
-\textbf{How test will be performed:} Automated script will initiate the bulk processing workflow. Performance monitoring tools will track execution time, CPU usage, memory consumption, and I/O operations. Upon completion, validation queries will verify that all fragments are searchable with extracted metadata. Test will be considered passed if processing time ≤48 hours and success rate ≥99\%.
+\textbf{How test will be performed:} Automated script will initiate the bulk processing workflow. Performance monitoring tools will track execution time, CPU usage, memory consumption, and I/O operations. Upon completion, validation queries will verify that all fragments are searchable with extracted metadata. Test will be considered passed if processing time \leq 48 hours and success rate \geq 99\%.
 
 \item \textbf{test-nfr-perf-2}
 
@@ -287,7 +287,7 @@ the contents of the subsections.}
 					
 \textbf{Input/Condition:} For each test fragment, request AI matching suggestions; record top 10 suggestions and their confidence scores
 					
-\textbf{Output/Result:} Evaluation report showing precision, recall, and utility metrics; expert researchers rate suggestions as "useful for research workflow" in ≥60\% of cases
+\textbf{Output/Result:} Evaluation report showing precision, recall, and utility metrics; expert researchers rate suggestions as "useful for research workflow" in \geq 60\% of cases
 					
 \textbf{How test will be performed:} Three Buddhist Studies researchers will independently evaluate AI matching suggestions for the 50-fragment test set. For each fragment, they will assess whether suggested matches merit scholarly investigation. Researchers will complete a standardized evaluation form rating suggestion utility on a 5-point scale and providing qualitative feedback. Results will be aggregated to determine if the 60\% utility threshold is met. Statistical analysis will include inter-rater reliability measures.
 
@@ -299,7 +299,7 @@ the contents of the subsections.}
 					
 \textbf{Input/Condition:} Execute batch prediction on validation dataset; compare model predictions against ground truth
 					
-\textbf{Output/Result:} Model performance metrics calculated: precision ≥70\%, recall ≥65\%, F1-score ≥67\%; confusion matrix and ROC curve generated for analysis
+\textbf{Output/Result:} Model performance metrics calculated: precision \geq 70\%, recall \geq 65\%, F1-score \geq 67\%; confusion matrix and ROC curve generated for analysis
 					
 \textbf{How test will be performed:} Automated test script will process the validation dataset through the AI matching pipeline. Predictions will be compared against ground truth labels to calculate standard classification metrics. Results will be documented in a test report including: confusion matrix, precision-recall curves, distribution of confidence scores, and analysis of false positives/negatives. Test passes if performance meets or exceeds specified thresholds.
 
@@ -319,9 +319,9 @@ the contents of the subsections.}
 					
 \textbf{Input/Condition:} Each participant performs 8-10 representative research tasks: searching fragments by metadata, applying multi-criteria filters, creating canvas workspaces, arranging fragments, saving and restoring sessions
 					
-\textbf{Output/Result:} Task completion rate ≥80\% across all participants and tasks; average time-on-task within acceptable ranges; System Usability Scale (SUS) score ≥70
+\textbf{Output/Result:} Task completion rate \geq 80\% across all participants and tasks; average time-on-task within acceptable ranges; System Usability Scale (SUS) score \geq 70
 					
-\textbf{How test will be performed:} Participants will complete tasks in a moderated usability testing session (60-90 minutes). Sessions will be recorded (with consent) for later analysis. For each task, observers will record: completion status (success/fail), time-on-task, number of errors, and assistance required. Post-test, participants will complete the SUS questionnaire and a custom satisfaction survey. Qualitative feedback will be collected through semi-structured interviews. Test passes if overall task completion rate ≥80\% and SUS score ≥70.
+\textbf{How test will be performed:} Participants will complete tasks in a moderated usability testing session (60-90 minutes). Sessions will be recorded (with consent) for later analysis. For each task, observers will record: completion status (success/fail), time-on-task, number of errors, and assistance required. Post-test, participants will complete the SUS questionnaire and a custom satisfaction survey. Qualitative feedback will be collected through semi-structured interviews. Test passes if overall task completion rate \geq 80\% and SUS score \geq 70.
 
 \item \textbf{test-nfr-usability-2}
 
@@ -351,7 +351,7 @@ the contents of the subsections.}
 					
 \textbf{Input/Condition:} Continuous operation over 30-day period with automated health checks every 5 minutes; simulated user activity maintained throughout period
 					
-\textbf{Output/Result:} System availability ≥95\% during operational hours (defined as 8:00 AM - 10:00 PM Eastern Time, Monday-Sunday); mean time between failures (MTBF) ≥168 hours; mean time to recovery (MTTR) ≤30 minutes for non-critical failures
+\textbf{Output/Result:} System availability \geq 95\% during operational hours (defined as 8:00 AM - 10:00 PM Eastern Time, Monday-Sunday); mean time between failures (MTBF) \geq 168 hours; mean time to recovery (MTTR) \leq 30 minutes for non-critical failures
 					
 \textbf{How test will be performed:} Monitoring system (e.g., Prometheus with Grafana) will track system availability, response times, and error rates. Automated health checks will verify core functionality: API endpoints responding, database connectivity, search operations, authentication services. All downtime incidents will be logged with root cause analysis. Monthly availability report will be generated showing uptime percentage, incident summary, and adherence to service level objectives. Test is continuous and evaluated monthly.
 
