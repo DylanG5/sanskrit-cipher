@@ -3,6 +3,7 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{hyperref}
+\usepackage{enumitem}
 \hypersetup{
     colorlinks,
     citecolor=blue,
@@ -234,64 +235,133 @@ as a Rev 0 demo for the supervisor.}
 
 \section{System Tests}
 
-\wss{There should be text between all headings, even if it is just a roadmap of
-the contents of the subsections.}
-
 \subsection{Tests for Functional Requirements}
 
-\wss{Subsets of the tests may be in related, so this section is divided into
-  different areas.  If there are no identifiable subsets for the tests, this
-  level of document structure can be removed.}
+This section details the functional tests derived from the system’s high-priority functional requirements defined in sections S.2 and S.4 of the Requirements Standard Plan. Each test validates that the platform performs its intended scholarly and technical functions.
 
-\wss{Include a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.}
+\subsubsection{Area of Testing 1 — User Authentication and Access}
 
-\subsubsection{Area of Testing1}
-
-\wss{It would be nice to have a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.  If a section
-  covers tests for input constraints, you should reference the data constraints
-  table in the SRS.}
-		
-\paragraph{Title for Test}
+This set of tests verifies that the authentication system satisfies requirements S.4.1 from the SRS, ensuring secure login, user access control, and proper error handling. These tests confirm compliance with input validation constraints defined in the data constraints table of the SRS.
 
 \begin{enumerate}
+\item 
+\textbf{Test ID:} test-fr-auth-1\\
+\textbf{Control:} Automatic\\
+\textbf{Initial State:} System running; no user session active.\\
+\textbf{Input:} Valid username and password.\\
+\textbf{Expected Output:} User successfully authenticated and directed to dashboard.\\
+\textbf{Test Case Derivation:} Confirms secure credential verification using backend authentication service.\\
+\textbf{How test will be performed:} Automated UI test verifying successful login and redirection.\\
+\textbf{Requirement addressed:} The system shall authenticate users through a secure login interface and only allow authorized access.\\
 
-\item{test-id1\\}
-
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs.  Output is not how you
-are going to return the results of the test.  The output is the expected
-result.}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-					
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-
+\item 
+\textbf{Test ID:} test-fr-auth-2\\
+\textbf{Control:} Automatic\\
+\textbf{Input:} Invalid username and/or password.\\
+\textbf{Expected Output:} Access denied; error message displayed ``Invalid username or password.''\\
+\textbf{How test will be performed:} Automated UI test submitting incorrect credentials.\\
+\textbf{Requirement addressed:} Invalid credentials must be rejected.\\
 \end{enumerate}
 
-\subsubsection{Area of Testing2}
+\subsubsection{Area of Testing 2 — Fragment Upload and Orientation Normalization}
 
-...
+These tests ensure that the system fulfills requirements S.4.2 of the SRS, covering input handling for image uploads, file format constraints, and automated orientation correction. Reference is made to SRS Table 3 (Data Constraints) for permissible image formats and size limits.
+
+\begin{enumerate}
+\item
+\textbf{Test ID:} test-fr-upload-1\\
+\textbf{Control:} Automatic\\
+\textbf{Initial State:} Authenticated session.\\
+\textbf{Input:} Valid image file (less than 50 MB).\\
+\textbf{Expected Output:} File successfully uploaded and preprocessing begins.\\
+\textbf{Test Case Derivation:} Confirms compliance with supported file formats and upload limits.\\
+\textbf{How test will be performed:} Automated API and UI tests with sample image files.\\
+\textbf{Requirement addressed:} The system shall allow users to upload images (JPG, PNG, TIFF) for processing.\\
+
+\item 
+\textbf{Test ID:} test-fr-upload-2\\
+\textbf{Control:} Automatic\\
+\textbf{Initial State:} Uploaded image with random rotation.\\
+\textbf{Input:} Rotated manuscript image.\\
+\textbf{Expected Output:} Processed image aligned horizontally; confidence score $\geq 0.9$.\\
+\textbf{How test will be performed:} Compare processed image orientation using OpenCV-based angle detection.\\
+\textbf{Requirement addressed:} The system shall automatically regularize image orientation within $\pm$5°.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 3 — Fragment Matching and Reconstruction}
+
+This section addresses requirements S.4.3 of the SRS, ensuring that the system can identify and reconstruct fragment matches based on edge and content similarity. The tests validate AI model performance, ranking algorithms, and interactive assembly functionality.
+
+\begin{enumerate}
+\item
+\textbf{Test ID:} test-fr-fragment-matching-1\\
+\textbf{Control:} Automatic\\
+\textbf{Initial State:} Database populated with preprocessed fragments.\\
+\textbf{Input:} Selected fragment ID.\\
+\textbf{Expected Output:} Ranked list of at least three probable matches with similarity scores.\\
+\textbf{Test Case Derivation:} Validates integration between AI/ML cluster and backend orchestration service.\\
+\textbf{How test will be performed:} Automated backend tests with known fragment pairs; check if top match $>$ 0.8 accuracy.\\
+\textbf{Requirement addressed:} The system shall generate ranked match suggestions for fragments based on edge, damage, and content similarity.\\
+
+\item
+\textbf{Test ID:} test-fr-fragment-matching-2\\
+\textbf{Control:} Manual\\
+\textbf{Initial State:} Logged-in user with fragments loaded.\\
+\textbf{Input:} Drag-and-drop fragments onto canvas.\\
+\textbf{Expected Output:} Fragments move and snap to nearby edges; arrangement saved to session.\\
+\textbf{How test will be performed:} Manual verification during demonstration; supplemented with UI automation for drag-drop response $<$ 200 ms.\\
+\textbf{Requirement addressed:} The system shall allow scholars to visually arrange fragments in an interactive workspace.\\
+\end{enumerate}
+
+
+\subsubsection{Area of Testing 4 — Script Identification and Transcription Assistance}
+
+The following tests verify that the system meets requirements S.4.4 and S.4.5 from the SRS, confirming accurate script classification and OCR-based transcription performance. These functions form the core of the text analysis pipeline and are critical for scholarly accuracy.
+
+\begin{enumerate}
+\item
+\textbf{Test ID:} test-fr-script-identification-1\\
+\textbf{Control:} Automatic\\
+\textbf{Initial State:} Uploaded fragment with visible text.\\
+\textbf{Input:} Image containing text of known script.\\
+\textbf{Expected Output:} Script classification with $\geq$ 70\% confidence.\\
+\textbf{Test Case Derivation:} Validates accuracy of handwriting classification model.\\
+\textbf{How test will be performed:} Model tested on labeled dataset of fragments; results compared to ground truth.\\
+\textbf{Requirement addressed:} The system shall identify the paleographic script type (e.g., Gupta, Tibetan, Chinese).\\
+
+\item
+\textbf{Test ID:} test-fr-script-identification-2\\
+\textbf{Control:} Automatic\\
+\textbf{Input:} Fragment image with legible text.\\
+\textbf{Expected Output:} Generated text file with $\geq$ 70\% character accuracy.\\
+\textbf{How test will be performed:} Compare OCR output to manually transcribed ground truth using Levenshtein distance metric.\\
+\textbf{Requirement addressed:} The system shall perform OCR transcription tuned for Sanskrit manuscripts.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 5 — Database Search and Exploration}
+
+These tests correspond to requirements S.4.6 of the SRS, which specify functionality for database search, filtering, and result export. The tests confirm that the query system performs efficiently and exports accurate data.
+
+\begin{enumerate}
+\item
+\textbf{Test ID:} test-fr-database-search-1\\
+\textbf{Control:} Automatic\\
+\textbf{Initial State:} Database with metadata indexed.\\
+\textbf{Input:} Query ``Gupta script, $>$ 5 lines.''\\
+\textbf{Expected Output:} Filtered result set within 3 s response time.\\
+\textbf{Test Case Derivation:} Validates search performance and accuracy against known dataset.\\
+\textbf{How test will be performed:} API testing using Postman and performance profiling with JMeter.\\
+\textbf{Requirement addressed:} The system shall enable multi-criteria search and filtering (by script type, line count, fragment size).\\
+
+\item
+\textbf{Test ID:} test-fr-database-search-2\\
+\textbf{Control:} Manual\\
+\textbf{Initial State:} Search results displayed.\\
+\textbf{Input:} Click ``Export''.\\
+\textbf{Expected Output:} Downloaded CSV file containing fragment metadata.\\
+\textbf{How test will be performed:} Manual verification of downloaded file structure.\\
+\textbf{Requirement addressed:} The system shall support exporting query results to CSV or PDF.\\
+\end{enumerate}
 
 \subsection{Tests for Nonfunctional Requirements}
 
@@ -354,8 +424,27 @@ How test will be performed:
 
 \subsection{Traceability Between Test Cases and Requirements}
 
-\wss{Provide a table that shows which test cases are supporting which
-  requirements.}
+\begin{table}[ht]
+\centering
+\begin{tabular}{|p{3cm}|p{7cm}|p{3cm}|p{3cm}|}
+\hline
+\textbf{Requirement ID} & \textbf{Description} & \textbf{Test ID(s)} & \textbf{Verification Method} \\
+\hline
+S.4.1 & Secure login and authentication & test-fr-auth-1, test-fr-auth-2 & Automated UI \& API testing \\
+\hline
+S.4.2 & Fragment upload and orientation normalization & test-fr-upload-1, test-fr-upload-2 & Automated pipeline testing \\
+\hline
+S.4.3 & Fragment matching and reconstruction & test-fr-fragment-matching-1, test-fr-fragment-matching-2 & Automated backend tests + manual UI \\
+\hline
+S.4.4 & Script identification & test-fr-script-identification-1 & Model accuracy testing \\
+\hline
+S.4.5 & OCR transcription assistance & test-fr-script-identification-2 & Automated comparison to ground truth \\
+\hline
+S.4.6 & Database search and exploration & test-fr-database-search-1, test-fr-database-search-2 & API performance testing + manual export check \\
+\hline
+\end{tabular}
+\caption{Traceability Between Test Cases and Requirements}
+\end{table}
 
 \section{Unit Test Description}
 
@@ -481,7 +570,8 @@ How test will be performed:
 \subsection{Traceability Between Test Cases and Modules}
 
 \wss{Provide evidence that all of the modules have been considered.}
-				
+
+
 \bibliographystyle{plainnat}
 
 \bibliography{../../refs/References}
