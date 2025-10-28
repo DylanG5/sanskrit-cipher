@@ -380,53 +380,49 @@ peer/TA reviews, a structured test-plan walkthrough \& retrospective focused on 
 
 \subsection{Implementation Verification}
 
-\wss{You should at least point to the tests listed in this document and the unit
-  testing plan.}
+Implementation verification will ensure that all parts of the system follow the functional requirements described in the SRS. Verification testing will include a variety of integration tests and static verification tests.  
 
-\wss{In this section you would also give any details of any plans for static
-  verification of the implementation.  Potential techniques include code
-  walkthroughs, code inspection, static analyzers, etc.}
-
-\wss{The final class presentation in CAS 741 could be used as a code
-walkthrough.  There is also a possibility of using the final presentation (in
-CAS741) for a partial usability survey.}
+Each module will have tests associated with it to verify correctness of input/output behavior, error handling, and data integrity. These tests will be defined in the testing plan and maintained in the continuous integration pipeline.  
+\newline
+\newline
+\textbf{Static Verification:}
+\begin{itemize}
+  \item \textbf{Code walkthroughs and inspections:} Conducted by peers to ensure code quality, maintainability, and adherence to design principles.
+  \item \textbf{Static analysis:} Automated tools will identify potential memory leaks, unused variables, and security vulnerabilities prior to runtime testing.
+  \item \textbf{Code review sessions:} Implemented using GitHub pull requests to ensure that every commit has at least one peer review before being merged to the main branch.
+\end{itemize}
 
 \subsection{Automated Testing and Verification Tools}
 
-\wss{What tools are you using for automated testing.  Likely a unit testing
-  framework and maybe a profiling tool, like ValGrind.  Other possible tools
-  include a static analyzer, make, continuous integration tools, test coverage
-  tools, etc.  Explain your plans for summarizing code coverage metrics.
-  Linters are another important class of tools.  For the programming language
-  you select, you should look at the available linters.  There may also be tools
-  that verify that coding standards have been respected, like flake9 for
-  Python.}
+Automated verification will be supported through system testing and quality assurance tools integrated into the project's continuous integration pipeline.  
+\newline
+\newline
+\textbf{Tools and Test Frameworks:}
+\begin{itemize}
+  \item \textbf{System Testing:} For back-end, testing frameworks such as pytest will be used, and Jest will be used for front-end components.
+  \item \textbf{Continuous Integration:} GitHub Actions for automated build, test, and deployment verification.
+  \item \textbf{Static Analysis:} Coding standards will be enforced using static code analysis tools such as pylint, and static type checkers such as mypy will be used for type checking.
+  \item \textbf{Test Coverage:} To measure the percentage of lines covered by automated tests, coverage.py can be used for the back-end and Jest will be used for the front-end.
+  \item \textbf{Dependency and Security Scanning:} For the back-end, security scanners such as bandit will be used and npm audit will be used for frontend libraries to identify known vulnerabilities.
+\end{itemize}
 
-\wss{If you have already done this in the development plan, you can point to
-that document.}
+Test coverage metrics will be summarized in the continuous integration dashboard and reviewed regularly to ensure that important components such as data management and authentication satify quality metrics. Linting and static checks will be automatically run when the pull request is created.
 
-\wss{The details of this section will likely evolve as you get closer to the
-  implementation.}
 
 \subsection{Software Validation}
 
-\wss{If there is any external data that can be used for validation, you should
-  point to it here.  If there are no plans for validation, you should state that
-  here.}
+Validation ensures that the implemented system meets the supervisor's requirements and satisfies its intended purpose in the academic research context. Validation will focus on confirming that reconstructed manuscripts and system functionality align with requirements.
+\newline
+\newline
+\textbf{Validation Activities:}
+\begin{itemize}
+  \item \textbf{Supervisor Review Sessions:} Periodic demonstrations to the project supervisor and relevant stakeholders in the field to confirm that features meet research and usability expectations.
+  \item \textbf{Usability Testing:} Stakeholders will try reconstructing manuscripts to observe system functionality and performance.
+  \item \textbf{Requirements Comparison Review:} Comparing system behavior with the functional and non-functional requirements in the SRS to confirm all requirements are satisfied.
+  \item \textbf{Manuscript Validation:} Comparison of fragment matches generated by the system with manuscript pairings that are proven to be accurate from the same dataset.
+\end{itemize}
 
-\wss{You might want to use review sessions with the stakeholder to check that
-the requirements document captures the right requirements.  Maybe task based
-inspection?}
-
-\wss{For those capstone teams with an external supervisor, the Rev 0 demo should 
-be used as an opportunity to validate the requirements.  You should plan on 
-demonstrating your project to your supervisor shortly after the scheduled Rev 0 demo.  
-The feedback from your supervisor will be very useful for improving your project.}
-
-\wss{For teams without an external supervisor, user testing can serve the same purpose 
-as a Rev 0 demo for the supervisor.}
-
-\wss{This section might reference back to the SRS verification section.}
+The Rev 0 demonstration will be used to validate the requirements through feedback provided from supervisors and peers to identify software usability issues and determine final improvements prior to the project's completion.
 
 \section{System Tests}
 
