@@ -4,6 +4,7 @@
 \usepackage{tabularx}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\usepackage{longtable}
 \hypersetup{
     colorlinks,
     citecolor=blue,
@@ -18,10 +19,10 @@
 
 \begin{document}
 
-\title{System Verification and Validation Plan for \progname{}} 
+\title{System Verification and Validation Plan for \progname{}}
 \author{\authname}
 \date{\today}
-	
+
 \maketitle
 
 \pagenumbering{roman}
@@ -66,10 +67,10 @@ in.}
 \section{Symbols, Abbreviations, and Acronyms}
 
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{l l} 
-  \toprule		
+\begin{tabular}{l l}
+  \toprule
   \textbf{symbol} & \textbf{description}\\
-  \midrule 
+  \midrule
   T & Test\\
   \bottomrule
 \end{tabular}\\
@@ -101,15 +102,15 @@ This document ... \wss{provide an introductory blurb and roadmap of the
   ``demonstrate adequate usability.'' etc.  You won't list all of the qualities,
   just those that are most important.}
 
-\wss{You should also list the objectives that are out of scope.  You don't have 
-the resources to do everything, so what will you be leaving out.  For instance, 
-if you are not going to verify the quality of usability, state this.  It is also 
+\wss{You should also list the objectives that are out of scope.  You don't have
+the resources to do everything, so what will you be leaving out.  For instance,
+if you are not going to verify the quality of usability, state this.  It is also
 worthwhile to justify why the objectives are left out.}
 
-\wss{The objectives are important because they highlight that you are aware of 
-limitations in your resources for verification and validation.  You can't do everything, 
-so what are you going to prioritize?  As an example, if your system depends on an 
-external library, you can explicitly state that you will assume that external library 
+\wss{The objectives are important because they highlight that you are aware of
+limitations in your resources for verification and validation.  You can't do everything,
+so what are you going to prioritize?  As an example, if your system depends on an
+external library, you can explicitly state that you will assume that external library
 has already been verified by its implementation team.}
 
 \subsection{Challenge Level and Extras}
@@ -138,7 +139,7 @@ Repos.csv) if your plan changes as a result of the VnV planning exercise.}
 
 \citet{SRS}
 
-\wss{Don't just list the other documents.  You should explain why they are relevant and 
+\wss{Don't just list the other documents.  You should explain why they are relevant and
 how they relate to your VnV efforts.}
 
 \section{Plan}
@@ -223,12 +224,12 @@ that document.}
 the requirements document captures the right requirements.  Maybe task based
 inspection?}
 
-\wss{For those capstone teams with an external supervisor, the Rev 0 demo should 
-be used as an opportunity to validate the requirements.  You should plan on 
-demonstrating your project to your supervisor shortly after the scheduled Rev 0 demo.  
+\wss{For those capstone teams with an external supervisor, the Rev 0 demo should
+be used as an opportunity to validate the requirements.  You should plan on
+demonstrating your project to your supervisor shortly after the scheduled Rev 0 demo.
 The feedback from your supervisor will be very useful for improving your project.}
 
-\wss{For teams without an external supervisor, user testing can serve the same purpose 
+\wss{For teams without an external supervisor, user testing can serve the same purpose
 as a Rev 0 demo for the supervisor.}
 
 \wss{This section might reference back to the SRS verification section.}
@@ -244,7 +245,7 @@ This section details the functional tests derived from the system’s high-prior
 This set of tests verifies that the authentication system satisfies requirements S.4.1 from the SRS, ensuring secure login, user access control, and proper error handling. These tests confirm compliance with input validation constraints defined in the data constraints table of the SRS.
 
 \begin{enumerate}
-\item 
+\item
 \textbf{Test ID:} test-fr-auth-1\\
 \textbf{Control:} Automatic\\
 \textbf{Initial State:} System running; no user session active.\\
@@ -255,7 +256,7 @@ This set of tests verifies that the authentication system satisfies requirements
 \textbf{Success criteria:} User receives a valid session token and is redirected to the dashboard within 2 s; authentication response is HTTP 200 and no error message is shown.\\
 \textbf{Requirement addressed:} The system shall authenticate users through a secure login interface and only allow authorized access.\\
 
-\item 
+\item
 \textbf{Test ID:} test-fr-auth-2\\
 \textbf{Control:} Automatic\\
 \textbf{Input:} Invalid username and/or password.\\
@@ -281,7 +282,7 @@ These tests ensure that the system fulfills requirements S.4.2 of the SRS, cover
 \textbf{Success criteria:} Server accepts the file (HTTP 200/201), file is stored in the expected location, and the preprocessing pipeline is invoked within 5 s of upload.\\
 \textbf{Requirement addressed:} The system shall allow users to upload images (JPG, PNG, TIFF) for processing.\\
 
-\item 
+\item
 \textbf{Test ID:} test-fr-upload-2\\
 \textbf{Control:} Automatic\\
 \textbf{Initial State:} Uploaded image with random rotation.\\
@@ -397,7 +398,7 @@ How will they be done?  In cases like code (or document) walkthroughs, who will
 be involved? Be specific.}
 
 \subsubsection{Area of Testing1}
-		
+
 \paragraph{Title for Test}
 
 \begin{enumerate}
@@ -405,26 +406,26 @@ be involved? Be specific.}
 \item{test-id1\\}
 
 Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input/Condition: 
-					
-Output/Result: 
-					
-How test will be performed: 
-					
+
+Initial State:
+
+Input/Condition:
+
+Output/Result:
+
+How test will be performed:
+
 \item{test-id2\\}
 
 Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input: 
-					
-Output: 
-					
-How test will be performed: 
+
+Initial State:
+
+Input:
+
+Output:
+
+How test will be performed:
 
 \end{enumerate}
 
@@ -434,42 +435,73 @@ How test will be performed:
 
 \subsection{Traceability Between Test Cases and Requirements}
 
+\subsubsection{}
+
 \begin{table}[ht]
 \centering
-\begin{tabular}{|p{3cm}|p{5cm}|p{3cm}|p{3cm}|}
+\begin{tabular}{|p{2cm}|p{4cm}|p{4cm}|p{2.5cm}|}
 \hline
-\textbf{Requirement ID} & \textbf{Description} & \textbf{Test ID(s)} & \textbf{Verification Method} \\
+\textbf{Req. ID} & \textbf{Description} & \textbf{Test ID(s)} & \textbf{Method} \\
 \hline
-S.4.1 & Secure login and authentication & test-fr-auth-1, test-fr-auth-2 & Automated UI \& API testing \\
+S.4.1 & Secure login and authentication & test-fr-auth-1 to test-fr-auth-5 & Manual UI \\
 \hline
-S.4.2 & Fragment upload and orientation normalization & test-fr-upload-1, test-fr-upload-2 & Automated pipeline testing \\
+S.4.2 & Fragment upload and preprocessing & test-fr-upload-1 to test-fr-upload-4, test-fr-preprocess-1 to test-fr-preprocess-3 & Manual and automated \\
 \hline
-S.4.3 & Fragment matching and reconstruction & test-fr-fragment-matching-1, test-fr-fragment-matching-2 & Automated backend tests + manual UI \\
+S.4.3 & Fragment matching and reconstruction & test-fr-match-1 to test-fr-match-6 & Manual UI \\
 \hline
-S.4.4 & Script identification & test-fr-script-identification-1 & Model accuracy testing \\
+G.4.3, S.4.3 & Interactive canvas workspace & test-fr-canvas-1 to test-fr-canvas-8 & Manual UI \\
 \hline
-S.4.5 & OCR transcription assistance & test-fr-script-identification-2 & Automated comparison to ground truth \\
+S.4.4 & Script identification & test-fr-script-1 to test-fr-script-4 & Automated and manual \\
 \hline
-S.4.6 & Database search and exploration & test-fr-database-search-1, test-fr-database-search-2 & API performance testing + manual export check \\
+S.4.5 & Transcription assistance & test-fr-transcript-1 to test-fr-transcript-7 & Automated OCR and manual \\
+\hline
+S.4.6 & Database search and exploration & test-fr-search-1 & Manual API and UI \\
 \hline
 \end{tabular}
-\caption{Traceability Between Test Cases and Requirements}
+\caption{Traceability for Functional Requirements}
 \end{table}
 
+% \subsubsection{Non-Functional Requirements Traceability}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|p{2cm}|p{4cm}|p{4cm}|p{2.5cm}|}
+\hline
+\textbf{Req. ID} & \textbf{Description} & \textbf{Test ID(s)} & \textbf{Method} \\
+\hline
+S.6, E.3 & System performance & test-nfr-perf-1, test-nfr-perf-2 & Automated \\
+\hline
+S.6 & AI matching quality & test-nfr-ai-1 & Manual expert eval \\
+\hline
+S.6, S.2.1 & Usability & test-nfr-usability-1, test-nfr-usability-2 & Manual testing \\
+\hline
+S.6, S.2.2 & Reliability & test-nfr-reliability-1, test-nfr-reliability-2 & Automated and manual \\
+\hline
+E.6, S.6, E.3 & Data integrity and security & test-nfr-data-1, test-nfr-data-2 & Automated and code review \\
+\hline
+E.3, S.6 & Scalability & test-nfr-scale-1 & Manual analysis \\
+\hline
+S.2.1 & Cross-browser compatibility & test-nfr-compat-1 & Manual \\
+\hline
+S.6 & Performance benchmarking & test-nfr-bench-1 & Manual benchmark \\
+\hline
+\end{tabular}
+\caption{Traceability for Non-Functional Requirements}
+\end{table}
 \section{Unit Test Description}
 
 \wss{This section should not be filled in until after the MIS (detailed design
   document) has been completed.}
 
 \wss{Reference your MIS (detailed design document) and explain your overall
-philosophy for test case selection.}  
+philosophy for test case selection.}
 
-\wss{To save space and time, it may be an option to provide less detail in this section.  
-For the unit tests you can potentially layout your testing strategy here.  That is, you 
-can explain how tests will be selected for each module.  For instance, your test building 
-approach could be test cases for each access program, including one test for normal behaviour 
-and as many tests as needed for edge cases.  Rather than create the details of the input 
-and output here, you could point to the unit testing code.  For this to work, you code 
+\wss{To save space and time, it may be an option to provide less detail in this section.
+For the unit tests you can potentially layout your testing strategy here.  That is, you
+can explain how tests will be selected for each module.  For instance, your test building
+approach could be test cases for each access program, including one test for normal behaviour
+and as many tests as needed for edge cases.  Rather than create the details of the input
+and output here, you could point to the unit testing code.  For this to work, you code
 needs to be well-documented, with meaningful names for all of the tests.}
 
 \subsection{Unit Testing Scope}
@@ -499,34 +531,34 @@ needs to be well-documented, with meaningful names for all of the tests.}
 
 Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
   be automatic}
-					
-Initial State: 
-					
-Input: 
-					
+
+Initial State:
+
+Input:
+
 Output: \wss{The expected result for the given inputs}
 
 Test Case Derivation: \wss{Justify the expected value given in the Output field}
 
-How test will be performed: 
-					
+How test will be performed:
+
 \item{test-id2\\}
 
 Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
   be automatic}
-					
-Initial State: 
-					
-Input: 
-					
+
+Initial State:
+
+Input:
+
 Output: \wss{The expected result for the given inputs}
 
 Test Case Derivation: \wss{Justify the expected value given in the Output field}
 
-How test will be performed: 
+How test will be performed:
 
 \item{...\\}
-    
+
 \end{enumerate}
 
 \subsubsection{Module 2}
@@ -543,33 +575,33 @@ How test will be performed:
   mentioned functional tests.}
 
 \subsubsection{Module ?}
-		
+
 \begin{enumerate}
 
 \item{test-id1\\}
 
 Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
   be automatic}
-					
-Initial State: 
-					
-Input/Condition: 
-					
-Output/Result: 
-					
-How test will be performed: 
-					
+
+Initial State:
+
+Input/Condition:
+
+Output/Result:
+
+How test will be performed:
+
 \item{test-id2\\}
 
 Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input: 
-					
-Output: 
-					
-How test will be performed: 
+
+Initial State:
+
+Input:
+
+Output:
+
+How test will be performed:
 
 \end{enumerate}
 
@@ -612,7 +644,7 @@ graduate attribute of Lifelong Learning.
 \input{../Reflection.tex}
 
 \begin{enumerate}
-  \item What went well while writing this deliverable? 
+  \item What went well while writing this deliverable?
   \item What pain points did you experience during this deliverable, and how
     did you resolve them?
   \item What knowledge and skills will the team collectively need to acquire to
@@ -627,3 +659,4 @@ graduate attribute of Lifelong Learning.
 \end{enumerate}
 
 \end{document}
+
