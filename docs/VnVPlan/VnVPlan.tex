@@ -88,57 +88,85 @@ This document ... \wss{provide an introductory blurb and roadmap of the
 \section{General Information}
 
 \subsection{Summary}
-
-\wss{Say what software is being tested.  Give its name and a brief overview of
-  its general functions.}
-
+The software system being tested is \textbf{Sanskrit Manuscript Reconstruction Platform}, a web-based research tool designed to assist scholars in reconstructing fragmented Buddhist manuscripts through computational analysis. The system integrates machine learning, computer vision, and database management to enable users to upload digitized manuscript fragments, perform automated preprocessing and orientation correction, and generate similarity based match suggestions across fragments. 
+\newline
+The platform consists of a front-end interface for visualization and user interaction, a back-end API for data management and orchestration, and multiple AI/ML components responsible for text extraction, edge and damage pattern analysis, and handwriting classification.  
+\newline
+The verification and validation process will ensure that all core functionalities, including fragment upload, orientation correction, transcription assistance, and match discovery, perform correctly, reliably, and consistently across diverse manuscript inputs. It will also verify that data integrity, user authentication, and safety-critical requirements identified in the Hazard Analysis are met. 
+\newline
+Testing will be conducted incrementally across all major milestones (Proof of Concept, Revision 0, and Revision 1) using a combination of unit testing, integration testing, usability testing, and system-level validation to confirm that the software meets its specified functional and non-functional requirements as outlined in the SRS.
+  
 \subsection{Objectives}
 
-\wss{State what is intended to be accomplished.  The objective will be around
-  the qualities that are most important for your project.  You might have
-  something like: ``build confidence in the software correctness,''
-  ``demonstrate adequate usability.'' etc.  You won't list all of the qualities,
-  just those that are most important.}
+The primary objective of this Verification and Validation (V\&V) Plan is to ensure that the \textbf{Sanskrit Manuscript Reconstruction Platform} meets its defined functional and non-functional requirements, operates reliably under typical research conditions, and achieves sufficient usability for its intended audience of Buddhist Studies scholars. The V\&V process aims to build confidence in the correctness, stability, and scholarly utility of the system.
 
-\wss{You should also list the objectives that are out of scope.  You don't have 
-the resources to do everything, so what will you be leaving out.  For instance, 
-if you are not going to verify the quality of usability, state this.  It is also 
-worthwhile to justify why the objectives are left out.}
+\textbf{In-Scope Objectives:}
+\begin{itemize}
+    \item \textbf{Functional correctness:} Verify that all major workflows (fragment upload, image normalization, fragment matching, OCR transcription, and session management) produce accurate and expected outcomes.
+    \item \textbf{Reliability:} Validate that the system performs consistently across multiple sessions and input types, with appropriate handling of errors, interruptions, and data corruption.
+    \item \textbf{Data integrity and security:} Ensure that user data, manuscript fragments, and annotations are stored and transmitted securely, as outlined in the Safety and Security Requirements.
+    \item \textbf{Usability and accessibility:} Evaluate that scholars can intuitively use the system to complete core reconstruction tasks with minimal training, supported by the usability study and user manual deliverables.
+    \item \textbf{Model transparency:} Confirm that AI-generated suggestions (match rankings, OCR outputs, classifications) include interpretable confidence levels and require explicit human confirmation before acceptance.
+    \item \textbf{Traceability:} Establish end-to-end verification between requirements, test cases, and hazard mitigations to ensure all critical safety-related functionalities are validated.
+\end{itemize}
 
-\wss{The objectives are important because they highlight that you are aware of 
-limitations in your resources for verification and validation.  You can't do everything, 
-so what are you going to prioritize?  As an example, if your system depends on an 
-external library, you can explicitly state that you will assume that external library 
-has already been verified by its implementation team.}
+\textbf{Out-of-Scope Objectives:}
+\begin{itemize}
+    \item \textbf{External library verification:} The correctness of third-party libraries and frameworks (e.g., OpenCV, PyTorch, TensorFlow) will be assumed based on their established reliability and community validation.
+    \item \textbf{Extensive performance benchmarking:} While basic response-time and load-handling tests will be conducted, large-scale benchmarking under production conditions is beyond the project’s resource and time constraints.
+    \item \textbf{Cross-platform hardware testing:} The V\&V plan focuses on web deployment via modern browsers and does not include testing on specialized hardware or legacy systems.
+    \item \textbf{Formal verification:} Mathematical proofs or model checking of algorithms are not feasible within the capstone timeline and are deferred to potential future work.
+\end{itemize}
+
+The objectives and their limitations reflect the practical constraints imposed on the team (mainly time and resources) while ensuring comprehensive coverage of functionality, usability, and safety-critical elements central to the platform’s success.
+
 
 \subsection{Challenge Level and Extras}
 
-\wss{State the challenge level (advanced, general, basic) for your project.
-Your challenge level should exactly match what is included in your problem
-statement.  This should be the challenge level agreed on between you and the
-course instructor.  You can use a pull request to update your challenge level
-(in TeamComposition.csv or Repos.csv) if your plan changes as a result of the
-VnV planning exercise.}
+This year’s capstone projects do not include a challenge level. Evaluation will focus on system completeness, correctness, usability, and overall technical quality.
 
-\wss{Summarize the extras (if any) that were tackled by this project.  Extras
-can include usability testing, code walkthroughs, user documentation, formal
-proof, GenderMag personas, Design Thinking, etc.  Extras should have already
-been approved by the course instructor as included in your problem statement.
-You can use a pull request to update your extras (in TeamComposition.csv or
-Repos.csv) if your plan changes as a result of the VnV planning exercise.}
+\textbf{Extras:}
+
+Two approved extras are included as part of this project to enhance the evaluation of usability and maintainability.
+
+\begin{itemize}
+    \item \textbf{User Manual:}  
+    A comprehensive user manual will be developed to assist scholars in using the platform effectively. It will describe the main workflows such as fragment upload, preprocessing, matching, and transcription, and provide troubleshooting guidance. The manual will also include annotated screenshots and short tutorials covering both basic and advanced usage scenarios.
+
+    \item \textbf{Usability Report:}  
+    A formal usability evaluation will be conducted to assess the system’s ease of use, learnability, and effectiveness for non-technical users. Feedback will be collected from scholars in Buddhist Studies and related fields through observation and structured task completion. The resulting report will summarize key usability metrics, identify design pain points, and provide recommendations for improvement.
+\end{itemize}
+
+These extras directly support the project’s primary goals of accessibility and scholarly usability by ensuring that end users can efficiently interact with complex AI-driven tools through a clear, guided interface.
 
 \subsection{Relevant Documentation}
 
-\wss{Reference relevant documentation.  This will definitely include your SRS
-  and your other project documents (design documents, like MG, MIS, etc).  You
-  can include these even before they are written, since by the time the project
-  is done, they will be written.  You can create BibTeX entries for your
-  documents and within those entries include a hyperlink to the documents.}
+This Verification and Validation Plan references all major project documents that define the system’s motivation, requirements, development strategy, safety considerations, and user-facing deliverables for the \textbf{Sanskrit Manuscript Reconstruction Platform}. These documents collectively establish the foundation for testing and traceability throughout the project lifecycle.
 
-\citet{SRS}
+\begin{itemize}
+    \item \textbf{Problem Statement and Goals Document} (\citet{ProblemStatement})  
+    Defines the project motivation, objectives, and expected outcomes for reconstructing fragmented Buddhist manuscripts.
 
-\wss{Don't just list the other documents.  You should explain why they are relevant and 
-how they relate to your VnV efforts.}
+    \item \textbf{Development Plan} (\citet{DevelopmentPlan})  
+    Outlines the workflow structure, team responsibilities, scheduling, coding standards, and continuous integration process.
+
+    \item \textbf{Software Requirements Specification (SRS)} (\citet{SRS-Sanskrit-Ciphers})  
+    Specifies all functional and non-functional requirements, including detailed system components, interfaces, and prioritized behaviors.
+
+    \item \textbf{Hazard Analysis Document} (\citet{HazardAnalysis})  
+    Identifies potential hazards, risk factors, and corresponding safety and security requirements that inform this V\&V plan.
+
+    \item \textbf{Design Documents (MG and MIS)} (\citet{DesignDocs})  
+    To be developed in later phases. These will provide architectural decomposition, module definitions, and design rationale.
+
+    \item \textbf{User Manual} (\citet{UserManual})  
+    Provides detailed guidance for scholars on using the platform’s core features, including uploading, preprocessing, matching, and transcription.
+
+    \item \textbf{Usability Report} (\citet{UsabilityReport})  
+    Summarizes results from usability testing and participant feedback to evaluate ease of use, learnability, and overall effectiveness.
+\end{itemize}
+
+Together, these documents establish a complete record of the project’s development and verification process, ensuring traceability between requirements, design, testing, and evaluation.
 
 \section{Plan}
 
