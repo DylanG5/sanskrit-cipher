@@ -430,6 +430,141 @@ This section describes the system-level tests for both functional and nonfunctio
 
 \subsection{Tests for Functional Requirements}
 
+This section details the functional tests derived from the system’s high-priority functional requirements defined in sections S.2 and S.4 of the Requirements Standard Plan. Each test validates that the platform performs its intended scholarly and technical functions.
+
+\subsubsection{Area of Testing 1 — User Authentication and Access}
+
+This set of tests verifies that the authentication system satisfies requirements S.4.1 from the SRS, ensuring secure login, user access control, and proper error handling. These tests confirm compliance with input validation constraints defined in the data constraints table of the SRS.
+
+\begin{enumerate}
+    \item
+    \textbf{Test ID:} test-fr-auth-1\\
+    \textbf{Control:} Automatic\\
+    \textbf{Initial State:} System running; no user session active.\\
+    \textbf{Input:} Valid username and password.\\
+    \textbf{Expected Output:} User successfully authenticated and directed to dashboard.\\
+    \textbf{Test Case Derivation:} Confirms secure credential verification using backend authentication service.\\
+    \textbf{How test will be performed:} Automated UI test verifying successful login and redirection.\\
+    \textbf{Success criteria:} User receives a valid session token and is redirected to the dashboard within 2 s; authentication response is HTTP 200 and no error message is shown.\\
+    \textbf{Requirement addressed:} The system shall authenticate users through a secure login interface and only allow authorized access.\\
+
+    \item
+    \textbf{Test ID:} test-fr-auth-2\\
+    \textbf{Control:} Automatic\\
+    \textbf{Input:} Invalid username and/or password.\\
+    \textbf{Expected Output:} Access denied; error message displayed ``Invalid username or password.''\\
+    \textbf{How test will be performed:} Automated UI test submitting incorrect credentials.\\
+    \textbf{Success criteria:} Login attempts with invalid credentials return HTTP 401/403 and display the correct error message; no session is created.\\
+    \textbf{Requirement addressed:} Invalid credentials must be rejected.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 2 — Fragment Upload and Orientation Normalization}
+
+These tests ensure that the system fulfills requirements S.4.2 of the SRS, covering input handling for image uploads, file format constraints, and automated orientation correction. Reference is made to SRS Table 3 (Data Constraints) for permissible image formats and size limits.
+
+\begin{enumerate}
+    \item
+    \textbf{Test ID:} test-fr-upload-1\\
+    \textbf{Control:} Automatic\\
+    \textbf{Initial State:} Authenticated session.\\
+    \textbf{Input:} Valid image file (less than 50 MB).\\
+    \textbf{Expected Output:} File successfully uploaded and preprocessing begins.\\
+    \textbf{Test Case Derivation:} Confirms compliance with supported file formats and upload limits.\\
+    \textbf{How test will be performed:} Automated API and UI tests with sample image files.\\
+    \textbf{Success criteria:} Server accepts the file (HTTP 200/201), file is stored in the expected location, and the preprocessing pipeline is invoked within 5 s of upload.\\
+    \textbf{Requirement addressed:} The system shall allow users to upload images (JPG, PNG, TIFF) for processing.\\
+
+    \item
+    \textbf{Test ID:} test-fr-upload-2\\
+    \textbf{Control:} Automatic\\
+    \textbf{Initial State:} Uploaded image with random rotation.\\
+    \textbf{Input:} Rotated manuscript image.\\
+    \textbf{Expected Output:} Processed image aligned horizontally; confidence score $\\geq 0.9$.\\
+    \textbf{How test will be performed:} Compare processed image orientation using OpenCV-based angle detection.\\
+    \textbf{Success criteria:} The corrected image orientation is within $\\pm$5\\deg of horizontal and the orientation confidence score is $\\geq 0.9$.\\
+    \textbf{Requirement addressed:} The system shall automatically regularize image orientation within $\\pm$5\\deg.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 3 — Fragment Matching and Reconstruction}
+
+This section addresses requirements S.4.3 of the SRS, ensuring that the system can identify and reconstruct fragment matches based on edge and content similarity. The tests validate AI model performance, ranking algorithms, and interactive assembly functionality.
+
+\begin{enumerate}
+    \item
+    \textbf{Test ID:} test-fr-fragment-matching-1\\
+    \textbf{Control:} Automatic\\
+    \textbf{Initial State:} Database populated with preprocessed fragments.\\
+    \textbf{Input:} Selected fragment ID.\\
+    \textbf{Expected Output:} Ranked list of at least three probable matches with similarity scores.\\
+    \textbf{Test Case Derivation:} Validates integration between AI/ML cluster and backend orchestration service.\\
+    \textbf{How test will be performed:} Automated backend tests with known fragment pairs; check if top match $>$ 0.8 accuracy.\\
+    \textbf{Success criteria:} At least three candidate matches are returned, the top-ranked match has similarity score $>$ 0.8, and results are returned within the expected latency (e.g., 5 s).\\
+    \textbf{Requirement addressed:} The system shall generate ranked match suggestions for fragments based on edge, damage, and content similarity.\\
+
+    \item
+    \textbf{Test ID:} test-fr-fragment-matching-2\\
+    \textbf{Control:} Manual\\
+    \textbf{Initial State:} Logged-in user with fragments loaded.\\
+    \textbf{Input:} Drag-and-drop fragments onto canvas.\\
+    \textbf{Expected Output:} Fragments move and snap to nearby edges; arrangement saved to session.\\
+    \textbf{How test will be performed:} Manual verification during demonstration; supplemented with UI automation for drag-drop response $<$ 200 ms.\\
+    \textbf{Success criteria:} Fragments snap correctly to compatible edges, the arrangement is persisted to the session store and can be reloaded, and UI drag/drop feedback latency is under 200 ms.\\
+    \textbf{Requirement addressed:} The system shall allow scholars to visually arrange fragments in an interactive workspace.\\
+\end{enumerate}
+
+
+\subsubsection{Area of Testing 4 — Script Identification and Transcription Assistance}
+
+The following tests verify that the system meets requirements S.4.4 and S.4.5 from the SRS, confirming accurate script classification and OCR-based transcription performance. These functions form the core of the text analysis pipeline and are critical for scholarly accuracy.
+
+\begin{enumerate}
+    \item
+    \textbf{Test ID:} test-fr-script-identification-1\\
+    \textbf{Control:} Automatic\\
+    \textbf{Initial State:} Uploaded fragment with visible text.\\
+    \textbf{Input:} Image containing text of known script.\\
+    \textbf{Expected Output:} Script classification with $\\geq$ 70\\% confidence.\\
+    \textbf{Test Case Derivation:} Validates accuracy of handwriting classification model.\\
+    \textbf{How test will be performed:} Model tested on labeled dataset of fragments; results compared to ground truth.\\
+    \textbf{Success criteria:} The model assigns the correct script label with confidence $\\geq$ 70\\% on at least 90\\% of the test samples drawn from the labeled dataset.\\
+    \textbf{Requirement addressed:} The system shall identify the paleographic script type (e.g., Gupta, Tibetan, Chinese).\\
+
+    \item
+    \textbf{Test ID:} test-fr-script-identification-2\\
+    \textbf{Control:} Automatic\\
+    \textbf{Input:} Fragment image with legible text.\\
+    \textbf{Expected Output:} Generated text file with $\\geq$ 70\\% character accuracy.\\
+    \textbf{How test will be performed:} Compare OCR output to manually transcribed ground truth using Levenshtein distance metric.\\
+    \textbf{Success criteria:} OCR output achieves character accuracy $\\geq$ 70\\% when measured against the ground truth using Levenshtein distance; output file is saved and retrievable.\\
+    \textbf{Requirement addressed:} The system shall perform OCR transcription tuned for Sanskrit manuscripts.\\
+\end{enumerate}
+
+\subsubsection{Area of Testing 5 — Database Search and Exploration}
+
+These tests correspond to requirements S.4.6 of the SRS, which specify functionality for database search, filtering, and result export. The tests confirm that the query system performs efficiently and exports accurate data.
+
+\begin{enumerate}
+    \item
+    \textbf{Test ID:} test-fr-database-search-1\\
+    \textbf{Control:} Automatic\\
+    \textbf{Initial State:} Database with metadata indexed.\\
+    \textbf{Input:} Query ``Gupta script, $>$ 5 lines.''\\
+    \textbf{Expected Output:} Filtered result set within 3 s response time.\\
+    \textbf{Test Case Derivation:} Validates search performance and accuracy against known dataset.\\
+    \textbf{How test will be performed:} API testing using Postman and performance profiling with JMeter.\\
+    \textbf{Success criteria:} Query returns the correct filtered set and response time is under 3 s for the test dataset; results match the expected ground-truth set.\\
+    \textbf{Requirement addressed:} The system shall enable multi-criteria search and filtering (by script type, line count, fragment size).\\
+
+    \item
+    \textbf{Test ID:} test-fr-database-search-2\\
+    \textbf{Control:} Manual\\
+    \textbf{Initial State:} Search results displayed.\\
+    \textbf{Input:} Click ``Export''.\\
+    \textbf{Expected Output:} Downloaded CSV file containing fragment metadata.\\
+    \textbf{How test will be performed:} Manual verification of downloaded file structure.\\
+    \textbf{Success criteria:} Exported CSV conforms to the documented schema, contains the filtered results, and downloads without error in common browsers.\\
+    \textbf{Requirement addressed:} The system shall support exporting query results to CSV or PDF.\\
+\end{enumerate}
 
 \subsection{Tests for Nonfunctional Requirements}
 
@@ -739,12 +874,63 @@ This test documents average response times for common operations to establish pe
 
 \end{enumerate}
 
-...
 
+\newline
 \subsection{Traceability Between Test Cases and Requirements}
 
-\wss{Provide a table that shows which test cases are supporting which
-  requirements.}
+\subsubsection{}
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|p{2cm}|p{4cm}|p{4cm}|p{2.5cm}|}
+        \hline
+        \textbf{Req. ID} & \textbf{Description} & \textbf{Test ID(s)} & \textbf{Method} \\
+        \hline
+        S.4.1 & Secure login and authentication & test-fr-auth-1 to test-fr-auth-5 & Manual UI \\
+        \hline
+        S.4.2 & Fragment upload and preprocessing & test-fr-upload-1 to test-fr-upload-4, test-fr-preprocess-1 to test-fr-preprocess-3 & Manual and automated \\
+        \hline
+        S.4.3 & Fragment matching and reconstruction & test-fr-match-1 to test-fr-match-6 & Manual UI \\
+        \hline
+        G.4.3, S.4.3 & Interactive canvas workspace & test-fr-canvas-1 to test-fr-canvas-8 & Manual UI \\
+        \hline
+        S.4.4 & Script identification & test-fr-script-1 to test-fr-script-4 & Automated and manual \\
+        \hline
+        S.4.5 & Transcription assistance & test-fr-transcript-1 to test-fr-transcript-7 & Automated OCR and manual \\
+        \hline
+        S.4.6 & Database search and exploration & test-fr-search-1 & Manual API and UI \\
+        \hline
+    \end{tabular}
+    \caption{Traceability for Functional Requirements}
+\end{table}
+
+% \subsubsection{Non-Functional Requirements Traceability}
+\newline
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|p{2cm}|p{4cm}|p{4cm}|p{2.5cm}|}
+        \hline
+        \textbf{Req. ID} & \textbf{Description} & \textbf{Test ID(s)} & \textbf{Method} \\
+        \hline
+        S.6, E.3 & System performance & test-nfr-perf-1, test-nfr-perf-2 & Automated \\
+        \hline
+        S.6 & AI matching quality & test-nfr-ai-1 & Manual expert eval \\
+        \hline
+        S.6, S.2.1 & Usability & test-nfr-usability-1, test-nfr-usability-2 & Manual testing \\
+        \hline
+        S.6, S.2.2 & Reliability & test-nfr-reliability-1, test-nfr-reliability-2 & Automated and manual \\
+        \hline
+        E.6, S.6, E.3 & Data integrity and security & test-nfr-data-1, test-nfr-data-2 & Automated and code review \\
+        \hline
+        E.3, S.6 & Scalability & test-nfr-scale-1 & Manual analysis \\
+        \hline
+        S.2.1 & Cross-browser compatibility & test-nfr-compat-1 & Manual \\
+        \hline
+        S.6 & Performance benchmarking & test-nfr-bench-1 & Manual benchmark \\
+        \hline
+    \end{tabular}
+    \caption{Traceability for Non-Functional Requirements}
+\end{table}
 
 \section{Unit Test Description}
 
