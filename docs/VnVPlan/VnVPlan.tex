@@ -541,17 +541,29 @@ graduate attribute of Lifelong Learning.
 
 \begin{enumerate}
   \item What went well while writing this deliverable? 
+  
+  \hspace{2em} The fact that we had a solid base from our SRS to work from was one of this deliverable's strongest points. We were able to directly map the SRS's structured sections and clearly defined functional requirements into test areas, which greatly streamlined the planning process. Assigning ownership for test design and documentation was also simple because we had already finished the Development Plan and each of us knew our general responsibilities. This helped us stay organized. Throughout this phase, we worked effectively as a team, checked each other's sections for coherence, and developed trust that the verification plan related to our earlier work.
+
   \item What pain points did you experience during this deliverable, and how
     did you resolve them?
+
+  \hspace{2em} Time management was our biggest challenge during this phase, as the deliverable overlapped with midterms and major assignments in other courses. We initially underestimated how much time would be required to properly structure the test cases and trace them back to the requirements. Since our platform integrates multiple components (front end, back end, and multiple AI/ML services), defining the boundaries between modules for testing was another significant challenge. This took longer than anticipated. In order to resolve this, we had brief group discussions to determine which system components would be verified at the unit level as opposed to the system level. These discussions also made sure that everyone understood the differences between validation and verification in the context of our platform. By the end, we were more assured of how we divided up the work and how we interpreted the testing scope.
+
   \item What knowledge and skills will the team collectively need to acquire to
   successfully complete the verification and validation of your project?
   Examples of possible knowledge and skills include dynamic testing knowledge,
   static testing knowledge, specific tool usage, Valgrind etc.  You should look to
-  identify at least one item for each team member.
+  identify at least one item for each team member.\hspace{2em} To carry out the next stages of verification effectively, our team identified several areas for skill development. We need to strengthen our understanding of automated testing frameworks, particularly PyTest and coverage.py, to ensure consistent and maintainable test execution. We also plan to expand our familiarity with static and dynamic analysis tools like Ruff, MyPy, and Bandit for enforcing code quality and identifying potential vulnerabilities. Another important learning area will be validating the accuracy and robustness of our machine learning models — for example, evaluating OCR performance using accuracy metrics, confusion matrices, and ground truth comparison datasets. Collectively, these skills will help us achieve more objective, measurable verification results and reduce the likelihood of regression errors in later phases.
+
+  \hspace{2em} To carry out the next stages of verification effectively, our team identified several areas for skill development. We need to strengthen our understanding of automated testing frameworks, particularly PyTest and coverage.py, to ensure consistent and maintainable test execution. We also plan to expand our familiarity with static and dynamic analysis tools like Ruff, MyPy, and Bandit for enforcing code quality and identifying potential vulnerabilities. Another important learning area will be validating the accuracy and robustness of our machine learning models, for example, evaluating OCR performance using accuracy metrics, confusion matrices, and ground truth comparison datasets. Collectively, these skills will help us achieve more objective, measurable verification results and reduce the likelihood of errors in later phases.
+
   \item For each of the knowledge areas and skills identified in the previous
   question, what are at least two approaches to acquiring the knowledge or
   mastering the skill?  Of the identified approaches, which will each team
   member pursue, and why did they make this choice?
+
+  \hspace{2em} As a team, we plan to take a mixed approach that combines self-learning, collaborative practice, and direct application within the project. To establish a technical foundation, everyone in the group will adhere to the PyTest, coverage.py, and static analysis tools' official documentation and focused tutorials. Then, using GitHub Actions to run automated tests continuously and track coverage over time, we will further solidify this learning by implementing them early in the development process. We intend to incorporate brief knowledge-sharing periods into our weekly team meetings, where a team member can show the others a testing or verification method. In order to guide our validation setup for the AI components, we plan to review open-source evaluation scripts from Optical Character Recognition(OCR) and similarity-based matching research papers.  This collaborative, iterative approach ensures that every member not only understands the testing tools but also applies them meaningfully within their assigned subsystem.
+
 \end{enumerate}
 
 \end{document}
