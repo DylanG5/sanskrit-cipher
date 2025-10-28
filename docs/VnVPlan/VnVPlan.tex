@@ -234,16 +234,22 @@ as a Rev 0 demo for the supervisor.}
 
 \section{System Tests}
 
-\wss{There should be text between all headings, even if it is just a roadmap of
-the contents of the subsections.}
+This section describes the system-level tests for both functional and nonfunctional requirements. Functional requirement tests verify that the system implements the specified features correctly. Nonfunctional requirement tests validate quality attributes including performance, usability, reliability, security, scalability, and compatibility. Each test case specifies the test type, initial state, input conditions, expected output, and detailed procedures for execution.
 
 \subsection{Tests for Functional Requirements}
 
+
 \subsection{Tests for Nonfunctional Requirements}
+
+The following subsections detail tests for system performance, AI matching quality, usability, reliability, data integrity, security, scalability, cross-browser compatibility, and performance benchmarking. These tests align with the nonfunctional requirements specified in the SRS document and provide measurable criteria for validating system quality attributes.
 
 \subsubsection{System Performance Testing}
 
+System performance testing validates that the platform meets specified performance requirements under expected workloads. These tests measure processing throughput for large fragment collections and system responsiveness under concurrent user load.
+
 \paragraph{Collection Processing Performance}
+
+These tests verify the system can process large collections of manuscript fragments within acceptable timeframes and handle concurrent research use as specified in the SRS.
 
 \begin{enumerate}
 
@@ -275,7 +281,11 @@ the contents of the subsections.}
 
 \subsubsection{AI Matching Assistance Quality}
 
+AI matching quality tests evaluate whether the system's machine learning-based fragment matching suggestions provide practical utility for scholarly research workflows.
+
 \paragraph{Matching Suggestion Utility}
+
+This test validates that AI-generated matching suggestions are sufficiently accurate and useful to assist researchers in identifying potential fragment connections.
 
 \begin{enumerate}
 
@@ -308,7 +318,11 @@ Results will be documented in a spreadsheet with one row per fragment. Test pass
 
 \subsubsection{Usability Testing}
 
+Usability testing evaluates whether the system interface enables scholars to effectively perform manuscript reconstruction research tasks. These tests combine task-based user testing and systematic interface evaluation.
+
 \paragraph{Research Workflow Task Completion}
+
+Task-based usability testing measures whether users can successfully complete core research workflows and assesses subjective ease of use.
 
 \begin{enumerate}
 
@@ -362,7 +376,11 @@ For each issue identified, document: (1) specific location/feature, (2) principl
 
 \subsubsection{System Availability and Reliability}
 
+Reliability testing validates that the system maintains consistent availability for academic research and can recover from failures without data loss.
+
 \paragraph{Uptime and Availability Testing}
+
+These tests measure system uptime and verify recovery capabilities to ensure the platform reliably supports ongoing research activities.
 
 \begin{enumerate}
 
@@ -394,7 +412,11 @@ For each issue identified, document: (1) specific location/feature, (2) principl
 
 \subsubsection{Data Integrity and Security}
 
+Data integrity and security testing ensures that fragment metadata and provenance information are preserved accurately and that the system protects against common security vulnerabilities.
+
 \paragraph{Data Preservation and Attribution}
+
+These tests verify that all fragment data maintains referential integrity and proper attribution throughout the system lifecycle.
 
 \begin{enumerate}
 
@@ -439,7 +461,11 @@ Validation checks: (1) all required fields present and non-null, (2) British Lib
 
 \subsubsection{Scalability Testing}
 
+Scalability testing analyzes how system performance changes as the fragment collection size increases, providing data to support future scaling decisions.
+
 \paragraph{Fragment Collection Scalability}
+
+This test measures system performance with varying dataset sizes to project scalability to larger fragment collections.
 
 \begin{enumerate}
 
@@ -459,7 +485,11 @@ Validation checks: (1) all required fields present and non-null, (2) British Lib
 
 \subsubsection{Cross-Browser and Device Compatibility}
 
+Cross-browser compatibility testing ensures that the web-based interface functions correctly across major desktop browsers used by researchers.
+
 \paragraph{Interface Compatibility Testing}
+
+This test verifies that core functionality operates consistently across Chrome and at least one additional modern browser.
 
 \begin{enumerate}
 
@@ -495,7 +525,11 @@ For each test-platform combination, record: Pass/Fail, any errors/warnings, visu
 
 \subsubsection{Performance Benchmarking}
 
+Performance benchmarking establishes baseline metrics for system response times that can be used for regression testing in future development.
+
 \paragraph{Response Time Measurement}
+
+This test documents average response times for common operations to establish performance baselines.
 
 \begin{enumerate}
 
