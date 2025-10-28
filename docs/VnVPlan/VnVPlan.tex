@@ -174,18 +174,6 @@ Supervisor &  External reviewer; approves SRS baselining and risk mitigations & 
 
 \subsection{SRS Verification}
 
-\wss{List any approaches you intend to use for SRS verification.  This may
-  include ad hoc feedback from reviewers, like your classmates (like your
-  primary reviewer), or you may plan for something more rigorous/systematic.}
-
-\wss{If you have a supervisor for the project, you shouldn't just say they will
-read over the SRS.  You should explain your structured approach to the review.
-Will you have a meeting?  What will you present?  What questions will you ask?
-Will you give them instructions for a task-based inspection?  Will you use your
-issue tracker?}
-
-\wss{Maybe create an SRS checklist?}
-
 This subsection defines how we will verify that the SRS is correct, complete, consistent, measurable, and feasible. We use three complementary approaches: guided reviews by TAs/peers, a supervisor-facing survey and interview that validate fundamentals in non-technical terms (translated into technical requirements), and continuous conformance checks during design/implementation against SRS use cases and fit criteria. Each approach includes instruments, process, and success metrics.
 
 \subsubsection*{TA/Peer Guided Review (Structured Feedback)}
@@ -227,11 +215,11 @@ This subsection defines how we will verify that the SRS is correct, complete, co
   \item \textbf{Traceability updates:} new items appear in Req$\rightarrow$Test matrix with an assigned test type and owner.
 \end{itemize}
 
-\subsubsection*{C. Ongoing Conformance During Build (Design/Code \textrightarrow{} SRS)}
+\subsubsection*{Ongoing Conformance During Build (Design/Code \textrightarrow{} SRS)}
 \textbf{Instrument.} A checklist that is shared with the team and has each module mapped to a requirement. \\
 \textbf{Process.}
 \begin{enumerate}
-  \item For each S.4 scenario in the SRS, create at least one system test; link the implementing issue/PR.
+  \item For each S.4 scenario in the SRS, create at least one system test; link the implementing issue/Pull Request (PR).
   \item On each PR, the author selects related requirement from the SRS document.
   \item Monthly conformance audit: Each month the team will highlight what percentage of the requirements is done or being completed.
   \item The team will also hihglight each month if they encountered a requirement that the SRS missed and make sure it is added within 48 hours of finding the missing requirement.
@@ -246,19 +234,13 @@ This subsection defines how we will verify that the SRS is correct, complete, co
 
 \subsection{Design Verification}
 
-\wss{Plans for design verification}
-
-\wss{The review will include reviews by your classmates}
-
-\wss{Create a checklists?}
-
 This subsection defines how we will verify that the \emph{design} (architecture, detailed design, and model design) is
 \textbf{sound, implementable, and consistent} with the SRS. We use three complementary techniques with objective
 success criteria.
 
-\subsection*{DV-1: UML Design \texorpdfstring{$\leftrightarrow$}{↔} Code Modules}
+\subsection*{DV-1: Unified Modeling Language (UML) Design \texorpdfstring{$\leftrightarrow$}{↔} Code Modules}
 
-\textbf{Approach.} Maintain a living UML class diagram for core modules (front-end, backend services, AI/ML components).
+\textbf{Approach.} Maintain a living UML class diagram for core modules (front-end, backend services, Machine Learning (ML) components).
 Verify code conformance on each milestone via static review (e.g., presence of classes/interfaces,
 key method signatures, dependency directions).
 \begin{itemize}
@@ -289,7 +271,7 @@ We will use lightweight, structured walkthroughs for code and design implementat
 \begin{itemize}
   \item \textbf{What they do:} Performs the detailed critique using a checklist (correctness, testability, traceability, compliance).
   \item \textbf{How it works:} Reviews asynchronously before the session; in the session, walks through findings; files issues or suggests concrete edits.
-  \item \textbf{Why it rotates:} Review expertise should match the change (e.g., ML for matching model code, accessibility for UI text), so the most relevant teammate reviews.
+  \item \textbf{Why it rotates:} Review expertise should match the change (e.g., ML for matching model code, accessibility for User Interface (UI) text), so the most relevant teammate reviews.
 \end{itemize}
 
 \paragraph{Walkthrough Lead}
@@ -318,7 +300,7 @@ We will use lightweight, structured walkthroughs for code and design implementat
 
 \vspace{0.25em}
 \noindent\textbf{Why roles change per task.}
-Changes originate in different parts of the system (UI, backend, AI/ML). The \emph{author} is the contributor for that change; the \emph{reviewer} is selected for the best subject-matter fit; the \emph{lead} alternates to match topic; the \emph{notetaker} rotates to share context. This rotation ensures expertise, fairness in workload, and higher defect detection while remaining lightweight and feasible.
+Changes originate in different parts of the system (UI, backend, ML). The \emph{author} is the contributor for that change; the \emph{reviewer} is selected for the best subject-matter fit; the \emph{lead} alternates to match topic; the \emph{notetaker} rotates to share context. This rotation ensures expertise, fairness in workload, and higher defect detection while remaining lightweight and feasible.
 
 
 \subsection*{DV-3: ML Design Soundness (Regularization/Robustness)}
@@ -336,13 +318,6 @@ stress tests.
 \end{itemize}
 
 \subsection{Verification and Validation Plan Verification}
-
-\wss{The verification and validation plan is an artifact that should also be
-verified.  Techniques for this include review and mutation testing.}
-
-\wss{The review will include reviews by your classmates}
-
-\wss{Create a checklists?}
 
 The V\&V plan is itself an artifact that must be verified and improved over time. We will use
 peer/TA reviews, a structured test-plan walkthrough \& retrospective focused on functional and nonfunctional tests
