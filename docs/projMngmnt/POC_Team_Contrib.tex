@@ -165,10 +165,6 @@ multi-author commits.}
 
 \section{Issue Tracker}
 
-\wss{For each team member how many issues have they authored (including open and
-closed issues (O+C)) and how many have they been assigned (only counting closed
-issues (C only)) over the time period of interest.}
-
 \begin{table}[H]
 \centering
 \begin{tabular}{lll}
@@ -184,7 +180,7 @@ Muhammad Umar Khan & 14 & 5 \\
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the counts can be provided here.}
+The assigned & completed issues are consistent across team members, there is some variation in created issues due to things like supervisor & TA meetings and granularity of issues created for self-assigned tasks.
 
 \section{CICD}
 
@@ -202,6 +198,9 @@ Our project utilizes GitHub Actions for Continuous Integration and Continuous De
 \item \textbf{Front-end Build and Deployment}: CI/CD will automatically build and deploy the front-end application after changes are made to the source code, ensuring the latest version is always available.
 
 \item \textbf{Database Repopulation}: Automated workflows will repopulate sample databases after changes are made to the underlying models and logic that generates metadata for each manuscript fragment image. This ensures database schemas and sample data remain consistent with code changes.
+\end{enumerate}
+
+\item \textbf{Linting & Automated Testing}: We will automat linting according to the appropriate style guides, as well as execute our automated test suites where applicable on a PR.
 \end{enumerate}
 
 \section{Team Charter Trigger Items}
