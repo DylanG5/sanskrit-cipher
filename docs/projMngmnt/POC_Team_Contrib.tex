@@ -26,11 +26,14 @@ and the POC demo.
 
 For the POC demo we are loosening the scope to reflect current bandwidth. This list intentionally diverges from the Development Plan, and we will adjust that document accordingly so everything stays consistent:
 \begin{itemize}
-  \item Run a scripted orientation correction routine on a handful of sample fragments to verify we can standardize inputs for later stages.
-  \item Present precomputed OCR outputs to discuss accuracy limits and mitigation strategies.
-  \item Walk through low-fidelity interface mockups that illustrate the planned researcher workflow for reviewing fragment evidence.
+  \item Demonstrate orientation correction and normalization on representative fragments to show we can standardize images ahead of downstream analysis.
+  \item Present a deterministic edge matching algorithm operating on raw fragments (intentionally without normalization) to baseline our matching 
+  
+  heuristics.
+  \item Build a one-criteria feature model that tags uploaded fragments with lightweight metadata (e.g. estimated line counts) that will drive future filtering and search.
+  \item Walk through interactive interface mockups/prototypes of the canvas tool to illustrate the planned researcher workflow.
 \end{itemize}
-Together these elements show that we have validated critical preprocessing steps, established baselines for OCR analysis, and framed the user workflow we will build out in upcoming milestones.
+Together these elements show that we have validated critical preprocessing, established deterministic baselines for feature and edge analysis, and mapped the user experience we will expand in upcoming milestones.
 
 \section{Team Meeting Attendance}
 
