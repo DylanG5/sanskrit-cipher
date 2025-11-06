@@ -22,6 +22,7 @@
 \usepackage{booktabs}
 \usepackage[T1]{fontenc}
 
+
 \hypersetup{
 bookmarks=true,     % show bookmarks bar?
 colorlinks=true,       % false: boxed links; true: colored links
@@ -163,29 +164,33 @@ Each level in the hierarchy captures a different design concern:
 
 \subsection{Module Hierarchy}
 
-\begin{table}[h]
+\begin{table}[h!]
 \centering
 \caption{Module Hierarchy}
-\setlength{\tabcolsep}{6pt}%
-\renewcommand{\arraystretch}{1.2}%
-\begin{tabular}{|p{3.8cm}|p{10.5cm}|}
-\hline
+\small
+\begin{tabular}{ll}
+\toprule
 \textbf{Level 1} & \textbf{Level 2 Modules} \\
-\hline
-\textbf{Hardware-Hiding} &
-Image Storage Interface \\
-\hline
-\textbf{Behaviour-Hiding} &
-\textbf{User Interface:} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload} \par
-\textbf{Service Layer:} \texttt{Svc.API}, \texttt{Svc.Search}, \texttt{Svc.AuthZ}, \texttt{Svc.Session}, \texttt{Svc.ProcOrch}, \texttt{Svc.MatchOrch} \par
-\textbf{Data Management:} \texttt{Data.FragmentStore}, \texttt{Data.Catalog}, \texttt{Data.User}, \texttt{Data.Project} \par
-\textbf{Machine Learning Modules:} \texttt{ML.EdgeMatch}, \texttt{ML.Damage}, \texttt{ML.ScriptClass}, \texttt{ML.OCR}, \texttt{ML.TextSim} \\
-\hline
-\textbf{Software Decision} &
-Utility and Support Modules (Error Handling, Logging, Configuration Management, Test Stubs) \\
-\hline
+\midrule
+Hardware-Hiding & Image Storage Interface \\
+\addlinespace
+Behaviour-Hiding & 
+\begin{minipage}[t]{0.7\linewidth}
+\textbf{User Interface:} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload}\\
+\textbf{Service Layer:} \texttt{Svc.API}, \texttt{Svc.Search}, \texttt{Svc.AuthZ}, \texttt{Svc.Session}, \texttt{Svc.ProcOrch}, \texttt{Svc.MatchOrch}\\
+\textbf{Data Management:} \texttt{Data.FragmentStore}, \texttt{Data.Catalog}, \texttt{Data.User}, \texttt{Data.Project}\\
+\textbf{Machine Learning Modules:} \texttt{ML.EdgeMatch}, \texttt{ML.Damage}, \texttt{ML.ScriptClass}, \texttt{ML.OCR}, \texttt{ML.TextSim}
+\end{minipage} \\
+\addlinespace
+Software Decision & 
+\begin{minipage}[t]{0.7\linewidth}
+Utility and Support Modules (Error Handling, Logging, Configuration Management, Test Stubs)
+\end{minipage} \\
+\bottomrule
 \end{tabular}
 \end{table}
+
+\newpage
 
 \subsection{Description of Levels}
 
@@ -198,41 +203,6 @@ This level defines the functional behavior of the system, implementing the requi
 \subsubsection{Software Decision Level}
 This level includes supporting components that are primarily design decisions rather than functional necessities. These modules include configuration handlers, utility libraries, and testing or logging frameworks that support development, debugging, and maintenance.
 
-
-
-The following table is taken directly from the Module Guide document for this project.
-
-\begin{table}[h!]
-\centering
-\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
-\toprule
-\textbf{Level 1} & \textbf{Level 2}\\
-\midrule
-
-{Hardware-Hiding} & ~ \\
-\midrule
-
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding} & Input Parameters\\
-& Output Format\\
-& Output Verification\\
-& Temperature ODEs\\
-& Energy Equations\\ 
-& Control Module\\
-& Specification Parameters Module\\
-\midrule
-
-\multirow{3}{0.3\textwidth}{Software Decision} & {Sequence Data Structure}\\
-& ODE Solver\\
-& Plotting\\
-\bottomrule
-
-\end{tabular}
-\caption{Module Hierarchy}
-\label{TblMH}
-\end{table}
-
-\newpage
-~\newpage
 
 \section{MIS of \wss{Module Name}} \label{Module} \wss{Use labels for
   cross-referencing}
