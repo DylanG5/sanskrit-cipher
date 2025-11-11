@@ -61,20 +61,26 @@ This section records information for easy reference.
 
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{l l} 
-  \toprule		
+  \toprule
   \textbf{symbol} & \textbf{description}\\
-  \midrule 
+  \midrule
   AC & Anticipated Change\\
+  AI & Artificial Intelligence\\
+  API & Application Programming Interface\\
+  CNN & Convolutional Neural Network\\
+  CV & Computer Vision\\
   DAG & Directed Acyclic Graph \\
+  JSON & JavaScript Object Notation\\
   M & Module \\
   MG & Module Guide \\
+  ML & Machine Learning\\
+  OCR & Optical Character Recognition\\
   OS & Operating System \\
   R & Requirement\\
-  SC & Scientific Computing \\
   SRS & Software Requirements Specification\\
-  \progname & Explanation of program name\\
+  UI & User Interface\\
   UC & Unlikely Change \\
-  \wss{etc.} & \wss{...}\\
+  \progname & AI-Powered Manuscript Fragment Reconstruction Platform\\
   \bottomrule
 \end{tabular}\\
 
@@ -160,13 +166,34 @@ change.
 \item[\refstepcounter{acnum} \actheacnum \label{acHardware}:] The specific
   hardware on which the software is running.
 \item[\refstepcounter{acnum} \actheacnum \label{acInput}:] The format of the
-  initial input data.
-\item ...
+  image input data (file formats, metadata structure).
+\item[\refstepcounter{acnum} \actheacnum \label{acAuth}:] The authentication
+  and authorization mechanism for different user types.
+\item[\refstepcounter{acnum} \actheacnum \label{acUpload}:] The method for
+  uploading and storing fragment images.
+\item[\refstepcounter{acnum} \actheacnum \label{acSearch}:] The algorithm used
+  for searching and filtering fragments.
+\item[\refstepcounter{acnum} \actheacnum \label{acEdgeMatch}:] The machine
+  learning model used for edge matching detection.
+\item[\refstepcounter{acnum} \actheacnum \label{acDamage}:] The algorithm for
+  damage pattern analysis.
+\item[\refstepcounter{acnum} \actheacnum \label{acScript}:] The method for
+  script classification and similarity matching.
+\item[\refstepcounter{acnum} \actheacnum \label{acOCR}:] The optical character
+  recognition engine used for text extraction.
+\item[\refstepcounter{acnum} \actheacnum \label{acTextSim}:] The algorithm for
+  text similarity comparison.
+\item[\refstepcounter{acnum} \actheacnum \label{acCanvas}:] The user interface
+  framework for the interactive canvas.
+\item[\refstepcounter{acnum} \actheacnum \label{acFragStore}:] The database
+  schema and storage mechanism for fragment data.
+\item[\refstepcounter{acnum} \actheacnum \label{acCatalog}:] The structure of
+  catalog metadata.
+\item[\refstepcounter{acnum} \actheacnum \label{acMatchOrch}:] The orchestration
+  logic for combining multiple ML model results.
+\item[\refstepcounter{acnum} \actheacnum \label{acSession}:] The session
+  management and state persistence mechanism.
 \end{description}
-
-\wss{Anticipated changes relate to changes that would be made in requirements,
-design or implementation choices.  They are not related to changes that are made
-at run-time, like the values of parameters.}
 
 \subsection{Unlikely Changes} \label{SecUchange}
 
@@ -179,8 +206,15 @@ decisions will be changed.
 
 \begin{description}
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: File and/or Keyboard, Output: File, Memory, and/or Screen).
-\item ...
+  (Input: Image files via web upload, Output: Screen display and file export).
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucWebApp}:] The system will be
+  deployed as a web-based application accessible through standard browsers.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucImageProc}:] The system will
+  process 2D images of manuscript fragments.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucCollaborate}:] The system will
+  support collaborative work through shared projects and annotations.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucMLCore}:] Machine learning will
+  be a core component for fragment matching and analysis.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
@@ -192,7 +226,29 @@ actually be implemented.
 
 \begin{description}
 \item [\refstepcounter{mnum} \mthemnum \label{mHH}:] Hardware-Hiding Module
-\item ...
+\item [\refstepcounter{mnum} \mthemnum \label{mCanvas}:] UI.Canvas Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSearch}:] UI.Search Module
+\item [\refstepcounter{mnum} \mthemnum \label{mAuth}:] UI.Auth Module
+\item [\refstepcounter{mnum} \mthemnum \label{mUpload}:] UI.Upload Module
+\item [\refstepcounter{mnum} \mthemnum \label{mAPI}:] Svc.API Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSearchSvc}:] Svc.Search Module
+\item [\refstepcounter{mnum} \mthemnum \label{mAuthZ}:] Svc.AuthZ Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSession}:] Svc.Session Module
+\item [\refstepcounter{mnum} \mthemnum \label{mProcOrch}:] Svc.ProcOrch Module
+\item [\refstepcounter{mnum} \mthemnum \label{mMatchOrch}:] Svc.MatchOrch Module
+\item [\refstepcounter{mnum} \mthemnum \label{mFragStore}:] Data.FragmentStore Module
+\item [\refstepcounter{mnum} \mthemnum \label{mCatalog}:] Data.Catalog Module
+\item [\refstepcounter{mnum} \mthemnum \label{mUser}:] Data.User Module
+\item [\refstepcounter{mnum} \mthemnum \label{mProject}:] Data.Project Module
+\item [\refstepcounter{mnum} \mthemnum \label{mEdgeMatch}:] ML.EdgeMatch Module
+\item [\refstepcounter{mnum} \mthemnum \label{mDamage}:] ML.Damage Module
+\item [\refstepcounter{mnum} \mthemnum \label{mScriptClass}:] ML.ScriptClass Module
+\item [\refstepcounter{mnum} \mthemnum \label{mOCR}:] ML.OCR Module
+\item [\refstepcounter{mnum} \mthemnum \label{mTextSim}:] ML.TextSim Module
+\item [\refstepcounter{mnum} \mthemnum \label{mError}:] Error Handling Module
+\item [\refstepcounter{mnum} \mthemnum \label{mLogging}:] Logging Module
+\item [\refstepcounter{mnum} \mthemnum \label{mConfig}:] Configuration Management Module
+\item [\refstepcounter{mnum} \mthemnum \label{mTestStubs}:] Test Stubs Module
 \end{description}
 
 
@@ -203,22 +259,20 @@ actually be implemented.
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
 
-{Hardware-Hiding Module} & ~ \\
+{Hardware-Hiding} & Image Storage Interface \\
 \midrule
 
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding Module} & ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\ 
-& ?\\
+\multirow{15}{0.3\textwidth}{Behaviour-Hiding} & User Interface: UI.Canvas, UI.Search, UI.Auth, UI.Upload\\
+& Service Layer: Svc.API, Svc.Search, Svc.AuthZ, Svc.Session,\\
+& \quad\quad\quad\quad\quad\quad Svc.ProcOrch, Svc.MatchOrch\\
+& Data Management: Data.FragmentStore, Data.Catalog,\\
+& \quad\quad\quad\quad\quad\quad Data.User, Data.Project\\
+& Machine Learning Modules: ML.EdgeMatch, ML.Damage,\\
+& \quad\quad\quad\quad\quad\quad ML.ScriptClass, ML.OCR, ML.TextSim\\
 \midrule
 
-\multirow{3}{0.3\textwidth}{Software Decision Module} & {?}\\
-& ?\\
-& ?\\
+\multirow{3}{0.3\textwidth}{Software Decision} & Utility and Support Modules (Error Handling, Logging,\\
+& Configuration Management, Test Stubs)\\
 \bottomrule
 
 \end{tabular}
@@ -278,18 +332,176 @@ to be implemented.
 \item[Implemented By:] --
 \end{description}
 
-\subsubsection{Input Format Module (\mref{mInput})}
+\subsubsection{UI.Canvas Module (\mref{mCanvas})}
 
 \begin{description}
-\item[Secrets:]The format and structure of the input data.
-\item[Services:]Converts the input data into the data structure used by the
-  input parameters module.
-\item[Implemented By:] [Your Program Name Here]
-\item[Type of Module:] [Record, Library, Abstract Object, or Abstract Data Type]
-  [Information to include for leaf modules in the decomposition by secrets tree.]
+\item[Secrets:] The implementation of the interactive canvas for fragment manipulation.
+\item[Services:] Provides drag-and-drop interface for positioning fragments, zoom and pan controls, visual overlay of match suggestions, and real-time collaboration indicators.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
 \end{description}
 
-\subsubsection{Etc.}
+\subsubsection{UI.Search Module (\mref{mSearch})}
+
+\begin{description}
+\item[Secrets:] The user interface design for search and filtering functionality.
+\item[Services:] Provides search interface for fragments by metadata, filters by script type, region, date range, and collection, and displays search results with previews.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{UI.Auth Module (\mref{mAuth})}
+
+\begin{description}
+\item[Secrets:] The user interface for authentication and user management.
+\item[Services:] Provides login/logout interface, user registration, role-based access control UI, and session management display.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{UI.Upload Module (\mref{mUpload})}
+
+\begin{description}
+\item[Secrets:] The user interface for uploading fragment images and metadata.
+\item[Services:] Provides file upload interface with drag-and-drop support, metadata form for fragment description, upload progress indicators, and batch upload capabilities.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Svc.API Module (\mref{mAPI})}
+
+\begin{description}
+\item[Secrets:] The RESTful API endpoint definitions and routing logic.
+\item[Services:] Exposes HTTP endpoints for all system operations, handles request validation and response formatting, manages API versioning, and implements rate limiting.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Library
+\end{description}
+
+\subsubsection{Svc.Search Module (\mref{mSearchSvc})}
+
+\begin{description}
+\item[Secrets:] The search algorithm and query optimization logic.
+\item[Services:] Performs efficient fragment searches across metadata, implements filtering and sorting logic, manages search indexing, and returns ranked results.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.AuthZ Module (\mref{mAuthZ})}
+
+\begin{description}
+\item[Secrets:] The authentication and authorization implementation.
+\item[Services:] Verifies user credentials, manages JWT tokens, enforces role-based permissions, and handles password encryption.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.Session Module (\mref{mSession})}
+
+\begin{description}
+\item[Secrets:] The session state management and persistence mechanism.
+\item[Services:] Maintains user session data, handles workspace state persistence, manages collaborative session synchronization, and implements session timeout logic.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Svc.ProcOrch Module (\mref{mProcOrch})}
+
+\begin{description}
+\item[Secrets:] The orchestration logic for image processing pipelines.
+\item[Services:] Coordinates preprocessing of uploaded images, manages job queues for ML tasks, handles asynchronous processing workflows, and aggregates processing results.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.MatchOrch Module (\mref{mMatchOrch})}
+
+\begin{description}
+\item[Secrets:] The algorithm for combining results from multiple ML models.
+\item[Services:] Aggregates match scores from different ML modules, applies weighting to different match criteria, ranks fragment match suggestions, and provides confidence scores.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Data.FragmentStore Module (\mref{mFragStore})}
+
+\begin{description}
+\item[Secrets:] The database schema and queries for fragment storage.
+\item[Services:] Stores fragment images and metadata, provides CRUD operations for fragments, manages fragment relationships and matches, and handles versioning of fragment data.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Data.Catalog Module (\mref{mCatalog})}
+
+\begin{description}
+\item[Secrets:] The catalog metadata structure and taxonomy.
+\item[Services:] Maintains standardized metadata schemas, manages controlled vocabularies (scripts, regions, periods), provides catalog browsing capabilities, and handles metadata validation.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Data.User Module (\mref{mUser})}
+
+\begin{description}
+\item[Secrets:] The user data model and storage.
+\item[Services:] Stores user profiles and credentials, manages user preferences and settings, tracks user activity and annotations, and handles user role assignments.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Data.Project Module (\mref{mProject})}
+
+\begin{description}
+\item[Secrets:] The project data structure for collaborative work.
+\item[Services:] Manages project workspaces and collections, stores project-specific fragment groupings, handles collaborative annotations and notes, and tracks project history and changes.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{ML.EdgeMatch Module (\mref{mEdgeMatch})}
+
+\begin{description}
+\item[Secrets:] The machine learning model for edge matching.
+\item[Services:] Detects and analyzes fragment edges, compares edge profiles between fragments, calculates edge match confidence scores, and handles irregular fragment shapes.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{ML.Damage Module (\mref{mDamage})}
+
+\begin{description}
+\item[Secrets:] The algorithm for damage pattern analysis.
+\item[Services:] Identifies damage patterns (tears, stains, wear), compares damage patterns across fragments, generates damage pattern signatures, and calculates pattern similarity scores.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{ML.ScriptClass Module (\mref{mScriptClass})}
+
+\begin{description}
+\item[Secrets:] The script classification model and training data.
+\item[Services:] Classifies scripts into predefined categories, analyzes script characteristics and style, compares script similarities between fragments, and provides classification confidence scores.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{ML.OCR Module (\mref{mOCR})}
+
+\begin{description}
+\item[Secrets:] The optical character recognition engine configuration.
+\item[Services:] Extracts text from fragment images, handles multiple script types and fonts, provides character-level and word-level recognition, and generates confidence scores for recognized text.
+\item[Implemented By:] \progname{} (using third-party OCR libraries)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{ML.TextSim Module (\mref{mTextSim})}
+
+\begin{description}
+\item[Secrets:] The text similarity comparison algorithm.
+\item[Services:] Compares extracted text between fragments, identifies potential text continuations, handles partial and damaged text, and calculates text similarity scores.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
 
 
 \subsection{Software Decision Module}
@@ -299,13 +511,47 @@ to be implemented.
   facts, or programming considerations. The secrets of this module are
   \emph{not} described in the SRS.
 \item[Services:] Includes data structure and algorithms used in the system that
-  do not provide direct interaction with the user. 
+  do not provide direct interaction with the user.
   % Changes in these modules are more likely to be motivated by a desire to
   % improve performance than by externally imposed changes.
 \item[Implemented By:] --
 \end{description}
 
-\subsubsection{Etc.}
+\subsubsection{Error Handling Module (\mref{mError})}
+
+\begin{description}
+\item[Secrets:] The error handling and exception management strategy.
+\item[Services:] Provides centralized error handling, formats error messages for users and logs, implements retry logic for transient failures, and manages graceful degradation.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Library
+\end{description}
+
+\subsubsection{Logging Module (\mref{mLogging})}
+
+\begin{description}
+\item[Secrets:] The logging implementation and log format structure.
+\item[Services:] Records system events and user actions, implements different log levels (debug, info, warning, error), manages log rotation and archival, and provides log querying capabilities.
+\item[Implemented By:] \progname{} (using standard logging libraries)
+\item[Type of Module:] Library
+\end{description}
+
+\subsubsection{Configuration Management Module (\mref{mConfig})}
+
+\begin{description}
+\item[Secrets:] The configuration file format and loading mechanism.
+\item[Services:] Loads application configuration from files and environment variables, validates configuration parameters, provides configuration access to other modules, and supports configuration hot-reloading.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Test Stubs Module (\mref{mTestStubs})}
+
+\begin{description}
+\item[Secrets:] The mock implementations for testing purposes.
+\item[Services:] Provides stub implementations of external services, generates test data for fragments and metadata, simulates ML model responses, and enables isolated module testing.
+\item[Implemented By:] \progname{}
+\item[Type of Module:] Library
+\end{description}
 
 \section{Traceability Matrix} \label{SecTM}
 
