@@ -675,6 +675,61 @@ arrows in the diagram typically correspond to the presence of import statement.}
 \wss{Design of user interface for software and hardware.  Attach an appendix if
 needed. Drawings, Sketches, Figma}
 
+The Sanskrit Manuscript Reconstruction Platform provides a web-based interface designed for Buddhist Studies scholars to interact with manuscript fragments. The interface is built using React with TypeScript and styled using CSS to ensure consistency and responsiveness.
+
+\subsection{Primary Interface Components}
+
+\subsubsection{Authentication Interface}
+\begin{itemize}
+    \item \textbf{Login Screen:} Secure credential entry with username and password fields
+    \item \textbf{Session Management:} Token-based authentication with automatic session persistence
+    \item \textbf{Error Handling:} Clear error messages for invalid credentials (``Invalid username or password'')
+\end{itemize}
+
+\subsubsection{Fragment Upload and Management}
+\begin{itemize}
+    \item \textbf{Upload Interface:} Drag-and-drop or file browser support for image uploads (JPG, PNG, TIFF formats, max 50 MB)
+    \item \textbf{Preprocessing Visualization:} Real-time display of orientation correction with confidence scores
+    \item \textbf{Fragment Browser:} Thumbnail grid view of uploaded fragments with metadata overlay
+\end{itemize}
+
+\subsubsection{Interactive Canvas Workspace}
+\begin{itemize}
+    \item \textbf{Drag-and-Drop Canvas:} Visual workspace for arranging and comparing fragments
+    \item \textbf{Fragment Manipulation:} Rotation, zoom, and positioning controls with snap-to-edge functionality
+    \item \textbf{Session Persistence:} Save and restore workspace arrangements
+    \item \textbf{Response Time Target:} UI drag/drop feedback latency under 200 ms
+\end{itemize}
+
+\subsubsection{Search and Filter Interface}
+\begin{itemize}
+    \item \textbf{Search Bar:} Fragment ID search with autocomplete
+    \item \textbf{Metadata Filters:} Multi-criteria filtering (script type, line count, fragment size)
+    \item \textbf{Results Display:} Grid or list view with sortable columns
+    \item \textbf{Export Options:} Download filtered results as CSV or PDF
+\end{itemize}
+
+\subsubsection{Matching Suggestions Display}
+\begin{itemize}
+    \item \textbf{Ranked Match List:} Top-ranked fragment matches with similarity scores and confidence levels
+    \item \textbf{Visual Comparison:} Side-by-side or overlay view for comparing fragments
+    \item \textbf{Trust Signals:} Confidence scores, edge pattern overlays, and match explanations
+\end{itemize}
+
+\subsubsection{Transcription Assistance}
+\begin{itemize}
+    \item \textbf{OCR Output Display:} Extracted text with character-level confidence indicators
+    \item \textbf{Script Classification:} Display of identified script type (e.g., Gupta, Tibetan, Chinese) with confidence $\geq$ 70\%
+    \item \textbf{Manual Correction:} Editable text fields for scholarly review and correction
+\end{itemize}
+\newpage
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/InterfaceFlowDiagram.png}
+    \caption{User Interface Flow Diagram showing the complete interaction workflow from login to fragment analysis}
+    \label{fig:interface_flow}
+\end{figure}
+
 \section{Design of Communication Protocols}
 
 \wss{If appropriate}
