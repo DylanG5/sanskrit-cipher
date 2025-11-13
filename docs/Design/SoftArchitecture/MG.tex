@@ -1053,9 +1053,189 @@ The backend orchestration service communicates with AI/ML components using inter
 
 \section{Timeline}
 
-\wss{Schedule of tasks and who is responsible}
+The development of the Sanskrit Manuscript Reconstruction Platform follows a phased approach, with module implementation organized by architectural layer. The timeline ensures that foundational components are established before dependent modules are developed, following the uses hierarchy described in Section \ref{SecUse}.
 
-\wss{You can point to GitHub if this information is included there}
+\subsection{Phase 1: Foundation and Infrastructure (Weeks 1-3)}
+
+\subsubsection{Week 1: Project Setup and Foundation Modules}
+\begin{itemize}
+    \item \textbf{Setup Development Environment}
+    \begin{itemize}
+        \item Configure MongoDB, Node.js/Express backend, and React frontend repositories
+        \item Set up version control, CI/CD pipelines, and development/staging environments
+        \item \textit{Responsible: Full Team}
+    \end{itemize}
+    \item \textbf{Implement Foundation Modules (Layer 0)}
+    \begin{itemize}
+        \item M21: Error Handling Module - Define error types, implement centralized exception handling
+        \item M22: Logging Module - Configure structured logging framework (Winston/Bunyan)
+        \item M23: Configuration Management - Implement environment-based configuration loading
+        \item \textit{Responsible: Yousef Shahin, Aswin Kugansen}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 2-3: Data Layer Implementation}
+\begin{itemize}
+    \item \textbf{Hardware-Hiding Module}
+    \begin{itemize}
+        \item M1: Implement file storage abstraction (local/cloud storage interface)
+        \item \textit{Responsible: Omar El Aref}
+    \end{itemize}
+    \item \textbf{Data Modules (Layer 1)}
+    \begin{itemize}
+        \item M14: User database schema, authentication data models
+        \item M12: Fragment storage schema, image metadata, CRUD operations
+        \item M13: Catalog metadata structure, controlled vocabularies
+        \item M15: Project workspace schema, collaborative annotations
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 2: Service Layer and API (Weeks 4-6)}
+
+\subsubsection{Week 4: Authentication and Session Management}
+\begin{itemize}
+    \item \textbf{Authentication Services (Layer 3)}
+    \begin{itemize}
+        \item M8: JWT-based authentication, role-based access control
+        \item M9: Session state management, workspace persistence
+        \item \textit{Responsible: Yousef Shahin, Aswin Kugansen}
+    \end{itemize}
+    \item \textbf{API Gateway (Layer 4)}
+    \begin{itemize}
+        \item M6: Express.js RESTful API setup, authentication endpoints
+        \item \textit{Responsible: Omar El Aref}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 5-6: Core Service Modules}
+\begin{itemize}
+    \item \textbf{Service Orchestration (Layer 3)}
+    \begin{itemize}
+        \item M7: Fragment search and filtering logic, query optimization
+        \item M10: Image preprocessing pipeline orchestration, job queue management
+        \item M11: ML model result aggregation, confidence scoring (initial implementation without ML models)
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+    \item \textbf{API Endpoint Completion}
+    \begin{itemize}
+        \item Complete all RESTful endpoints for fragment management, search, sessions, and preprocessing
+        \item \textit{Responsible: Omar El Aref, Yousef Shahin}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 3: Machine Learning Integration (Weeks 7-10)}
+
+\subsubsection{Week 7-8: ML Infrastructure and Basic Models}
+\begin{itemize}
+    \item \textbf{ML Service Setup}
+    \begin{itemize}
+        \item Python ML service infrastructure, REST API for ML models
+        \item Model serving framework (Flask/FastAPI for Python services)
+        \item \textit{Responsible: Aswin Kugansen, Umar Khan}
+    \end{itemize}
+    \item \textbf{Initial ML Modules (Layer 2)}
+    \begin{itemize}
+        \item M16: Edge detection and matching algorithm implementation
+        \item M18: Script classification model training and deployment
+        \item \textit{Responsible: Dylan Garner, Yousef Shahin}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 9-10: Advanced ML Models}
+\begin{itemize}
+    \item \textbf{ML Module Completion (Layer 2)}
+    \begin{itemize}
+        \item M17: Damage pattern analysis and similarity scoring
+        \item M19: OCR model integration (using existing libraries like Tesseract/EasyOCR, fine-tuned for ancient scripts)
+        \item M20: Text similarity comparison using embeddings
+        \item \textit{Responsible: Omar El Aref, Aswin Kugansen}
+    \end{itemize}
+    \item \textbf{Orchestrator Integration}
+    \begin{itemize}
+        \item Connect ML modules to M10 and M11
+        \item Implement weighted scoring and confidence calculation
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 4: User Interface Development (Weeks 8-11)}
+
+\textit{Note: UI development runs partially in parallel with ML integration}
+
+\subsubsection{Week 8-9: Core UI Components}
+\begin{itemize}
+    \item \textbf{Authentication UI (Layer 5)}
+    \begin{itemize}
+        \item M4: Login/logout interface, user registration, session display
+        \item \textit{Responsible: Yousef Shahin}
+    \end{itemize}
+    \item \textbf{Fragment Management UI}
+    \begin{itemize}
+        \item M5: File upload interface with drag-and-drop, metadata forms
+        \item M3: Search bar, filtering interface, results display
+        \item \textit{Responsible: Omar El Aref, Aswin Kugansen}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 10-11: Interactive Canvas}
+\begin{itemize}
+    \item \textbf{Canvas Workspace (Layer 5)}
+    \begin{itemize}
+        \item M2: Drag-and-drop canvas for fragment arrangement
+        \item Real-time match visualization, collaborative workspace features
+        \item Integration with M11 for displaying suggestions
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 5: Testing and Refinement (Weeks 12-14)}
+
+\subsubsection{Week 12: Integration Testing}
+\begin{itemize}
+    \item \textbf{Test Infrastructure}
+    \begin{itemize}
+        \item Mock implementations for all services and ML components
+        \item \textit{Responsible: Full Team}
+    \end{itemize}
+    \item \textbf{Layer-by-Layer Integration Testing}
+    \begin{itemize}
+        \item Test data layer with foundation modules
+        \item Test service layer with data layer
+        \item Test ML integration with orchestrators
+        \item Test UI with complete backend
+        \item \textit{Responsible: Full Team}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 13: Performance Optimization and ML Tuning}
+\begin{itemize}
+    \item Database query optimization, API response time tuning
+    \item ML model fine-tuning based on test fragment dataset
+    \item Concurrent user testing (target: 15+ users)
+    \item \textit{Responsible: Yousef Shahin, Aswin Kugansen, Omar El Aref}
+\end{itemize}
+
+\subsubsection{Week 14: User Acceptance Testing and Documentation}
+\begin{itemize}
+    \item User testing with domain experts (Buddhist Studies scholars)
+    \item Bug fixes and usability improvements
+    \item Complete API documentation
+    \item User manual and deployment documentation
+    \item \textit{Responsible: Full Team}
+\end{itemize}
+
+\subsection{Phase 6: Deployment and Monitoring (Week 15)}
+
+\begin{itemize}
+    \item Production environment setup and deployment
+    \item Monitoring and logging infrastructure configuration
+    \item Performance monitoring and error tracking setup
+    \item Handoff and training for stakeholders
+    \item \textit{Responsible: Full Team}
+\end{itemize}
+
+\textbf{Note:} For detailed task assignments, sprint planning, and issue tracking, refer to the project's GitHub repository at: \texttt{https://github.com/DylanG5/sanskrit-cipher}
 
 \bibliographystyle {plainnat}
 \bibliography{../../../refs/References}
