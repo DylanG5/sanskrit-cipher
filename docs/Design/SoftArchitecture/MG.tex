@@ -923,6 +923,133 @@ The Sanskrit Manuscript Reconstruction Platform provides a web-based interface d
 
 \section{Design of Communication Protocols}
 
+The Sanskrit Manuscript Reconstruction Platform uses a client-server architecture with RESTful API communication between the frontend and backend services. This section describes the communication protocols and data exchange formats.
+
+\subsection{API Architecture}
+
+\subsubsection{Backend API Layer}
+The backend API is implemented using Flask, FastAPI, or Django (final selection to be determined during implementation) and provides versioned RESTful endpoints for all system operations.
+
+\textbf{API Design Principles:}
+\begin{itemize}
+    \item \textbf{RESTful Convention:} Resource-based URLs with standard HTTP methods (GET, POST, PUT, DELETE)
+    \item \textbf{Versioning:} All endpoints include version prefix (e.g., \texttt{/api/v1/})
+    \item \textbf{Status Codes:} Proper HTTP status codes (200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error)
+    \item \textbf{JSON Format:} All request and response bodies use JSON
+    \item \textbf{Schema Validation:} Request/response schemas defined using Pydantic models (backend) and TypeScript interfaces (frontend)
+\end{itemize}
+
+\subsection{Core API Endpoints}
+
+\subsubsection{Authentication Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/auth/login} - User authentication, returns session token
+    \item \texttt{POST /api/v1/auth/logout} - Session termination
+    \item \texttt{GET /api/v1/auth/verify} - Token validation
+\end{itemize}
+
+\subsubsection{Fragment Management Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/fragments/upload} - Upload fragment image (multipart/form-data)
+    \item \texttt{GET /api/v1/fragments/\{id\}} - Retrieve fragment metadata and image URL
+    \item \texttt{GET /api/v1/fragments} - List/search fragments with query parameters
+    \item \texttt{DELETE /api/v1/fragments/\{id\}} - Delete fragment (authorized users only)
+\end{itemize}
+
+\subsubsection{Preprocessing Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/preprocess/orientation} - Trigger orientation correction
+    \item \texttt{GET /api/v1/preprocess/status/\{job\_id\}} - Check preprocessing job status
+\end{itemize}
+
+\subsubsection{Matching and Similarity Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/matching/suggest} - Generate match suggestions for fragment
+    \item \texttt{GET /api/v1/matching/results/\{fragment\_id\}} - Retrieve ranked match list
+\end{itemize}
+
+\subsubsection{OCR and Script Identification Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/ocr/transcribe} - Extract text from fragment image
+    \item \texttt{POST /api/v1/classification/script} - Identify script type
+    \item \texttt{GET /api/v1/ocr/results/\{fragment\_id\}} - Retrieve OCR output
+\end{itemize}
+
+\subsubsection{Session and Workspace Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/sessions} - Create new canvas workspace session
+    \item \texttt{PUT /api/v1/sessions/\{id\}} - Update/save workspace state
+    \item \texttt{GET /api/v1/sessions/\{id\}} - Restore workspace session
+    \item \texttt{DELETE /api/v1/sessions/\{id\}} - Delete session
+\end{itemize}
+
+\subsection{Data Exchange Formats}
+
+\subsubsection{Request Schema Example (Fragment Upload)}
+\begin{verbatim}
+POST /api/v1/fragments/upload
+Content-Type: multipart/form-data
+
+{
+    "file": <binary image data>,
+    "metadata": {
+        "collection": "British Library",
+        "shelfmark": "BL-12345",
+        "provenance": "Gandhara",
+        "notes": "Optional user notes"
+    }
+}
+\end{verbatim}
+
+\subsubsection{Response Schema Example (Match Suggestions)}
+\begin{verbatim}
+GET /api/v1/matching/results/{fragment_id}
+Response: 200 OK
+
+{
+    "fragment_id": "BL-12345",
+    "matches": [
+        {
+            "match_id": "BL-67890",
+            "similarity_score": 0.87,
+            "confidence": 0.92,
+            "match_features": ["edge_pattern", "damage_signature"],
+            "thumbnail_url": "/api/v1/fragments/BL-67890/thumbnail"
+        },
+        ...
+    ],
+    "timestamp": "2025-11-11T14:30:00Z"
+}
+\end{verbatim}
+
+\subsection{Inter-Service Communication}
+
+\subsubsection{Backend to ML/AI Cluster}
+The backend orchestration service communicates with AI/ML components using internal API calls or message queues:
+\begin{itemize}
+    \item \textbf{OCR Service:} Asynchronous job queue for text extraction
+    \item \textbf{Matching Service:} Real-time or batch processing for similarity computation
+    \item \textbf{Script Classification Service:} Synchronous inference requests
+\end{itemize}
+
+\subsubsection{Database Communication}
+\begin{itemize}
+    \item \textbf{ORM Layer:} SQLAlchemy for database abstraction (PostgreSQL or SQLite)
+    \item \textbf{Query Optimization:} Indexed searches for metadata filtering
+    \item \textbf{Connection Pooling:} Maintained for concurrent user support (target: 15+ concurrent users)
+\end{itemize}
+
+\subsection{Security and Data Integrity}
+
+\begin{itemize}
+    \item \textbf{Authentication:} Token-based authentication (JWT or similar)
+    \item \textbf{Authorization:} Role-based access control for sensitive operations
+    \item \textbf{Input Validation:} Server-side validation of all API inputs
+    \item \textbf{SQL Injection Prevention:} Parameterized queries via ORM
+    \item \textbf{API Rate Limiting:} Throttling to prevent abuse
+    \item \textbf{HTTPS:} Encrypted communication in production deployment
+\end{itemize}
+
 
 \section{Timeline}
 
