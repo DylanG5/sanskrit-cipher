@@ -4,6 +4,7 @@
 \usepackage{tabularx}
 \usepackage{hyperref}
 \usepackage{multirow}
+\usepackage[round]{natbib}
 
 \hypersetup{
     colorlinks=true,       % false: boxed links; true: colored links
@@ -167,7 +168,7 @@ Table~\ref{TblPotentialLosses} summarizes the potential losses that could occur 
 
 \section{System Boundaries and Components}
 
-This hazard analysis treats the system as four major component groups that interact to support scholarly reconstruction of manuscript fragments. (For full details, refer to the SRS~\cite{SRS}, Section~S.1.)
+This hazard analysis treats the system as four major component groups that interact to support scholarly reconstruction of manuscript fragments. (For full details, refer to the SRS \citep{SRS-Sanskrit-Ciphers}, Section~S.1.)
 
 \subsection*{Major Component Groups}
 \begin{itemize}
@@ -517,18 +518,9 @@ The implementation roadmap prioritizes requirements that:
 
 \newpage{}
 
-\section{References}
-% \addcontentsline{toc}{section}{References}  % only needed if you used \section*
+\bibliographystyle{plainnat}
 
-\renewcommand{\refname}{}  % suppress the automatic "References" title
-
-\begin{thebibliography}{1}
-\bibitem{SRS}
-\authname.
-\newblock \textit{Sanskrit Manuscript Fragment Reconstruction Platform}.
-\newblock Available at
-\url{https://github.com/DylanG5/sanskrit-ciphers-requirements/blob/ab899d5d07b554c8e80fb4fc8a8adaa181a0c81a/parts/system/S1.adoc}.
-\end{thebibliography}
+\bibliography{../../refs/References}
 
 
 
