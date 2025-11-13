@@ -8,6 +8,8 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
 \hypersetup{
     colorlinks,
     citecolor=blue,
@@ -641,39 +643,228 @@ NFR3.3 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \m
 
 \section{Use Hierarchy Between Modules} \label{SecUse}
 
-In this section, the uses hierarchy between modules is
-provided. \citet{Parnas1978} said of two programs A and B that A {\em uses} B if
-correct execution of B may be necessary for A to complete the task described in
-its specification. That is, A {\em uses} B if there exist situations in which
-the correct functioning of A depends upon the availability of a correct
-implementation of B.  Figure \ref{FigUH} illustrates the use relation between
-the modules. It can be seen that the graph is a directed acyclic graph
-(DAG). Each level of the hierarchy offers a testable and usable subset of the
-system, and modules in the higher level of the hierarchy are essentially simpler
-because they use modules from the lower levels.
-
-\wss{The uses relation is not a data flow diagram.  In the code there will often
-be an import statement in module A when it directly uses module B.  Module B
-provides the services that module A needs.  The code for module A needs to be
-able to see these services (hence the import statement).  Since the uses
-relation is transitive, there is a use relation without an import, but the
-arrows in the diagram typically correspond to the presence of import statement.}
-
-\wss{If module A uses module B, the arrow is directed from A to B.}
-
 \begin{figure}[H]
 \centering
-%\includegraphics[width=0.7\textwidth]{UsesHierarchy.png}
-\caption{Use hierarchy among modules}
+\begin{tikzpicture}[
+  node distance=1.8cm and 1.2cm,
+  module/.style={rectangle, draw, minimum width=1.8cm, minimum height=0.6cm, align=center, font=\footnotesize},
+  direct/.style={->, >=stealth, thick},
+  layer/.style={font=\bfseries\small}
+]
+
+% Layer 5 - UI
+\node[layer] at (-2,10) {Layer 5: UI};
+\node[module] (Canvas) at (0,10) {M2\\Canvas};
+\node[module] (Search) at (3,10) {M3\\Search};
+\node[module] (Auth) at (6,10) {M4\\Auth};
+\node[module] (Upload) at (9,10) {M5\\Upload};
+
+% Layer 4 - API
+\node[layer] at (-2,6) {Layer 4: API};
+\node[module] (API) at (4.5,6) {M6\\API};
+
+% Layer 3 - Services
+\node[layer, text width=2.5cm, align=left] at (-2,2) {Layer 3:\\Services};
+\node[module] (SearchSvc) at (0,2) {M7\\Search};
+\node[module] (AuthZ) at (2.5,2) {M8\\AuthZ};
+\node[module] (Session) at (5,2) {M9\\Session};
+\node[module] (ProcOrch) at (7.5,2) {M10\\Proc};
+\node[module] (MatchOrch) at (10,2) {M11\\Match};
+
+% Layer 2 - ML
+\node[layer] at (-2,-2) {Layer 2: ML};
+\node[module] (EdgeMatch) at (1,-2) {M16\\Edge};
+\node[module] (Damage) at (3.5,-2) {M17\\Damage};
+\node[module] (ScriptClass) at (6,-2) {M18\\Script};
+\node[module] (OCR) at (8.5,-2) {M19\\OCR};
+\node[module] (TextSim) at (11,-2) {M20\\Text};
+
+% Layer 1 - Data
+\node[layer] at (-2,-6) {Layer 1: Data};
+\node[module] (FragStore) at (2.5,-6) {M12\\Frags};
+\node[module] (Catalog) at (5.5,-6) {M13\\Catalog};
+\node[module] (User) at (8,-6) {M14\\User};
+\node[module] (Project) at (10.5,-6) {M15\\Project};
+
+% Layer 0 - Foundation
+\node[layer, text width=2.5cm, align=left] at (-2,-10) {Layer 0:\\Foundation};
+\node[module] (HH) at (1.5,-10) {M1\\Hardware};
+\node[module] (Error) at (4,-10) {M21\\Error};
+\node[module] (Logging) at (6.5,-10) {M22\\Logging};
+\node[module] (Config) at (9,-10) {M23\\Config};
+
+% UI -> API (all UI modules use API)
+\draw[direct] (Canvas) -- (API);
+\draw[direct] (Search) -- (API);
+\draw[direct] (Auth) -- (API);
+\draw[direct] (Upload) -- (API);
+
+% API -> Services (API uses all service modules)
+\draw[direct] (API) -- (SearchSvc);
+\draw[direct] (API) -- (AuthZ);
+\draw[direct] (API) -- (Session);
+\draw[direct] (API) to[out=-90, in=90] (ProcOrch);
+\draw[direct] (API) to[out=-90, in=90] (MatchOrch);
+
+% Services -> ML (orchestrators coordinate ML)
+\draw[direct] (ProcOrch) to[out=-90, in=90] (EdgeMatch);
+\draw[direct] (ProcOrch) to[out=-90, in=90] (ScriptClass);
+\draw[direct] (ProcOrch) to[out=-90, in=90] (OCR);
+\draw[direct] (MatchOrch) -- (EdgeMatch);
+\draw[direct] (MatchOrch) -- (Damage);
+\draw[direct] (MatchOrch) -- (ScriptClass);
+\draw[direct] (MatchOrch) to[out=-90, in=90] (TextSim);
+
+% Services -> Data (key data access)
+\draw[direct] (SearchSvc) to[out=-90, in=90] (FragStore);
+\draw[direct] (SearchSvc) to[out=-90, in=90] (Catalog);
+\draw[direct] (AuthZ) to[out=-90, in=90] (User);
+\draw[direct] (Session) to[out=-90, in=90] (User);
+\draw[direct] (Session) to[out=-90, in=90] (Project);
+\draw[direct] (ProcOrch) to[out=-90, in=90] (FragStore);
+
+% ML -> Data (ML modules use FragStore)
+\draw[direct] (EdgeMatch) to[out=-90, in=90] (FragStore);
+\draw[direct] (ScriptClass) to[out=-90, in=90] (Catalog);
+
+% Data -> Foundation (all data modules use foundation)
+\draw[direct] (FragStore) to[out=-90, in=90] (HH);
+\draw[direct] (FragStore) to[out=-90, in=90] (Error);
+\draw[direct] (FragStore) to[out=-90, in=90] (Logging);
+\draw[direct] (FragStore) to[out=-90, in=90] (Config);
+\draw[direct] (Catalog) to[out=-90, in=90] (Error);
+\draw[direct] (Catalog) to[out=-90, in=90] (Logging);
+\draw[direct] (Catalog) to[out=-90, in=90] (Config);
+\draw[direct] (User) to[out=-90, in=90] (Error);
+\draw[direct] (User) to[out=-90, in=90] (Logging);
+\draw[direct] (User) to[out=-90, in=90] (Config);
+\draw[direct] (Project) to[out=-90, in=90] (Error);
+\draw[direct] (Project) to[out=-90, in=90] (Logging);
+\draw[direct] (Project) to[out=-90, in=90] (Config);
+
+\end{tikzpicture}
+\caption{Use hierarchy among modules (simplified view showing key dependencies)}
 \label{FigUH}
 \end{figure}
+
+\subsection{Uses Hierarchy Description}
+
+The uses hierarchy follows a strict layered architecture where modules at each level depend only on services provided by lower levels. The diagram shows direct dependencies between modules, with arrows indicating the uses relationship.
+
+\subsubsection{Layer 5: User Interface}
+All UI modules communicate exclusively through the API layer:
+\begin{itemize}
+\item \textbf{Canvas (M2), Search (M3), Auth (M4), Upload (M5)} all directly use \textbf{API (M6)}
+\item UI modules have no direct access to service, data, or ML layers, ensuring clean separation between presentation and business logic
+\end{itemize}
+
+\subsubsection{Layer 4: API Gateway}
+\textbf{API (M6)} serves as the central gateway and coordinates all service layer modules:
+\begin{itemize}
+\item Directly uses all five service modules: \textbf{SearchSvc (M7)}, \textbf{AuthZ (M8)}, \textbf{Session (M9)}, \textbf{ProcOrch (M10)}, and \textbf{MatchOrch (M11)}
+\item Provides unified RESTful interface to all backend services for the UI layer
+\item Handles request routing, validation, response formatting, and rate limiting
+\item Acts as the single entry point for all business logic operations
+\end{itemize}
+
+\subsubsection{Layer 3: Service Orchestration}
+Service modules implement business logic and coordinate lower-level modules:
+
+\paragraph{Data Access Services:}
+\begin{itemize}
+\item \textbf{SearchSvc (M7)} uses \textbf{FragmentStore (M12)} and \textbf{Catalog (M13)} to perform search and filtering operations across fragments
+\item \textbf{AuthZ (M8)} uses \textbf{User (M14)} for credential verification and role-based authorization
+\item \textbf{Session (M9)} uses \textbf{User (M14)} and \textbf{Project (M15)} to manage user sessions and collaborative workspace state
+\end{itemize}
+
+\paragraph{Orchestration Services:}
+\begin{itemize}
+\item \textbf{ProcOrch (M10)} orchestrates image processing pipelines by using:
+  \begin{itemize}
+  \item \textbf{FragmentStore (M12)} for accessing fragment images
+  \item \textbf{EdgeMatch (M16)} for edge detection during preprocessing
+  \item \textbf{ScriptClass (M18)} for initial script classification
+  \item \textbf{OCR (M19)} for text extraction from fragment images
+  \end{itemize}
+\item \textbf{MatchOrch (M11)} coordinates fragment matching by using:
+  \begin{itemize}
+  \item \textbf{EdgeMatch (M16)} for edge profile comparison
+  \item \textbf{Damage (M17)} for damage pattern analysis
+  \item \textbf{ScriptClass (M18)} for script similarity comparison
+  \item \textbf{TextSim (M20)} for comparing extracted text between fragments
+  \end{itemize}
+\end{itemize}
+
+Note that ProcOrch focuses on preprocessing and feature extraction, while MatchOrch focuses on comparing fragments and ranking matches.
+
+\subsubsection{Layer 2: Machine Learning}
+ML modules provide specialized analysis capabilities:
+\begin{itemize}
+\item \textbf{EdgeMatch (M16)} uses \textbf{FragmentStore (M12)} to access fragment images for edge detection and comparison
+\item \textbf{ScriptClass (M18)} uses both \textbf{Catalog (M13)} for script taxonomy metadata and \textbf{FragmentStore (M12)} for fragment images
+\item Other ML modules (\textbf{Damage (M17), OCR (M19), TextSim (M20)}) also use \textbf{FragmentStore (M12)} for data access (connections shown representatively through EdgeMatch to reduce visual complexity)
+\item ML modules are always coordinated by service orchestrators (ProcOrch or MatchOrch), never invoked directly by the API
+\end{itemize}
+
+\subsubsection{Layer 1: Data Storage}
+Data modules encapsulate all persistence operations and provide CRUD interfaces:
+\begin{itemize}
+\item \textbf{FragmentStore (M12)} uses:
+  \begin{itemize}
+  \item \textbf{Hardware Hiding (M1)} for file system and storage operations
+  \item \textbf{Error Handling (M21)} for exception management
+  \item \textbf{Logging (M22)} for audit trails of fragment operations
+  \item \textbf{Config (M23)} for storage configuration parameters
+  \end{itemize}
+\item \textbf{Catalog (M13)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for managing controlled vocabularies and metadata schemas
+\item \textbf{User (M14)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for user profile management and authentication data
+\item \textbf{Project (M15)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for collaborative workspace data
+\end{itemize}
+
+All data modules depend heavily on foundation modules to ensure reliable, configurable, and auditable data operations.
+
+\subsubsection{Layer 0: Foundation}
+Foundation modules provide cross-cutting system services with no dependencies on other system modules:
+\begin{itemize}
+\item \textbf{Hardware Hiding (M1)} abstracts operating system and file system operations, used by FragmentStore for persistent storage
+\item \textbf{Error Handling (M21)} provides exception management and error reporting, used by all data modules and propagated throughout upper layers
+\item \textbf{Logging (M22)} records system events, user actions, and audit trails, used extensively by data and service layers
+\item \textbf{Config (M23)} manages application configuration from files and environment variables, used by all data modules and some services
+\end{itemize}
+
+\subsubsection{Key Architectural Properties}
+
+The uses hierarchy exhibits several important design properties:
+
+\begin{enumerate}
+\item \textbf{Strict Layering:} All dependencies flow downward through the layer hierarchy. Modules only use modules in lower layers, never peers or higher layers, ensuring clear separation of concerns.
+
+\item \textbf{API Gateway Pattern:} The API module (M6) serves as the single entry point for all UI modules, providing a unified interface to backend services and preventing direct UI-to-service coupling.
+
+\item \textbf{Orchestration Pattern:} Complex workflows involving multiple ML modules are coordinated by dedicated orchestrator services (ProcOrch and MatchOrch), which hide the complexity of multi-model coordination from the API layer.
+
+\item \textbf{Data Encapsulation:} All persistent data access flows through dedicated data modules (M12-M15), preventing direct database access from service or ML layers and enabling consistent data validation and access control.
+
+\item \textbf{Foundation Ubiquity:} Utility modules (Error, Logging, Config) are used throughout the system, particularly by the data layer. The diagram shows representative uses of these modules by all data modules, though they are actually used more broadly throughout the system.
+
+\item \textbf{DAG Structure:} The dependency graph forms a directed acyclic graph with no circular dependencies, which enables:
+  \begin{itemize}
+  \item Independent development and testing of each layer
+  \item Incremental system integration from bottom to top
+  \item Module substitution without affecting higher layers
+  \item Clear understanding of system dependencies and impact analysis
+  \end{itemize}
+
+\item \textbf{Testable Subsets:} Each layer represents a testable subset of the system. Layer 0 can be tested independently, Layer 1 requires only Layer 0, and so on, supporting systematic integration testing.
+
+\item \textbf{Separation of Concerns:} The architecture clearly separates presentation (Layer 5), API interface (Layer 4), business logic (Layer 3), specialized algorithms (Layer 2), persistence (Layer 1), and system utilities (Layer 0).
+\end{enumerate}
+
+This hierarchical organization supports maintainability, testability, and evolution of the system over time.
 
 %\section*{References}
 
 \section{User Interfaces}
-
-\wss{Design of user interface for software and hardware.  Attach an appendix if
-needed. Drawings, Sketches, Figma}
 
 The Sanskrit Manuscript Reconstruction Platform provides a web-based interface designed for Buddhist Studies scholars to interact with manuscript fragments. The interface is built using React with TypeScript and styled using CSS to ensure consistency and responsiveness.
 
@@ -732,7 +923,6 @@ The Sanskrit Manuscript Reconstruction Platform provides a web-based interface d
 
 \section{Design of Communication Protocols}
 
-\wss{If appropriate}
 
 \section{Timeline}
 
