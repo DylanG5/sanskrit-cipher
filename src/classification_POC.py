@@ -35,14 +35,23 @@ class FragmentDataset(Dataset):
         base_transforms = []
         if self.augment:
             base_transforms += [
-                T.RandomHorizontalFlip(),
-                T.ColorJitter(brightness=0.1, contrast=0.1),
-                T.RandomRotation(5),
+                T.RandomHorizontalFlip(p=0.5),
+                # More aggressive color augmentation to handle varying backgrounds and aging
+                T.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.1),
+                T.RandomRotation(10),
+                # Random affine to handle different text sizes and orientations
+                T.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+                # Random perspective for torn/warped fragments
+                T.RandomPerspective(distortion_scale=0.2, p=0.3),
+                # Simulate lighting variations
+                T.RandomAdjustSharpness(sharpness_factor=2, p=0.3),
+                T.RandomAutocontrast(p=0.3),
             ]
         base_transforms += [
             T.Resize((self.img_size, self.img_size)),
             T.ToTensor(),
-            T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+            # Use ImageNet normalization for better transfer learning potential
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
         return T.Compose(base_transforms)
 
@@ -64,25 +73,60 @@ class FragmentDataset(Dataset):
 class LineCountCNN(nn.Module):
     def __init__(self, num_classes):
         super(LineCountCNN, self).__init__()
+        # Enhanced feature extraction with more depth
         self.features = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            # Block 1 - Initial feature extraction
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),
+            nn.Dropout2d(0.1),
+            
+            # Block 2 - Intermediate features
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
+            nn.Dropout2d(0.1),
+            
+            # Block 3 - High-level features
             nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+            nn.Dropout2d(0.2),
+            
+            # Block 4 - Deep features for line counting
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
             nn.AdaptiveAvgPool2d((1, 1)),
         )
+        
+        # Enhanced classifier with residual-like connection
         self.classifier = nn.Sequential(
             nn.Flatten(),
+            nn.Dropout(0.4),
+            nn.Linear(512, 256),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(256),
             nn.Dropout(0.3),
             nn.Linear(256, 128),
             nn.ReLU(inplace=True),
+            nn.BatchNorm1d(128),
+            nn.Dropout(0.2),
             nn.Linear(128, num_classes),
         )
 
@@ -134,14 +178,16 @@ def eval_model(model, dataloader, criterion, device):
 # Main training script
 # ------------------------------
 def main():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
     parser = argparse.ArgumentParser(description="Train CNN to predict line counts in fragment images (PyTorch)")
-    parser.add_argument("--images_dir", type=str, default="./src/images")
-    parser.add_argument("--labels_csv", type=str, default="./src/labels.csv")
-    parser.add_argument("--out_dir", type=str, default="./src/output")
-    parser.add_argument("--img_size", type=int, default=224)
-    parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--epochs", type=int, default=25)
-    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--images_dir", type=str, default="./classification_training_images")
+    parser.add_argument("--labels_csv", type=str, default="./image_line_count.csv")
+    parser.add_argument("--out_dir", type=str, default="./output")
+    parser.add_argument("--img_size", type=int, default=256)  # Increased for better detail
+    parser.add_argument("--batch_size", type=int, default=16)  # Reduced for larger model
+    parser.add_argument("--epochs", type=int, default=50)  # More epochs for better convergence
+    parser.add_argument("--lr", type=float, default=5e-4)  # Slightly higher initial LR
     parser.add_argument("--max_lines", type=int, default=15)
     parser.add_argument("--val_split", type=float, default=0.15)
     parser.add_argument("--test_split", type=float, default=0.1)
@@ -157,10 +203,26 @@ def main():
     df = pd.read_csv(args.labels_csv)
     assert "File Name" in df.columns and "Line Count" in df.columns
 
-    strat = df["Line Count"].clip(0, args.max_lines).astype(int)
-    train_val_df, test_df = train_test_split(df, test_size=args.test_split, random_state=args.seed, stratify=strat)
+    # Clip line counts to max_lines
+    df["Line Count"] = df["Line Count"].clip(0, args.max_lines).astype(int)
+    
+    # Check class distribution
+    class_counts = df["Line Count"].value_counts()
+    print(f"Class distribution:\n{class_counts.sort_index()}")
+    
+    # Filter out classes with only 1 sample for stratified split
+    valid_classes = class_counts[class_counts >= 2].index
+    df_filtered = df[df["Line Count"].isin(valid_classes)].copy()
+    
+    if len(df_filtered) < len(df):
+        print(f"Warning: Removed {len(df) - len(df_filtered)} samples with classes having only 1 member")
+        print(f"Remaining samples: {len(df_filtered)}")
+    
+    # Stratified split
+    strat = df_filtered["Line Count"].astype(int)
+    train_val_df, test_df = train_test_split(df_filtered, test_size=args.test_split, random_state=args.seed, stratify=strat)
     val_size_rel = args.val_split / (1 - args.test_split)
-    train_df, val_df = train_test_split(train_val_df, test_size=val_size_rel, random_state=args.seed, stratify=train_val_df["Line Count"].clip(0, args.max_lines).astype(int))
+    train_df, val_df = train_test_split(train_val_df, test_size=val_size_rel, random_state=args.seed, stratify=train_val_df["Line Count"].astype(int))
 
     print(f"Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")
 
@@ -175,15 +237,26 @@ def main():
     # -------------------- Model --------------------
     num_classes = args.max_lines + 1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+    
     model = LineCountCNN(num_classes=num_classes).to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-5)
+    
+    # Learning rate scheduler for better convergence
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
 
     # -------------------- Training --------------------
     best_val_acc = 0
+    patience_counter = 0
+    early_stop_patience = 15
+    
     for epoch in range(args.epochs):
         train_loss, train_acc = train_one_epoch(model, train_dl, criterion, optimizer, device)
         val_loss, val_acc = eval_model(model, val_dl, criterion, device)
+        
+        # Step the scheduler
+        scheduler.step(val_acc)
 
         print(f"Epoch {epoch+1}/{args.epochs}: "
               f"TrainLoss={train_loss:.4f}, TrainAcc={train_acc:.3f}, "
@@ -191,7 +264,16 @@ def main():
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
+            patience_counter = 0
             torch.save(model.state_dict(), os.path.join(args.out_dir, "best_model.pt"))
+            print(f"  -> New best model saved! (Val Acc: {val_acc:.3f})")
+        else:
+            patience_counter += 1
+            
+        # Early stopping
+        if patience_counter >= early_stop_patience:
+            print(f"Early stopping triggered after {epoch+1} epochs")
+            break
 
     print("Training complete. Best validation accuracy:", best_val_acc)
 
@@ -212,35 +294,43 @@ def main():
 # Inference helper
 # ------------------------------
 def predict_image(model_path, image_path, meta_path="./output/meta.json", device=None):
+    """
+    Load a trained model and predict the number of lines in a given image.
+    Returns: (predicted_lines, confidence)
+    """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    with open(meta_path, "r") as f:
+    
+    # Load metadata
+    with open(meta_path, 'r') as f:
         meta = json.load(f)
-
-    max_lines = meta["max_lines"]
-    img_size = meta["img_size"]
+    
+    max_lines = meta['max_lines']
+    img_size = meta['img_size']
     num_classes = max_lines + 1
-
+    
+    # Load model
     model = LineCountCNN(num_classes=num_classes)
     model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
     model.eval()
-
+    
+    # Load and preprocess image
+    img = Image.open(image_path).convert("RGB")
     transform = T.Compose([
         T.Resize((img_size, img_size)),
         T.ToTensor(),
-        T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-
-    img = Image.open(image_path).convert("RGB")
-    img_t = transform(img).unsqueeze(0).to(device)
-
+    img_t = transform(img).unsqueeze(0).to(device)  # Add batch dimension and move to device
+    
+    # Predict
     with torch.no_grad():
         outputs = model(img_t)
         probs = torch.softmax(outputs, dim=1)
         pred_class = probs.argmax(dim=1).item()
         confidence = probs.max().item()
-
+    
     return pred_class, confidence
 
 
