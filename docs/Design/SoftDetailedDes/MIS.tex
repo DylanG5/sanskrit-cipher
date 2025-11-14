@@ -229,8 +229,11 @@ This module provides a uniform interface for reading, writing, and managing manu
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{HW.ImageStorage - Exported Access Programs}
+\begin{tabular}{p{3cm} p{3.5cm} p{3cm} p{4.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -240,7 +243,7 @@ This module provides a uniform interface for reading, writing, and managing manu
 \texttt{getMetadata} & \texttt{id: ImageID} & \texttt{Record} & \texttt{NotFoundError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -319,8 +322,10 @@ This module provides the browser-facing login and logout experience. It collects
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
+\begin{table}[H]
+\centering
 \small
+\caption{UI.Auth - Exported Access Programs}
 \begin{tabular}{p{3.5cm} p{3.2cm} p{3.2cm} p{4.1cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -330,8 +335,7 @@ This module provides the browser-facing login and logout experience. It collects
 \texttt{logoutUser} & \texttt{none} & \texttt{bool} & \texttt{NetworkError} \\
 \bottomrule
 \end{tabular}
-\normalsize
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -405,8 +409,11 @@ This module allows users to select, preview, and submit manuscript fragment imag
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{UI.Upload - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4cm} p{2.8cm} p{3.7cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -415,7 +422,7 @@ This module allows users to select, preview, and submit manuscript fragment imag
 \texttt{submitUpload} & \texttt{none} & \texttt{UploadResult} & \texttt{NetworkError, UploadError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -489,8 +496,11 @@ This module provides the interactive canvas where scholars can view, move, rotat
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{UI.Canvas - Exported Access Programs}
+\begin{tabular}{p{3.3cm} p{3.8cm} p{2.8cm} p{4.1cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -501,7 +511,7 @@ This module provides the interactive canvas where scholars can view, move, rotat
 \texttt{saveLayout} & \texttt{none} & \texttt{LayoutID} & \texttt{NetworkError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -589,8 +599,11 @@ This module provides the interface for querying the fragment database, filtering
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{UI.Search - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.2cm} p{3.2cm} p{4.1cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -600,7 +613,7 @@ This module provides the interface for querying the fragment database, filtering
 \texttt{exportResults} & \texttt{format: ExportFormat} & \texttt{none} & \texttt{NetworkError, ExportError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -684,8 +697,11 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.API - Exported Access Programs}
+\begin{tabular}{p{4cm} p{2.9cm} p{2.9cm} p{4.2cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -696,7 +712,7 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 \texttt{handleSessionRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ServiceError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -782,8 +798,11 @@ This module validates user credentials, issues and verifies session tokens, and 
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.AuthZ - Exported Access Programs}
+\begin{tabular}{p{3.2cm} p{3.8cm} p{3cm} p{4cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -792,7 +811,7 @@ This module validates user credentials, issues and verifies session tokens, and 
 \texttt{checkAccess} & \texttt{ctx: UserContext, action: String} & \texttt{bool} & \texttt{AuthError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -863,8 +882,11 @@ This module manages user sessions, saved canvas layouts, and ongoing reconstruct
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.Session - Exported Access Programs}
+\begin{tabular}{p{3.3cm} p{3cm} p{4.8cm} p{3.9cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -873,7 +895,7 @@ This module manages user sessions, saved canvas layouts, and ongoing reconstruct
 \texttt{listLayouts} & \texttt{ctx: UserContext} & \texttt{Sequence[LayoutSummary]} & \texttt{SessionError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -944,8 +966,11 @@ This module coordinates image preprocessing workflows such as orientation correc
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.ProcOrch - Exported Access Programs}
+\begin{tabular}{p{4cm} p{3cm} p{3.5cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -953,7 +978,7 @@ This module coordinates image preprocessing workflows such as orientation correc
 \texttt{runPreprocessing} & \texttt{job: JobID} & \texttt{PreprocResult} & \texttt{PreprocError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1019,8 +1044,11 @@ This module coordinates AI models for fragment matching, aggregates model output
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.MatchOrch - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4.5cm} p{2.5cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1028,7 +1056,7 @@ This module coordinates AI models for fragment matching, aggregates model output
 \texttt{aggregateScores} & \texttt{scores: Sequence[ModelScore]} & \texttt{float} & \texttt{AggregationError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1091,8 +1119,11 @@ This module executes queries over stored fragments and metadata, providing pagin
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.Search - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4cm} p{3.2cm} p{4.3cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1100,7 +1131,7 @@ This module executes queries over stored fragments and metadata, providing pagin
 \texttt{exportResults} & \texttt{q: SearchQuery, format: ExportFormat} & \texttt{ExportPayload} & \texttt{SearchError, ExportError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1165,8 +1196,11 @@ This module is responsible for storing and retrieving logical fragment entities.
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Data.FragmentStore - Exported Access Programs}
+\begin{tabular}{p{3.2cm} p{3.8cm} p{3cm} p{4cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1176,7 +1210,7 @@ This module is responsible for storing and retrieving logical fragment entities.
 \texttt{deleteFragment} & \texttt{id: FragmentID} & \texttt{bool} & \texttt{FragmentError, NotFoundError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1252,8 +1286,11 @@ This module maintains mappings between internal fragments and external catalogue
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Data.Catalog - Exported Access Programs}
+\begin{tabular}{p{4.2cm} p{3.8cm} p{3.5cm} p{2.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1262,7 +1299,7 @@ This module maintains mappings between internal fragments and external catalogue
 \texttt{findByCatalogID} & \texttt{catID: String} & \texttt{Sequence[FragmentID]} & \texttt{CatalogError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1331,8 +1368,11 @@ This module stores user accounts, credentials (hashed), roles, and profile infor
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Data.User - Exported Access Programs}
+\begin{tabular}{p{3.3cm} p{3.5cm} p{3.2cm} p{4cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1342,7 +1382,7 @@ This module stores user accounts, credentials (hashed), roles, and profile infor
 \texttt{updateUser} & \texttt{id: UserID, rec: UserRecord} & \texttt{bool} & \texttt{UserError, NotFoundError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1418,8 +1458,11 @@ This module records reconstruction projects, including project metadata, associa
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Data.Project - Exported Access Programs}
+\begin{tabular}{p{3.8cm} p{3.2cm} p{4.5cm} p{2.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1429,7 +1472,7 @@ This module records reconstruction projects, including project metadata, associa
 \texttt{listProjectsForUser} & \texttt{user: UserID} & \texttt{Sequence[ProjectSummary]} & \texttt{ProjectError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1508,8 +1551,11 @@ This module provides model-based similarity estimates based on fragment edge con
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{ML.EdgeMatch - Exported Access Programs}
+\begin{tabular}{p{4cm} p{4.5cm} p{2.3cm} p{3.2cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1517,7 +1563,7 @@ This module provides model-based similarity estimates based on fragment edge con
 \texttt{scoreEdgeSimilarity} & \texttt{a: EdgeSignature, b: EdgeSignature} & \texttt{float} & \texttt{ModelError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1578,8 +1624,11 @@ This module characterizes damage patterns (tears, stains, burn marks) and comput
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{ML.Damage - Exported Access Programs}
+\begin{tabular}{p{4.5cm} p{4.8cm} p{2cm} p{2.7cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1587,7 +1636,7 @@ This module characterizes damage patterns (tears, stains, burn marks) and comput
 \texttt{scoreDamageSimilarity} & \texttt{a: DamageSignature, b: DamageSignature} & \texttt{float} & \texttt{ModelError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1648,15 +1697,18 @@ This module classifies the script type of a fragment (for example, Gupta BrƒÅhmƒ
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{ML.ScriptClass - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
 \texttt{classifyScript} & \texttt{id: ImageID} & \texttt{ScriptPrediction} & \texttt{ModelError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1711,8 +1763,11 @@ This module performs OCR on manuscript fragments, returning transcribed text and
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{ML.OCR - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1720,7 +1775,7 @@ This module performs OCR on manuscript fragments, returning transcribed text and
 \texttt{estimateAccuracy} & \texttt{gt: String, pred: String} & \texttt{float} & \texttt{None} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1781,8 +1836,11 @@ This module computes semantic similarity between text segments derived from OCR 
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{ML.TextSim - Exported Access Programs}
+\begin{tabular}{p{3.8cm} p{4.5cm} p{2.5cm} p{3.2cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1790,7 +1848,7 @@ This module computes semantic similarity between text segments derived from OCR 
 \texttt{scoreTextSimilarity} & \texttt{a: TextEmbedding, b: TextEmbedding} & \texttt{float} & \texttt{ModelError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1855,8 +1913,11 @@ This module defines standard error types and helpers for constructing and handli
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Util.Error - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4cm} p{3cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1864,7 +1925,7 @@ This module defines standard error types and helpers for constructing and handli
 \texttt{toClientMessage} & \texttt{err: ErrorObject} & \texttt{String} & \texttt{None} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1920,8 +1981,11 @@ This module provides structured logging for events, errors, and performance metr
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Util.Logging - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -1930,7 +1994,7 @@ This module provides structured logging for events, errors, and performance metr
 \texttt{logError} & \texttt{msg: String, err: ErrorObject} & \texttt{none} & \texttt{None} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -1992,8 +2056,11 @@ This module provides read-only access to configuration values such as database c
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Util.Config - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -2001,7 +2068,7 @@ This module provides read-only access to configuration values such as database c
 \texttt{getBool} & \texttt{key: String} & \texttt{bool} & \texttt{ConfigError} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
@@ -2057,8 +2124,11 @@ This module provides stub implementations of selected services and ML components
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\begin{table}[H]
+\centering
+\small
+\caption{Util.TestStub - Exported Access Programs}
+\begin{tabular}{p{3.8cm} p{2.5cm} p{4.2cm} p{3.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -2066,7 +2136,7 @@ This module provides stub implementations of selected services and ML components
 \texttt{getFixedMatchStub} & \texttt{none} & \texttt{Svc.MatchOrch-like object} & \texttt{None} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
