@@ -61,20 +61,25 @@ This section records information for easy reference.
 
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{l l} 
-  \toprule		
+  \toprule
   \textbf{symbol} & \textbf{description}\\
-  \midrule 
+  \midrule
   AC & Anticipated Change\\
+  AI & Artificial Intelligence\\
+  API & Application Programming Interface\\
+  CNN & Convolutional Neural Network\\
+  CV & Computer Vision\\
   DAG & Directed Acyclic Graph \\
+  JSON & JavaScript Object Notation\\
   M & Module \\
   MG & Module Guide \\
+  ML & Machine Learning\\
+  OCR & Optical Character Recognition\\
   OS & Operating System \\
   R & Requirement\\
-  SC & Scientific Computing \\
   SRS & Software Requirements Specification\\
-  \progname & Explanation of program name\\
+  UI & User Interface\\
   UC & Unlikely Change \\
-  \wss{etc.} & \wss{...}\\
   \bottomrule
 \end{tabular}\\
 
@@ -160,13 +165,34 @@ change.
 \item[\refstepcounter{acnum} \actheacnum \label{acHardware}:] The specific
   hardware on which the software is running.
 \item[\refstepcounter{acnum} \actheacnum \label{acInput}:] The format of the
-  initial input data.
-\item ...
+  image input data (file formats, metadata structure).
+\item[\refstepcounter{acnum} \actheacnum \label{acAuth}:] The authentication
+  and authorization mechanism for different user types.
+\item[\refstepcounter{acnum} \actheacnum \label{acUpload}:] The method for
+  uploading and storing fragment images.
+\item[\refstepcounter{acnum} \actheacnum \label{acSearch}:] The algorithm used
+  for searching and filtering fragments.
+\item[\refstepcounter{acnum} \actheacnum \label{acEdgeMatch}:] The machine
+  learning model used for edge matching detection.
+\item[\refstepcounter{acnum} \actheacnum \label{acDamage}:] The algorithm for
+  damage pattern analysis.
+\item[\refstepcounter{acnum} \actheacnum \label{acScript}:] The method for
+  script classification and similarity matching.
+\item[\refstepcounter{acnum} \actheacnum \label{acOCR}:] The optical character
+  recognition engine used for text extraction.
+\item[\refstepcounter{acnum} \actheacnum \label{acTextSim}:] The algorithm for
+  text similarity comparison.
+\item[\refstepcounter{acnum} \actheacnum \label{acCanvas}:] The user interface
+  framework for the interactive canvas.
+\item[\refstepcounter{acnum} \actheacnum \label{acFragStore}:] The database
+  schema and storage mechanism for fragment data.
+\item[\refstepcounter{acnum} \actheacnum \label{acCatalog}:] The structure of
+  catalog metadata.
+\item[\refstepcounter{acnum} \actheacnum \label{acMatchOrch}:] The orchestration
+  logic for combining multiple ML model results.
+\item[\refstepcounter{acnum} \actheacnum \label{acSession}:] The session
+  management and state persistence mechanism.
 \end{description}
-
-\wss{Anticipated changes relate to changes that would be made in requirements,
-design or implementation choices.  They are not related to changes that are made
-at run-time, like the values of parameters.}
 
 \subsection{Unlikely Changes} \label{SecUchange}
 
@@ -179,8 +205,15 @@ decisions will be changed.
 
 \begin{description}
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: File and/or Keyboard, Output: File, Memory, and/or Screen).
-\item ...
+  (Input: Image files via web upload, Output: Screen display and file export).
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucWebApp}:] The system will be
+  deployed as a web-based application accessible through standard browsers.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucImageProc}:] The system will
+  process 2D images of manuscript fragments.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucCollaborate}:] The system will
+  support collaborative work through shared projects and annotations.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucMLCore}:] Machine learning will
+  be a core component for fragment matching and analysis.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
@@ -191,8 +224,30 @@ below, which are leaves in the hierarchy tree, are the modules that will
 actually be implemented.
 
 \begin{description}
-\item [\refstepcounter{mnum} \mthemnum \label{mHH}:] Hardware-Hiding Module
-\item ...
+  \item [\refstepcounter{mnum} \mthemnum \label{mHWImageStorage}:] HW.ImageStorage Module
+\item [\refstepcounter{mnum} \mthemnum \label{mCanvas}:] UI.Canvas Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSearch}:] UI.Search Module
+\item [\refstepcounter{mnum} \mthemnum \label{mAuth}:] UI.Auth Module
+\item [\refstepcounter{mnum} \mthemnum \label{mUpload}:] UI.Upload Module
+\item [\refstepcounter{mnum} \mthemnum \label{mAPI}:] Svc.API Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSearchSvc}:] Svc.Search Module
+\item [\refstepcounter{mnum} \mthemnum \label{mAuthZ}:] Svc.AuthZ Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSession}:] Svc.Session Module
+\item [\refstepcounter{mnum} \mthemnum \label{mProcOrch}:] Svc.ProcOrch Module
+\item [\refstepcounter{mnum} \mthemnum \label{mMatchOrch}:] Svc.MatchOrch Module
+\item [\refstepcounter{mnum} \mthemnum \label{mFragStore}:] Data.FragmentStore Module
+\item [\refstepcounter{mnum} \mthemnum \label{mCatalog}:] Data.Catalog Module
+\item [\refstepcounter{mnum} \mthemnum \label{mUser}:] Data.User Module
+\item [\refstepcounter{mnum} \mthemnum \label{mProject}:] Data.Project Module
+\item [\refstepcounter{mnum} \mthemnum \label{mEdgeMatch}:] ML.EdgeMatch Module
+\item [\refstepcounter{mnum} \mthemnum \label{mDamage}:] ML.Damage Module
+\item [\refstepcounter{mnum} \mthemnum \label{mScriptClass}:] ML.ScriptClass Module
+\item [\refstepcounter{mnum} \mthemnum \label{mOCR}:] ML.OCR Module
+\item [\refstepcounter{mnum} \mthemnum \label{mTextSim}:] ML.TextSim Module
+\item [\refstepcounter{mnum} \mthemnum \label{mError}:] Error Handling Module
+\item [\refstepcounter{mnum} \mthemnum \label{mLogging}:] Logging Module
+\item [\refstepcounter{mnum} \mthemnum \label{mConfig}:] Configuration Management Module
+\item [\refstepcounter{mnum} \mthemnum \label{mTestStubs}:] Test Stubs Module
 \end{description}
 
 
@@ -212,7 +267,7 @@ actually be implemented.
 & ?\\
 & ?\\
 & ?\\
-& ?\\ 
+& ?\\
 & ?\\
 \midrule
 
@@ -278,20 +333,6 @@ to be implemented.
 \item[Implemented By:] --
 \end{description}
 
-\subsubsection{Input Format Module (\mref{mInput})}
-
-\begin{description}
-\item[Secrets:]The format and structure of the input data.
-\item[Services:]Converts the input data into the data structure used by the
-  input parameters module.
-\item[Implemented By:] [Your Program Name Here]
-\item[Type of Module:] [Record, Library, Abstract Object, or Abstract Data Type]
-  [Information to include for leaf modules in the decomposition by secrets tree.]
-\end{description}
-
-\subsubsection{Etc.}
-
-
 \subsection{Software Decision Module}
 
 \begin{description}
@@ -299,7 +340,7 @@ to be implemented.
   facts, or programming considerations. The secrets of this module are
   \emph{not} described in the SRS.
 \item[Services:] Includes data structure and algorithms used in the system that
-  do not provide direct interaction with the user. 
+  do not provide direct interaction with the user.
   % Changes in these modules are more likely to be motivated by a desire to
   % improve performance than by externally imposed changes.
 \item[Implemented By:] --
