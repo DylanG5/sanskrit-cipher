@@ -56,8 +56,14 @@ urlcolor=cyan          % color of external links
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+
+Nov.\ 13, 2025 & 1.0 & Added Section 2: Symbols, Abbreviations and Acronyms.\\
+Nov.\ 13, 2025 & 1.1 & Added Section 3: Introduction.\\
+Nov.\ 13, 2025 & 1.2 & Added Section 4: Notation.\\
+Nov.\ 13, 2025 & 1.3 & Added Section 5: Module Decomposition.\\
+Nov.\ 13, 2025 & 1.4 & Added Sections 6--29: Module Interface Specifications for all modules.\\
+Nov.\ 13, 2025 & 1.5 & Added Reflection and References\\
+
 \bottomrule
 \end{tabularx}
 
@@ -65,9 +71,60 @@ Date 2 & 1.1 & Notes\\
 
 \section{Symbols, Abbreviations and Acronyms}
 
-See SRS Documentation at \wss{give url}
+The following symbols, abbreviations, and acronyms are used throughout this Module Interface Specification (MIS):
 
-\wss{Also add any additional symbols, abbreviations or acronyms}
+\subsection*{Project-Specific}
+\begin{itemize}
+    \item \textbf{SMFRP} — Sanskrit Manuscript Fragment Reconstruction Platform
+    \item \textbf{SRS} — System Requirements Specification
+    \item \textbf{MG} — Module Guide
+    \item \textbf{MIS} — Module Interface Specification
+\end{itemize}
+
+\subsection*{Layer \& Module Prefixes}
+\begin{itemize}
+    \item \textbf{HW} — Hardware-Hiding Level
+    \item \textbf{UI} — User Interface Layer
+    \item \textbf{Svc} — Service Layer
+    \item \textbf{ML} — Machine Learning Layer
+    \item \textbf{Data} — Data Management Layer
+    \item \textbf{Util} — Utility / Software Decision Level
+\end{itemize}
+
+\subsection*{UI / Web Terms}
+\begin{itemize}
+    \item \textbf{DOM} — Document Object Model
+    \item \textbf{UI} — User Interface
+    \item \textbf{HTML} — HyperText Markup Language
+    \item \textbf{API} — Application Programming Interface
+    \item \textbf{URL} — Uniform Resource Locator
+\end{itemize}
+
+\subsection*{Data Types \& Structures}
+\begin{itemize}
+    \item \textbf{ID} — Identifier (e.g., ImageID, FragmentID)
+    \item \textbf{MB} — Megabyte
+    \item \textbf{JSON} — JavaScript Object Notation
+    \item \textbf{HTTP} — Hypertext Transfer Protocol
+    \item \textbf{REST} — Representational State Transfer
+\end{itemize}
+
+\subsection*{Exceptions / Errors}
+\begin{itemize}
+    \item \textbf{UIRenderError} — User Interface Rendering Error
+    \item \textbf{NetworkError} — Network Communication Error
+    \item \textbf{ValidationError} — Input Validation Error
+    \item \textbf{UploadError} — File Upload Failure
+    \item \textbf{AuthError} — Authentication Error
+    \item \textbf{NotFoundError} — Missing Resource
+    \item \textbf{StorageWriteError} / \textbf{StorageReadError} — File I/O Problems
+\end{itemize}
+
+\subsection*{Machine Learning Terms}
+\begin{itemize}
+    \item \textbf{OCR} — Optical Character Recognition
+    \item \textbf{ML} — Machine Learning
+\end{itemize}
 
 \newpage
 
@@ -91,7 +148,7 @@ This document ensures that the system achieves consistency, and minimal coupling
 
 \subsection*{Complementary Documents}
 \begin{itemize}
-    \item \textbf{System Requirements Specification (SRS)} – Defines the system’s functional and non-functional requirements. The SRS can be accessed at: \href{https://github.com/DylanG5/sanskrit-ciphers-requirements/tree/ab899d5d07b554c8e80fb4fc8a8adaa181a0c81a}{SRS}
+    \item \textbf{System Requirements Specification (SRS)} – Defines the system’s functional and non-functional requirements. The SRS \citep{SRS-Sanskrit-Ciphers} can be accessed at: \href{https://github.com/DylanG5/sanskrit-ciphers-requirements/tree/ab899d5d07b554c8e80fb4fc8a8adaa181a0c81a}{SRS}
     \item \textbf{Module Guide (MG)} – Outlines the overall software architecture, module decomposition, and dependency hierarchy.
 \end{itemize}
 
@@ -2185,11 +2242,7 @@ This module provides stub implementations of selected services and ML components
 
 \newpage
 
-\section{Appendix} \label{Appendix}
 
-\wss{Extra information if required}
-
-\newpage{}
 
 \section*{Appendix --- Reflection}
 
@@ -2216,7 +2269,7 @@ graduate attribute of Problem Analysis and Design.
   \item While creating the design doc, what parts of your other documents (e.g.
   requirements, hazard analysis, etc), it any, needed to be changed, and why?
 
-    \hspace{2em} Very few changes were needed to our previous documents. Because this is a pre-approved project with a well-defined problem and scope, many of the requirements and expectations were already laid out for us in the project description. As a result, our earlier documents, such as the SRS and Hazard Analysis, aligned naturally with the design work we did here. We did not need to revisit or adjust them significantly, beyond minor wording refinements and consistency updates.
+    \hspace{2em} Very few changes were needed to our previous documents. Because this is a pre-approved project with a well-defined problem and scope, many of the requirements and expectations were already laid out for us in the project description. As a result, our earlier documents, such as the SRS \citep{SRS-Sanskrit-Ciphers} and Hazard Analysis \citep{HazardAnalysis}, aligned naturally with the design work we did here. We did not need to revisit or adjust them significantly, beyond minor wording refinements and consistency updates.
 
   \item What are the limitations of your solution?  Put another way, given
   unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)
