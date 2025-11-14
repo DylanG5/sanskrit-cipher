@@ -204,76 +204,1975 @@ This level defines the functional behavior of the system, implementing the requi
 This level includes supporting components that are primarily design decisions rather than functional necessities. These modules include configuration handlers, utility libraries, and testing or logging frameworks that support development, debugging, and maintenance.
 
 
-\section{MIS of \wss{Module Name}} \label{Module} \wss{Use labels for
-  cross-referencing}
-
-\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
-
-\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+\section{MIS of HW.ImageStorage} \label{HW.ImageStorage}
 
 \subsection{Module}
+\textbf{HW.ImageStorage} \; (Image Storage Interface)
 
-\wss{Short name for the module}
+This module provides a uniform interface for reading, writing, and managing manuscript fragment image files and related metadata in the underlying file system or cloud storage. It hides all platform-specific file operations from higher-level modules and ensures consistent access and naming conventions.
 
 \subsection{Uses}
-
+\begin{itemize}
+    \item \texttt{Data.FragmentStore} – for linking stored image references to fragment metadata records.
+    \item \texttt{Svc.ProcOrch} – for initiating preprocessing or orientation correction workflows once an image is stored.
+    \item External file system or object storage API.
+\end{itemize}
 
 \subsection{Syntax}
 
 \subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_FILE\_SIZE = 50MB}
+    \item \texttt{SUPPORTED\_FORMATS = \{.jpg, .png, .tiff\}}
+    \item \texttt{STORAGE\_PATH = "/images/"}
+\end{itemize}
 
 \subsubsection{Exported Access Programs}
 
-\begin{center}
-\begin{tabular}{p{2cm} p{4cm} p{4cm} p{2cm}}
-\hline
+\begin{table}[H]
+\centering
+\small
+\caption{HW.ImageStorage - Exported Access Programs}
+\begin{tabular}{p{3cm} p{3.5cm} p{3cm} p{4.5cm}}
+\toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
-\hline
-\wss{accessProg} & - & - & - \\
-\hline
+\midrule
+\texttt{storeImage} & \texttt{file: ImageFile, metadata: Record} & \texttt{ImageID} & \texttt{InvalidFormatError, StorageWriteError} \\
+\texttt{retrieveImage} & \texttt{id: ImageID} & \texttt{ImageFile} & \texttt{NotFoundError, StorageReadError} \\
+\texttt{deleteImage} & \texttt{id: ImageID} & \texttt{bool} & \texttt{NotFoundError, StorageWriteError} \\
+\texttt{getMetadata} & \texttt{id: ImageID} & \texttt{Record} & \texttt{NotFoundError} \\
+\bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Semantics}
 
 \subsubsection{State Variables}
-
-\wss{Not all modules will have state variables.  State variables give the module
-  a memory.}
+\begin{itemize}
+    \item \texttt{storageIndex: Map[ImageID, FilePath]}
+    \item \texttt{metadataCache: Map[ImageID, Record]}
+\end{itemize}
 
 \subsubsection{Environment Variables}
-
-\wss{This section is not necessary for all modules.  Its purpose is to capture
-  when the module has external interaction with the environment, such as for a
-  device driver, screen interface, keyboard, file, etc.}
+\begin{itemize}
+    \item \texttt{FileSystem / CloudStorage} – external persistence for image binaries
+\end{itemize}
 
 \subsubsection{Assumptions}
-
-\wss{Try to minimize assumptions and anticipate programmer errors via
-  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+\begin{itemize}
+    \item The underlying storage service guarantees atomic read/write operations.
+    \item ImageIDs are globally unique.
+\end{itemize}
 
 \subsubsection{Access Routine Semantics}
 
-\noindent \wss{accessProg}():
+\noindent \texttt{storeImage(file, metadata)}:
 \begin{itemize}
-\item transition: \wss{if appropriate} 
-\item output: \wss{if appropriate} 
-\item exception: \wss{if appropriate} 
+    \item transition: file is written to storage; \texttt{storageIndex} and \texttt{metadataCache} updated with new entry.
+    \item output: a newly generated \texttt{ImageID}.
+    \item exception: \texttt{InvalidFormatError} if file type not in \texttt{SUPPORTED\_FORMATS}; \texttt{StorageWriteError} if write fails.
 \end{itemize}
 
-\wss{A module without environment variables or state variables is unlikely to
-  have a state transition.  In this case a state transition can only occur if
-  the module is changing the state of another module.}
+\noindent \texttt{retrieveImage(id)}:
+\begin{itemize}
+    \item output: image file associated with \texttt{id}.
+    \item exception: \texttt{NotFoundError} if \texttt{id} absent from \texttt{storageIndex}; \texttt{StorageReadError} if read fails.
+\end{itemize}
 
-\wss{Modules rarely have both a transition and an output.  In most cases you
-  will have one or the other.}
+\noindent \texttt{deleteImage(id)}:
+\begin{itemize}
+    \item transition: remove image file from storage; delete entries from \texttt{storageIndex} and \texttt{metadataCache}.
+    \item output: \texttt{true} if deletion successful.
+    \item exception: \texttt{NotFoundError} if \texttt{id} not present; \texttt{StorageWriteError} if deletion fails.
+\end{itemize}
+
+\noindent \texttt{getMetadata(id)}:
+\begin{itemize}
+    \item output: metadata record associated with \texttt{id}.
+    \item exception: \texttt{NotFoundError} if no record exists.
+\end{itemize}
 
 \subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{generateImageID(file: ImageFile): ImageID}
+    \item \texttt{validateFormat(file: ImageFile): bool}
+\end{itemize}
 
-\wss{As appropriate} \wss{These functions are for the purpose of specification.
-  They are not necessarily something that is going to be implemented
-  explicitly.  Even if they are implemented, they are not exported; they only
-  have local scope.}
+
+
+\section{MIS of UI.Auth} \label{UI.Auth}
+
+\subsection{Module}
+\textbf{UI.Auth} \; (Authentication Interface)
+
+This module provides the browser-facing login and logout experience. It collects user credentials, displays relevant error messages, and forwards authentication requests to the backend service. It does not perform authentication logic itself.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Svc.AuthZ} – for validating credentials and issuing session tokens.
+    \item \texttt{Svc.Session} – for managing client-side session lifecycle.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_LOGIN\_ATTEMPTS = 5}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{UI.Auth - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.2cm} p{3.2cm} p{4.1cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{renderLoginForm} & \texttt{none} & \texttt{none} & \texttt{UIRenderError} \\
+\texttt{submitCredentials} & \texttt{creds: UserCredentials} & \texttt{AuthResult} & \texttt{AuthError, NetworkError, InboxOverflowError} \\
+\texttt{logoutUser} & \texttt{none} & \texttt{bool} & \texttt{NetworkError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{loginAttempts: int} – count of consecutive failed attempts in current session.
+    \item \texttt{authErrorMessage: String} – message shown on failed login.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Browser window and Document Object Model(DOM).
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Network connectivity is available for requests to \texttt{Svc.AuthZ}.
+    \item Password input is masked and handled securely by the browser.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{renderLoginForm()}:
+\begin{itemize}
+    \item transition: updates DOM to show login form, clears previous error message.
+    \item output: none.
+    \item exception: \texttt{UIRenderError} if DOM cannot be updated.
+\end{itemize}
+
+\noindent \texttt{submitCredentials(creds)}:
+\begin{itemize}
+    \item transition: sends credentials to \texttt{Svc.AuthZ}; updates \texttt{loginAttempts} and \texttt{authErrorMessage} based on response.
+    \item output: \texttt{AuthResult} indicating success or failure.
+    \item exception: \texttt{AuthError} if credentials rejected; \texttt{NetworkError} if backend unreachable.
+\end{itemize}
+
+\noindent \texttt{logoutUser()}:
+\begin{itemize}
+    \item transition: clears client-side session state and redirects to login view.
+    \item output: \texttt{true} if logout succeeds.
+    \item exception: \texttt{NetworkError} if logout call to backend fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{displayError(msg: String)} – updates UI error region.
+    \item \texttt{resetForm()} – clears form fields.
+\end{itemize}
+
+
+
+\section{MIS of UI.Upload} \label{UI.Upload}
+
+\subsection{Module}
+\textbf{UI.Upload} \; (Fragment Upload Interface)
+
+This module allows users to select, preview, and submit manuscript fragment images for processing. It performs basic client-side validation and delegates storage and preprocessing to backend services.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Svc.API} – for upload endpoints.
+    \item \texttt{HW.ImageStorage} – indirectly, via backend, for persistent image storage.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_FILES\_PER\_UPLOAD = 20}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{UI.Upload - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4cm} p{2.8cm} p{3.7cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{renderUploadPanel} & \texttt{none} & \texttt{none} & \texttt{UIRenderError} \\
+\texttt{selectFiles} & \texttt{files: Sequence[ImageFile]} & \texttt{none} & \texttt{ValidationError} \\
+\texttt{submitUpload} & \texttt{none} & \texttt{UploadResult} & \texttt{NetworkError, UploadError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{pendingFiles: Sequence[ImageFile]}
+    \item \texttt{uploadErrorMessage: String}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Browser file picker and local file system access (sandboxed).
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item The browser enforces configured file size constraints on selection when possible.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{renderUploadPanel()}:
+\begin{itemize}
+    \item transition: renders the upload panel, including file input control and status indicators.
+    \item output: none.
+    \item exception: \texttt{UIRenderError} if DOM cannot be updated.
+\end{itemize}
+
+\noindent \texttt{selectFiles(files)}:
+\begin{itemize}
+    \item transition: validates file count and basic properties; if valid, stores them in \texttt{pendingFiles}.
+    \item output: none.
+    \item exception: \texttt{ValidationError} if any file exceeds size or format constraints.
+\end{itemize}
+
+\noindent \texttt{submitUpload()}:
+\begin{itemize}
+    \item transition: sends \texttt{pendingFiles} to backend via \texttt{Svc.API}; clears \texttt{pendingFiles} on success.
+    \item output: \texttt{UploadResult} containing list of created fragment IDs.
+    \item exception: \texttt{NetworkError} if request fails; \texttt{UploadError} if backend rejects the upload.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{validateFiles(files)} – checks count, format, and size bounds.
+    \item \texttt{previewThumbnails()} – generates and displays thumbnails for selected files.
+\end{itemize}
+
+
+
+\section{MIS of UI.Canvas} \label{UI.Canvas}
+
+\subsection{Module}
+\textbf{UI.Canvas} \; (Interactive Fragment Workspace)
+
+This module provides the interactive canvas where scholars can view, move, rotate, and arrange multiple fragments simultaneously. It displays match suggestions and visual overlays for edges, damage patterns, or text regions.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Svc.MatchOrch} – for requesting match suggestions.
+    \item \texttt{Svc.Session} – for loading and saving canvas layouts.
+    \item \texttt{Svc.API} – for fetching fragment images and overlays.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_FRAGMENTS\_ON\_CANVAS = 50}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{UI.Canvas - Exported Access Programs}
+\begin{tabular}{p{3.3cm} p{3.8cm} p{2.8cm} p{4.1cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{renderCanvas} & \texttt{state: CanvasState} & \texttt{none} & \texttt{UIRenderError} \\
+\texttt{placeFragment} & \texttt{id: FragmentID, position: Tuple} & \texttt{none} & \texttt{LayoutError} \\
+\texttt{rotateFragment} & \texttt{id: FragmentID, angle: float} & \texttt{none} & \texttt{LayoutError} \\
+\texttt{requestMatches} & \texttt{id: FragmentID} & \texttt{none} & \texttt{NetworkError} \\
+\texttt{saveLayout} & \texttt{none} & \texttt{LayoutID} & \texttt{NetworkError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{currentState: CanvasState} – positions, rotations, and visibility for fragments.
+    \item \texttt{selectedFragment: FragmentID or null}
+    \item \texttt{activeMatchOverlay: MatchResultList}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Browser rendering surface (HTML canvas or equivalent).
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Device supports required rendering capabilities for zoom and pan.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{renderCanvas(state)}:
+\begin{itemize}
+    \item transition: updates the visual layout to match \texttt{state}.
+    \item output: none.
+    \item exception: \texttt{UIRenderError} if rendering fails.
+\end{itemize}
+
+\noindent \texttt{placeFragment(id, position)}:
+\begin{itemize}
+    \item transition: updates \texttt{currentState} with new position for \texttt{id}.
+    \item output: none.
+    \item exception: \texttt{LayoutError} if fragment exceeds bounds or limit exceeded.
+\end{itemize}
+
+\noindent \texttt{rotateFragment(id, angle)}:
+\begin{itemize}
+    \item transition: updates rotation of \texttt{id} in \texttt{currentState}.
+    \item output: none.
+    \item exception: \texttt{LayoutError} if rotation cannot be applied.
+\end{itemize}
+
+\noindent \texttt{requestMatches(id)}:
+\begin{itemize}
+    \item transition: sends match request to \texttt{Svc.MatchOrch}; updates \texttt{activeMatchOverlay} when response is received.
+    \item output: none.
+    \item exception: \texttt{NetworkError} if request fails.
+\end{itemize}
+
+\noindent \texttt{saveLayout()}:
+\begin{itemize}
+    \item transition: persists \texttt{currentState} via \texttt{Svc.Session}.
+    \item output: a \texttt{LayoutID} for later retrieval.
+    \item exception: \texttt{NetworkError} if persistence fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{snapToEdges(id)} – adjusts position so nearby edges align visually.
+    \item \texttt{highlightMatches(id)} – visually emphasizes suggested neighbors.
+\end{itemize}
+
+
+
+\section{MIS of UI.Search} \label{UI.Search}
+
+\subsection{Module}
+\textbf{UI.Search} \; (Database Search and Exploration Interface)
+
+This module provides the interface for querying the fragment database, filtering results, and viewing metadata. It supports search by script type, line count, fragment size, and other criteria.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Svc.Search} – for executing search queries.
+    \item \texttt{Svc.API} – for retrieving fragment summaries and export payloads.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{RESULTS\_PAGE\_SIZE = 25}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{UI.Search - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.2cm} p{3.2cm} p{4.1cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{renderSearchPanel} & \texttt{none} & \texttt{none} & \texttt{UIRenderError} \\
+\texttt{submitQuery} & \texttt{q: SearchQuery} & \texttt{none} & \texttt{ValidationError, NetworkError} \\
+\texttt{nextPage} & \texttt{none} & \texttt{none} & \texttt{NetworkError} \\
+\texttt{exportResults} & \texttt{format: ExportFormat} & \texttt{none} & \texttt{NetworkError, ExportError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{currentQuery: SearchQuery}
+    \item \texttt{currentPage: int}
+    \item \texttt{results: SearchResultPage}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Browser viewport for displaying tables and filters.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Backend search service responds within acceptable time bounds defined in the SRS.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{renderSearchPanel()}:
+\begin{itemize}
+    \item transition: displays search form, filters, and an empty or last-used results view.
+    \item output: none.
+    \item exception: \texttt{UIRenderError} if rendering fails.
+\end{itemize}
+
+\noindent \texttt{submitQuery(q)}:
+\begin{itemize}
+    \item transition: validates query parameters; if valid, sends query to \texttt{Svc.Search} and updates \texttt{results} and \texttt{currentPage}.
+    \item output: none.
+    \item exception: \texttt{ValidationError} if query malformed; \texttt{NetworkError} if backend unreachable.
+\end{itemize}
+
+\noindent \texttt{nextPage()}:
+\begin{itemize}
+    \item transition: increments \texttt{currentPage} and requests next result page.
+    \item output: none.
+    \item exception: \texttt{NetworkError} if request fails.
+\end{itemize}
+
+\noindent \texttt{exportResults(format)}:
+\begin{itemize}
+    \item transition: sends export request for current query to backend.
+    \item output: none at UI level; triggers file download in browser.
+    \item exception: \texttt{NetworkError} if backend unreachable; \texttt{ExportError} if export fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{renderResultsTable(results)} – updates DOM table from latest \texttt{SearchResultPage}.
+    \item \texttt{validateSearchQuery(q)} – checks filter ranges and required fields.
+\end{itemize}
+
+\section{MIS of Svc.API} \label{Svc.API}
+
+\subsection{Module}
+\textbf{Svc.API} \; (Backend API Gateway)
+
+This module exposes the backend functionality of the Sanskrit Manuscript Fragment Reconstruction Platform as a REST-style service layer. It routes incoming HTTP requests from the UI to the corresponding internal services, enforces basic request validation, and standardizes API responses.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Svc.AuthZ} – for authentication and authorization checks.
+    \item \texttt{Svc.Session} – for resolving current user/session context.
+    \item \texttt{Svc.ProcOrch} – for preprocessing and normalization requests.
+    \item \texttt{Svc.MatchOrch} – for fragment match discovery.
+    \item \texttt{Svc.Search} – for database search and exploration.
+    \item \texttt{Data.FragmentStore}, \texttt{Data.User}, \texttt{Data.Project}.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{API\_VERSION = "v1"}
+    \item \texttt{MAX\_REQUEST\_SIZE} – logical upper bound on payload size (aligned with SRS).
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.API - Exported Access Programs}
+\begin{tabular}{p{4cm} p{2.9cm} p{2.9cm} p{4.2cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{handleAuthRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{AuthError} \\
+\texttt{handleUploadRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ValidationError, ServiceError} \\
+\texttt{handleMatchRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ServiceError} \\
+\texttt{handleSearchRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ValidationError, ServiceError} \\
+\texttt{handleSessionRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ServiceError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{routeTable: Map[Endpoint, Handler]} – mapping between URL paths and internal handlers.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item HTTP server environment providing incoming requests and outgoing responses.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item All requests include sufficient information to resolve user/session context when required.
+    \item Lower-level services enforce their own invariants in addition to basic checks at this layer.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{handleAuthRequest(req)}:
+\begin{itemize}
+    \item transition: forwards credentials/token to \texttt{Svc.AuthZ}; logs outcome.
+    \item output: \texttt{HttpResponse} with status code and (if successful) session token or user info.
+    \item exception: \texttt{AuthError} if authentication fails or token invalid.
+\end{itemize}
+
+\noindent \texttt{handleUploadRequest(req)}:
+\begin{itemize}
+    \item transition: validates payload size and type; forwards work to \texttt{Svc.ProcOrch} for ingestion.
+    \item output: \texttt{HttpResponse} including created fragment IDs or error details.
+    \item exception: \texttt{ValidationError} if request violates constraints; \texttt{ServiceError} if downstream failure occurs.
+\end{itemize}
+
+\noindent \texttt{handleMatchRequest(req)}:
+\begin{itemize}
+    \item transition: parses fragment identifier and forwards to \texttt{Svc.MatchOrch}.
+    \item output: \texttt{HttpResponse} containing ranked match suggestions.
+    \item exception: \texttt{ServiceError} if orchestrator fails or times out.
+\end{itemize}
+
+\noindent \texttt{handleSearchRequest(req)}:
+\begin{itemize}
+    \item transition: validates search query parameters; forwards to \texttt{Svc.Search}.
+    \item output: \texttt{HttpResponse} containing search results page.
+    \item exception: \texttt{ValidationError} for malformed queries; \texttt{ServiceError} on backend failures.
+\end{itemize}
+
+\noindent \texttt{handleSessionRequest(req)}:
+\begin{itemize}
+    \item transition: routes session save/load actions to \texttt{Svc.Session}.
+    \item output: \texttt{HttpResponse} with session payload or confirmation.
+    \item exception: \texttt{ServiceError} if the session operation fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{parseJSONBody(req)} – extracts and validates JSON payload.
+    \item \texttt{buildErrorResponse(code, msg)} – standardizes error responses.
+\end{itemize}
+
+\section{MIS of Svc.AuthZ} \label{Svc.AuthZ}
+
+\subsection{Module}
+\textbf{Svc.AuthZ} \; (Authentication and Authorization Service)
+
+This module validates user credentials, issues and verifies session tokens, and enforces access control for protected operations.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Data.User} – for user credentials and role lookup.
+    \item Cryptographic utilities (hashing, token signing).
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{TOKEN\_TTL\_MINUTES} – session token lifetime.
+    \item \texttt{MAX\_FAILED\_ATTEMPTS} – lockout threshold.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.AuthZ - Exported Access Programs}
+\begin{tabular}{p{3.2cm} p{3.8cm} p{3cm} p{4cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{authenticate} & \texttt{creds: UserCredentials} & \texttt{AuthResult} & \texttt{AuthError} \\
+\texttt{validateToken} & \texttt{token: String} & \texttt{UserContext} & \texttt{AuthError} \\
+\texttt{checkAccess} & \texttt{ctx: UserContext, action: String} & \texttt{bool} & \texttt{AuthError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{failedAttempts: Map[UserID, int]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Secure storage for password hashes and secret keys.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Passwords are stored as salted hashes only.
+    \item Time and randomness sources are trustworthy for token generation.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{authenticate(creds)}:
+\begin{itemize}
+    \item transition: verifies credentials against stored hash; updates \texttt{failedAttempts}.
+    \item output: \texttt{AuthResult} containing success flag and token on success.
+    \item exception: \texttt{AuthError} if user locked out or credentials invalid.
+\end{itemize}
+
+\noindent \texttt{validateToken(token)}:
+\begin{itemize}
+    \item output: \texttt{UserContext} if token valid and not expired.
+    \item exception: \texttt{AuthError} if token invalid or expired.
+\end{itemize}
+
+\noindent \texttt{checkAccess(ctx, action)}:
+\begin{itemize}
+    \item output: \texttt{true} if user role in \texttt{ctx} is allowed to perform \texttt{action}.
+    \item exception: \texttt{AuthError} if context invalid.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{hashPassword(pw)} – hashes password for comparison.
+    \item \texttt{generateToken(user)} – constructs signed token.
+\end{itemize}
+
+
+
+\section{MIS of Svc.Session} \label{Svc.Session}
+
+\subsection{Module}
+\textbf{Svc.Session} \; (Session and Workspace Management Service)
+
+This module manages user sessions, saved canvas layouts, and ongoing reconstruction projects. It provides persistent storage and retrieval of user workspace state.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Data.Project} – for project-level data and references.
+    \item \texttt{Data.User} – for associating sessions with users.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_SAVED\_LAYOUTS\_PER\_USER}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.Session - Exported Access Programs}
+\begin{tabular}{p{3.3cm} p{3cm} p{4.8cm} p{3.9cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{saveCanvasState} & \texttt{ctx: UserContext, state: CanvasState} & \texttt{LayoutID} & \texttt{SessionError} \\
+\texttt{loadCanvasState} & \texttt{ctx: UserContext, id: LayoutID} & \texttt{CanvasState} & \texttt{NotFoundError, SessionError} \\
+\texttt{listLayouts} & \texttt{ctx: UserContext} & \texttt{Sequence[LayoutSummary]} & \texttt{SessionError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{layoutStore: Map[LayoutID, (UserID, CanvasState)]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Persistent database for layouts and project metadata.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item \texttt{UserContext} is valid and has been authenticated by \texttt{Svc.AuthZ}.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{saveCanvasState(ctx, state)}:
+\begin{itemize}
+    \item transition: creates or updates an entry in \texttt{layoutStore} for the user.
+    \item output: generated \texttt{LayoutID}.
+    \item exception: \texttt{SessionError} if write fails or limit exceeded.
+\end{itemize}
+
+\noindent \texttt{loadCanvasState(ctx, id)}:
+\begin{itemize}
+    \item output: \texttt{CanvasState} associated with user and layout ID.
+    \item exception: \texttt{NotFoundError} if layout does not exist or not owned by user; \texttt{SessionError} on read failure.
+\end{itemize}
+
+\noindent \texttt{listLayouts(ctx)}:
+\begin{itemize}
+    \item output: summaries of layouts owned by the user.
+    \item exception: \texttt{SessionError} if retrieval fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{generateLayoutID()} – creates unique identifier for layouts.
+\end{itemize}
+
+
+
+\section{MIS of Svc.ProcOrch} \label{Svc.ProcOrch}
+
+\subsection{Module}
+\textbf{Svc.ProcOrch} \; (Preprocessing and Normalization Orchestrator)
+
+This module coordinates image preprocessing workflows such as orientation correction, denoising, and resolution standardization before downstream analysis.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage} – for reading and writing image files.
+    \item \texttt{ML.EdgeMatch}, \texttt{ML.Damage} – where preprocessing parameters are shared.
+    \item External image processing library (for example, OpenCV).
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{TARGET\_RESOLUTION} – canonical resolution for normalized images.
+    \item \texttt{MAX\_ORIENTATION\_ERROR} – tolerated post-correction skew.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.ProcOrch - Exported Access Programs}
+\begin{tabular}{p{4cm} p{3cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{enqueuePreprocessing} & \texttt{id: ImageID} & \texttt{JobID} & \texttt{PreprocError} \\
+\texttt{runPreprocessing} & \texttt{job: JobID} & \texttt{PreprocResult} & \texttt{PreprocError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{jobQueue: Sequence[JobID]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Execution environment for batch or async jobs.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Input image already stored by \texttt{HW.ImageStorage}.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{enqueuePreprocessing(id)}:
+\begin{itemize}
+    \item transition: creates a preprocessing job for \texttt{id} and appends it to \texttt{jobQueue}.
+    \item output: \texttt{JobID} for tracking.
+    \item exception: \texttt{PreprocError} if job cannot be created.
+\end{itemize}
+
+\noindent \texttt{runPreprocessing(job)}:
+\begin{itemize}
+    \item transition: retrieves image by \texttt{ImageID}, applies normalization steps, and writes results back to storage.
+    \item output: \texttt{PreprocResult} containing normalized image reference and metrics (for example, estimated orientation error).
+    \item exception: \texttt{PreprocError} if any step fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{correctOrientation(img)} – aligns text horizontally.
+    \item \texttt{normalizeResolution(img)} – resamples to \texttt{TARGET\_RESOLUTION}.
+\end{itemize}
+
+
+
+\section{MIS of Svc.MatchOrch} \label{Svc.MatchOrch}
+
+\subsection{Module}
+\textbf{Svc.MatchOrch} \; (Fragment Matching Orchestrator)
+
+This module coordinates AI models for fragment matching, aggregates model outputs, and produces ranked match suggestions for a given fragment.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{ML.EdgeMatch}, \texttt{ML.Damage}, \texttt{ML.TextSim}.
+    \item \texttt{Data.FragmentStore} – for retrieving fragment metadata.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_TOP\_MATCHES = 10}
+    \item \texttt{MATCH\_CONFIDENCE\_THRESHOLD = 0.6}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.MatchOrch - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4.5cm} p{2.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{generateMatches} & \texttt{frag: FragmentID} & \texttt{MatchResultList} & \texttt{MatchError} \\
+\texttt{aggregateScores} & \texttt{scores: Sequence[ModelScore]} & \texttt{float} & \texttt{AggregationError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{recentResults: Map[FragmentID, MatchResultList]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item ML model serving endpoints.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Each model returns normalized scores in \([0, 1]\).
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{generateMatches(frag)}:
+\begin{itemize}
+    \item transition: queries all relevant ML models; aggregates and sorts candidate matches; updates \texttt{recentResults}.
+    \item output: \texttt{MatchResultList} of top candidates above threshold.
+    \item exception: \texttt{MatchError} if models unavailable or response invalid.
+\end{itemize}
+
+\noindent \texttt{aggregateScores(scores)}:
+\begin{itemize}
+    \item output: combined score (for example, weighted mean) over model scores.
+    \item exception: \texttt{AggregationError} if sequence empty or weights invalid.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{filterByThreshold(results)} – drops candidates below \texttt{MATCH\_CONFIDENCE\_THRESHOLD}.
+    \item \texttt{sortByScore(results)} – orders candidates descending by final score.
+\end{itemize}
+
+
+
+\section{MIS of Svc.Search} \label{Svc.Search}
+
+\subsection{Module}
+\textbf{Svc.Search} \; (Search and Exploration Service)
+
+This module executes queries over stored fragments and metadata, providing paginated and filterable search results to the UI.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Data.FragmentStore}, \texttt{Data.Catalog}.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{DEFAULT\_PAGE\_SIZE = 25}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Svc.Search - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4cm} p{3.2cm} p{4.3cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{executeQuery} & \texttt{q: SearchQuery, page: int} & \texttt{SearchResultPage} & \texttt{SearchError} \\
+\texttt{exportResults} & \texttt{q: SearchQuery, format: ExportFormat} & \texttt{ExportPayload} & \texttt{SearchError, ExportError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item none
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Database engine for indexing and querying fragment records.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item All searchable fields are indexed appropriately for performance.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{executeQuery(q, page)}:
+\begin{itemize}
+    \item output: \texttt{SearchResultPage} containing fragment summaries for the requested page.
+    \item exception: \texttt{SearchError} if query invalid or backend failure occurs.
+\end{itemize}
+
+\noindent \texttt{exportResults(q, format)}:
+\begin{itemize}
+    \item output: \texttt{ExportPayload} that can be streamed to client as CSV or PDF.
+    \item exception: \texttt{SearchError} on query failure; \texttt{ExportError} if export generation fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{buildQueryPlan(q)} – compiles filter and sort options into database query.
+    \item \texttt{formatExport(results, format)} – converts results into specified output format.
+\end{itemize}
+
+%===========================
+% DATA MANAGEMENT MODULES
+%===========================
+
+\section{MIS of Data.FragmentStore} \label{Data.FragmentStore}
+
+\subsection{Module}
+\textbf{Data.FragmentStore} \; (Fragment Metadata Store)
+
+This module is responsible for storing and retrieving logical fragment entities. It maintains metadata such as fragment IDs, associated image IDs, script labels, line counts, and status flags, and acts as the core record of fragments used throughout the system.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage} – via stored \texttt{ImageID} references.
+    \item \texttt{Data.Catalog} – for linking to external catalogue identifiers when available.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_LABEL\_LENGTH}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Data.FragmentStore - Exported Access Programs}
+\begin{tabular}{p{3.2cm} p{3.8cm} p{3cm} p{4cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{createFragment} & \texttt{rec: FragmentRecord} & \texttt{FragmentID} & \texttt{FragmentError} \\
+\texttt{getFragment} & \texttt{id: FragmentID} & \texttt{FragmentRecord} & \texttt{NotFoundError} \\
+\texttt{updateFragment} & \texttt{id: FragmentID, rec: FragmentRecord} & \texttt{bool} & \texttt{FragmentError, NotFoundError} \\
+\texttt{deleteFragment} & \texttt{id: FragmentID} & \texttt{bool} & \texttt{FragmentError, NotFoundError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{fragmentTable: Map[FragmentID, FragmentRecord]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Relational database or equivalent persistent storage.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Fragment IDs are globally unique and stable over time.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{createFragment(rec)}:
+\begin{itemize}
+    \item transition: inserts a new record into \texttt{fragmentTable}.
+    \item output: new \texttt{FragmentID}.
+    \item exception: \texttt{FragmentError} if insert fails or constraints violated.
+\end{itemize}
+
+\noindent \texttt{getFragment(id)}:
+\begin{itemize}
+    \item output: record associated with \texttt{id}.
+    \item exception: \texttt{NotFoundError} if no record exists.
+\end{itemize}
+
+\noindent \texttt{updateFragment(id, rec)}:
+\begin{itemize}
+    \item transition: replaces existing record for \texttt{id} with \texttt{rec}.
+    \item output: \texttt{true} if update successful.
+    \item exception: \texttt{NotFoundError} if \texttt{id} unknown; \texttt{FragmentError} on write failure.
+\end{itemize}
+
+\noindent \texttt{deleteFragment(id)}:
+\begin{itemize}
+    \item transition: removes record associated with \texttt{id}.
+    \item output: \texttt{true} if deletion successful.
+    \item exception: \texttt{NotFoundError} if \texttt{id} unknown; \texttt{FragmentError} on delete failure.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{validateFragment(rec)} – checks required fields and constraints.
+\end{itemize}
+
+
+
+\section{MIS of Data.Catalog} \label{Data.Catalog}
+
+\subsection{Module}
+\textbf{Data.Catalog} \; (External Catalogue Link Store)
+
+This module maintains mappings between internal fragments and external catalogue identifiers from libraries, collections, or previous editions.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Data.FragmentStore} – for core fragment records.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_CATALOG\_ID\_LENGTH}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Data.Catalog - Exported Access Programs}
+\begin{tabular}{p{4.2cm} p{3.8cm} p{3.5cm} p{2.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{linkFragmentToCatalog} & \texttt{frag: FragmentID, catID: String} & \texttt{bool} & \texttt{CatalogError} \\
+\texttt{getCatalogIDs} & \texttt{frag: FragmentID} & \texttt{Sequence[String]} & \texttt{CatalogError} \\
+\texttt{findByCatalogID} & \texttt{catID: String} & \texttt{Sequence[FragmentID]} & \texttt{CatalogError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{catalogMap: Map[FragmentID, Sequence[String]]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Same underlying database as the fragment store or a logically related schema.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item External catalogue identifiers are opaque strings; uniqueness is handled externally.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{linkFragmentToCatalog(frag, catID)}:
+\begin{itemize}
+    \item transition: appends \texttt{catID} to the list of identifiers for \texttt{frag}.
+    \item output: \texttt{true} on success.
+    \item exception: \texttt{CatalogError} on write failure.
+\end{itemize}
+
+\noindent \texttt{getCatalogIDs(frag)}:
+\begin{itemize}
+    \item output: all catalogue IDs associated with \texttt{frag}.
+    \item exception: \texttt{CatalogError} if retrieval fails.
+\end{itemize}
+
+\noindent \texttt{findByCatalogID(catID)}:
+\begin{itemize}
+    \item output: all \texttt{FragmentID} values linked to \texttt{catID}.
+    \item exception: \texttt{CatalogError} if query fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{normalizeCatalogID(catID)} – optional normalization (trim, case).
+\end{itemize}
+
+
+
+\section{MIS of Data.User} \label{Data.User}
+
+\subsection{Module}
+\textbf{Data.User} \; (User Account Store)
+
+This module stores user accounts, credentials (hashed), roles, and profile information required for authentication and access control.
+
+\subsection{Uses}
+\begin{itemize}
+    \item Cryptographic utilities for password hashing.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_USERNAME\_LENGTH}
+    \item \texttt{MAX\_EMAIL\_LENGTH}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Data.User - Exported Access Programs}
+\begin{tabular}{p{3.3cm} p{3.5cm} p{3.2cm} p{4cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{createUser} & \texttt{rec: UserRecord} & \texttt{UserID} & \texttt{UserError} \\
+\texttt{getUserByID} & \texttt{id: UserID} & \texttt{UserRecord} & \texttt{NotFoundError} \\
+\texttt{getUserByEmail} & \texttt{email: String} & \texttt{UserRecord} & \texttt{NotFoundError} \\
+\texttt{updateUser} & \texttt{id: UserID, rec: UserRecord} & \texttt{bool} & \texttt{UserError, NotFoundError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{userTable: Map[UserID, UserRecord]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Persistent user database with appropriate access controls.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Email addresses are unique per user.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{createUser(rec)}:
+\begin{itemize}
+    \item transition: inserts new user record; hashes password fields before storage.
+    \item output: generated \texttt{UserID}.
+    \item exception: \texttt{UserError} if constraints violated or write fails.
+\end{itemize}
+
+\noindent \texttt{getUserByID(id)}:
+\begin{itemize}
+    \item output: user record with \texttt{id}.
+    \item exception: \texttt{NotFoundError} if no such user.
+\end{itemize}
+
+\noindent \texttt{getUserByEmail(email)}:
+\begin{itemize}
+    \item output: user record whose email matches \texttt{email}.
+    \item exception: \texttt{NotFoundError} if not found.
+\end{itemize}
+
+\noindent \texttt{updateUser(id, rec)}:
+\begin{itemize}
+    \item transition: updates record for \texttt{id}.
+    \item output: \texttt{true} on success.
+    \item exception: \texttt{NotFoundError} if \texttt{id} unknown; \texttt{UserError} on failure.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{validateUser(rec)} – checks email format, password policy etc.
+\end{itemize}
+
+
+
+\section{MIS of Data.Project} \label{Data.Project}
+
+\subsection{Module}
+\textbf{Data.Project} \; (Project and Reconstruction Session Store)
+
+This module records reconstruction projects, including project metadata, associated fragments, and saved reconstruction sessions.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Data.User} – to associate projects with owners or collaborators.
+    \item \texttt{Data.FragmentStore}.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_PROJECT\_NAME\_LENGTH}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Data.Project - Exported Access Programs}
+\begin{tabular}{p{3.8cm} p{3.2cm} p{4.5cm} p{2.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{createProject} & \texttt{rec: ProjectRecord} & \texttt{ProjectID} & \texttt{ProjectError} \\
+\texttt{getProject} & \texttt{id: ProjectID} & \texttt{ProjectRecord} & \texttt{NotFoundError} \\
+\texttt{updateProject} & \texttt{id: ProjectID, rec: ProjectRecord} & \texttt{bool} & \texttt{ProjectError, NotFoundError} \\
+\texttt{listProjectsForUser} & \texttt{user: UserID} & \texttt{Sequence[ProjectSummary]} & \texttt{ProjectError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{projectTable: Map[ProjectID, ProjectRecord]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Persistent project database.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Each project belongs to at least one user.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{createProject(rec)}:
+\begin{itemize}
+    \item transition: inserts new row in \texttt{projectTable}.
+    \item output: created \texttt{ProjectID}.
+    \item exception: \texttt{ProjectError} on constraint violation or failure.
+\end{itemize}
+
+\noindent \texttt{getProject(id)}:
+\begin{itemize}
+    \item output: project record matching \texttt{id}.
+    \item exception: \texttt{NotFoundError} if none exists.
+\end{itemize}
+
+\noindent \texttt{updateProject(id, rec)}:
+\begin{itemize}
+    \item transition: updates stored record.
+    \item output: \texttt{true} on success.
+    \item exception: \texttt{NotFoundError} or \texttt{ProjectError}.
+\end{itemize}
+
+\noindent \texttt{listProjectsForUser(user)}:
+\begin{itemize}
+    \item output: summaries of all projects owned by or shared with \texttt{user}.
+    \item exception: \texttt{ProjectError} if query fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{validateProject(rec)} – checks required fields and name length.
+\end{itemize}
+
+
+
+%===========================
+% MACHINE LEARNING MODULES
+%===========================
+
+\section{MIS of ML.EdgeMatch} \label{ML.EdgeMatch}
+
+\subsection{Module}
+\textbf{ML.EdgeMatch} \; (Edge Pattern Matching Model)
+
+This module provides model-based similarity estimates based on fragment edge contours and shapes.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage} – to retrieve normalized images.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{EDGE\_SIGNATURE\_DIM}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.EdgeMatch - Exported Access Programs}
+\begin{tabular}{p{4cm} p{4.5cm} p{2.3cm} p{3.2cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{computeEdgeSignature} & \texttt{id: ImageID} & \texttt{EdgeSignature} & \texttt{ModelError} \\
+\texttt{scoreEdgeSimilarity} & \texttt{a: EdgeSignature, b: EdgeSignature} & \texttt{float} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Optional cached model weights and configuration.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Model runtime (for example, PyTorch or TensorFlow backend).
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Input images have been preprocessed and normalized by \texttt{Svc.ProcOrch}.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{computeEdgeSignature(id)}:
+\begin{itemize}
+    \item output: fixed-length vector representing edge features for the image.
+    \item exception: \texttt{ModelError} if image cannot be processed.
+\end{itemize}
+
+\noindent \texttt{scoreEdgeSimilarity(a, b)}:
+\begin{itemize}
+    \item output: similarity score in \([0, 1]\) reflecting how well edges match.
+    \item exception: \texttt{ModelError} if signatures invalid or incompatible.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{extractContours(img)} – local function to compute edge features.
+\end{itemize}
+
+
+
+\section{MIS of ML.Damage} \label{ML.Damage}
+
+\subsection{Module}
+\textbf{ML.Damage} \; (Damage Pattern Recognition Model)
+
+This module characterizes damage patterns (tears, stains, burn marks) and computes similarity between fragments based on shared damage signatures.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage}.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{DAMAGE\_SIGNATURE\_DIM}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.Damage - Exported Access Programs}
+\begin{tabular}{p{4.5cm} p{4.8cm} p{2cm} p{2.7cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{computeDamageSignature} & \texttt{id: ImageID} & \texttt{DamageSignature} & \texttt{ModelError} \\
+\texttt{scoreDamageSimilarity} & \texttt{a: DamageSignature, b: DamageSignature} & \texttt{float} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Optional cached model configuration.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Same model runtime as other ML modules.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Damage features can be extracted from normalized images.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{computeDamageSignature(id)}:
+\begin{itemize}
+    \item output: feature vector encoding damage pattern characteristics.
+    \item exception: \texttt{ModelError} on failure.
+\end{itemize}
+
+\noindent \texttt{scoreDamageSimilarity(a, b)}:
+\begin{itemize}
+    \item output: similarity score in \([0, 1]\).
+    \item exception: \texttt{ModelError} if input invalid.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{segmentDamageRegions(img)} – internal helper for feature extraction.
+\end{itemize}
+
+
+
+\section{MIS of ML.ScriptClass} \label{ML.ScriptClass}
+
+\subsection{Module}
+\textbf{ML.ScriptClass} \; (Script Classification Model)
+
+This module classifies the script type of a fragment (for example, Gupta Brāhmī, Tibetan Uchen, Chinese) and returns confidence scores.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage}.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{SUPPORTED\_SCRIPTS: Sequence[String]}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.ScriptClass - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{classifyScript} & \texttt{id: ImageID} & \texttt{ScriptPrediction} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Model weights for script classification.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Model runtime and hardware accelerators (if available).
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Input image includes at least some legible text.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{classifyScript(id)}:
+\begin{itemize}
+    \item output: \texttt{ScriptPrediction} containing predicted script label and confidence.
+    \item exception: \texttt{ModelError} if classification fails or confidence undefined.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{preprocessForScript(img)} – applies script-specific preprocessing pipeline.
+\end{itemize}
+
+
+
+\section{MIS of ML.OCR} \label{ML.OCR}
+
+\subsection{Module}
+\textbf{ML.OCR} \; (Sanskrit OCR and Transcription Model)
+
+This module performs OCR on manuscript fragments, returning transcribed text and character-level confidence scores.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage}.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MIN\_ACCEPTABLE\_CONFIDENCE} – used to flag low-confidence characters.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.OCR - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{runOCR} & \texttt{id: ImageID} & \texttt{OCRResult} & \texttt{ModelError} \\
+\texttt{estimateAccuracy} & \texttt{gt: String, pred: String} & \texttt{float} & \texttt{None} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item OCR model weights and configuration.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Model runtime and any external OCR library.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Input images obey preprocessing constraints (orientation, resolution).
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{runOCR(id)}:
+\begin{itemize}
+    \item output: \texttt{OCRResult} containing recognized text and confidence scores.
+    \item exception: \texttt{ModelError} if inference fails.
+\end{itemize}
+
+\noindent \texttt{estimateAccuracy(gt, pred)}:
+\begin{itemize}
+    \item output: approximate accuracy value, for example using character-level Levenshtein-based metric.
+    \item exception: none.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{normalizeText(str)} – harmonizes text for fair comparison.
+\end{itemize}
+
+
+
+\section{MIS of ML.TextSim} \label{ML.TextSim}
+
+\subsection{Module}
+\textbf{ML.TextSim} \; (Textual Content Similarity Model)
+
+This module computes semantic similarity between text segments derived from OCR or manual transcription.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{ML.OCR} – as a source of text.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{EMBEDDING\_DIM}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.TextSim - Exported Access Programs}
+\begin{tabular}{p{3.8cm} p{4.5cm} p{2.5cm} p{3.2cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{embedText} & \texttt{text: String} & \texttt{TextEmbedding} & \texttt{ModelError} \\
+\texttt{scoreTextSimilarity} & \texttt{a: TextEmbedding, b: TextEmbedding} & \texttt{float} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Embedding model weights.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Model runtime.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Input text is normalized (script, encoding).
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{embedText(text)}:
+\begin{itemize}
+    \item output: fixed-length embedding vector.
+    \item exception: \texttt{ModelError} if model fails.
+\end{itemize}
+
+\noindent \texttt{scoreTextSimilarity(a, b)}:
+\begin{itemize}
+    \item output: similarity score in \([0, 1]\).
+    \item exception: \texttt{ModelError} if inputs invalid.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{cosineSimilarity(a, b)} – core similarity computation.
+\end{itemize}
+
+
+
+%===========================
+% UTILITY / SUPPORT MODULES
+%===========================
+
+\section{MIS of Util.Error} \label{Util.Error}
+
+\subsection{Module}
+\textbf{Util.Error} \; (Error Type and Exception Utilities)
+
+This module defines standard error types and helpers for constructing and handling errors in a consistent way across modules.
+
+\subsection{Uses}
+\begin{itemize}
+    \item None at the architectural level; referenced by many other modules.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item Standard error codes or identifiers (for example, \texttt{ERR\_NOT\_FOUND}, \texttt{ERR\_VALIDATION}).
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Util.Error - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{4cm} p{3cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{buildError} & \texttt{code: String, msg: String} & \texttt{ErrorObject} & \texttt{None} \\
+\texttt{toClientMessage} & \texttt{err: ErrorObject} & \texttt{String} & \texttt{None} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item None.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item None.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item All modules reference the same canonical error types.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{buildError(code, msg)}:
+\begin{itemize}
+    \item output: structured error object capturing code and message.
+    \item exception: none.
+\end{itemize}
+
+\noindent \texttt{toClientMessage(err)}:
+\begin{itemize}
+    \item output: safe message for display at UI or API boundary.
+    \item exception: none.
+\end{itemize}
+
+
+
+\section{MIS of Util.Logging} \label{Util.Logging}
+
+\subsection{Module}
+\textbf{Util.Logging} \; (Logging Utility)
+
+This module provides structured logging for events, errors, and performance metrics.
+
+\subsection{Uses}
+\begin{itemize}
+    \item Underlying logging framework or standard output.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item Log levels such as \texttt{INFO}, \texttt{WARN}, \texttt{ERROR}.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Util.Logging - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{logInfo} & \texttt{msg: String} & \texttt{none} & \texttt{None} \\
+\texttt{logWarn} & \texttt{msg: String} & \texttt{none} & \texttt{None} \\
+\texttt{logError} & \texttt{msg: String, err: ErrorObject} & \texttt{none} & \texttt{None} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Optional runtime configuration (log level, sinks).
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item File system, console, or external logging service.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Logging operations are non-fatal and do not throw.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{logInfo(msg)}:
+\begin{itemize}
+    \item output: none; writes informational log entry.
+    \item exception: none.
+\end{itemize}
+
+\noindent \texttt{logWarn(msg)}:
+\begin{itemize}
+    \item output: none; writes warning log entry.
+    \item exception: none.
+\end{itemize}
+
+\noindent \texttt{logError(msg, err)}:
+\begin{itemize}
+    \item output: none; writes error entry including details from \texttt{err}.
+    \item exception: none.
+\end{itemize}
+
+
+
+\section{MIS of Util.Config} \label{Util.Config}
+
+\subsection{Module}
+\textbf{Util.Config} \; (Configuration Management)
+
+This module provides read-only access to configuration values such as database connection strings, model paths, and feature flags.
+
+\subsection{Uses}
+\begin{itemize}
+    \item Environment variables or configuration files.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item None fixed; keys are used to look up values.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Util.Config - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{getValue} & \texttt{key: String} & \texttt{String} & \texttt{ConfigError} \\
+\texttt{getBool} & \texttt{key: String} & \texttt{bool} & \texttt{ConfigError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{configCache: Map[String, String]}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Config file or environment variable store.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Configuration is loaded at startup and remains static during runtime.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{getValue(key)}:
+\begin{itemize}
+    \item output: configuration value associated with \texttt{key}.
+    \item exception: \texttt{ConfigError} if key missing.
+\end{itemize}
+
+\noindent \texttt{getBool(key)}:
+\begin{itemize}
+    \item output: parsed boolean value.
+    \item exception: \texttt{ConfigError} if key missing or value not parseable.
+\end{itemize}
+
+
+
+\section{MIS of Util.TestStub} \label{Util.TestStub}
+
+\subsection{Module}
+\textbf{Util.TestStub} \; (Testing Stubs and Fakes)
+
+This module provides stub implementations of selected services and ML components for use in automated tests.
+
+\subsection{Uses}
+\begin{itemize}
+    \item Core service and ML interfaces for type compatibility.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item None.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Util.TestStub - Exported Access Programs}
+\begin{tabular}{p{3.8cm} p{2.5cm} p{4.2cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{getFixedOCRStub} & \texttt{none} & \texttt{ML.OCR-like object} & \texttt{None} \\
+\texttt{getFixedMatchStub} & \texttt{none} & \texttt{Svc.MatchOrch-like object} & \texttt{None} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Predefined responses used for deterministic tests.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item None.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Stubs are only used in test environments.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{getFixedOCRStub()}:
+\begin{itemize}
+    \item output: object implementing \texttt{runOCR} that returns predictable results for known inputs.
+    \item exception: none.
+\end{itemize}
+
+\noindent \texttt{getFixedMatchStub()}:
+\begin{itemize}
+    \item output: object implementing \texttt{generateMatches} with fixed candidate lists.
+    \item exception: none.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{loadStubFixtures()} – loads predefined responses from static files.
+\end{itemize}
 
 \newpage
 
