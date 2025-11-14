@@ -8,6 +8,8 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
 \hypersetup{
     colorlinks,
     citecolor=blue,
@@ -641,49 +643,599 @@ NFR3.3 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \m
 
 \section{Use Hierarchy Between Modules} \label{SecUse}
 
-In this section, the uses hierarchy between modules is
-provided. \citet{Parnas1978} said of two programs A and B that A {\em uses} B if
-correct execution of B may be necessary for A to complete the task described in
-its specification. That is, A {\em uses} B if there exist situations in which
-the correct functioning of A depends upon the availability of a correct
-implementation of B.  Figure \ref{FigUH} illustrates the use relation between
-the modules. It can be seen that the graph is a directed acyclic graph
-(DAG). Each level of the hierarchy offers a testable and usable subset of the
-system, and modules in the higher level of the hierarchy are essentially simpler
-because they use modules from the lower levels.
-
-\wss{The uses relation is not a data flow diagram.  In the code there will often
-be an import statement in module A when it directly uses module B.  Module B
-provides the services that module A needs.  The code for module A needs to be
-able to see these services (hence the import statement).  Since the uses
-relation is transitive, there is a use relation without an import, but the
-arrows in the diagram typically correspond to the presence of import statement.}
-
-\wss{If module A uses module B, the arrow is directed from A to B.}
-
 \begin{figure}[H]
 \centering
-%\includegraphics[width=0.7\textwidth]{UsesHierarchy.png}
-\caption{Use hierarchy among modules}
+\begin{tikzpicture}[
+  node distance=1.8cm and 1.2cm,
+  module/.style={rectangle, draw, minimum width=1.8cm, minimum height=0.6cm, align=center, font=\footnotesize},
+  direct/.style={->, >=stealth, thick},
+  layer/.style={font=\bfseries\small}
+]
+
+% Layer 5 - UI
+\node[layer] at (-2,10) {Layer 5: UI};
+\node[module] (Canvas) at (0,10) {M2\\Canvas};
+\node[module] (Search) at (3,10) {M3\\Search};
+\node[module] (Auth) at (6,10) {M4\\Auth};
+\node[module] (Upload) at (9,10) {M5\\Upload};
+
+% Layer 4 - API
+\node[layer] at (-2,6) {Layer 4: API};
+\node[module] (API) at (4.5,6) {M6\\API};
+
+% Layer 3 - Services
+\node[layer, text width=2.5cm, align=left] at (-2,2) {Layer 3:\\Services};
+\node[module] (SearchSvc) at (0,2) {M7\\Search};
+\node[module] (AuthZ) at (2.5,2) {M8\\AuthZ};
+\node[module] (Session) at (5,2) {M9\\Session};
+\node[module] (ProcOrch) at (7.5,2) {M10\\Proc};
+\node[module] (MatchOrch) at (10,2) {M11\\Match};
+
+% Layer 2 - ML
+\node[layer] at (-2,-2) {Layer 2: ML};
+\node[module] (EdgeMatch) at (1,-2) {M16\\Edge};
+\node[module] (Damage) at (3.5,-2) {M17\\Damage};
+\node[module] (ScriptClass) at (6,-2) {M18\\Script};
+\node[module] (OCR) at (8.5,-2) {M19\\OCR};
+\node[module] (TextSim) at (11,-2) {M20\\Text};
+
+% Layer 1 - Data
+\node[layer] at (-2,-6) {Layer 1: Data};
+\node[module] (FragStore) at (2.5,-6) {M12\\Frags};
+\node[module] (Catalog) at (5.5,-6) {M13\\Catalog};
+\node[module] (User) at (8,-6) {M14\\User};
+\node[module] (Project) at (10.5,-6) {M15\\Project};
+
+% Layer 0 - Foundation
+\node[layer, text width=2.5cm, align=left] at (-2,-10) {Layer 0:\\Foundation};
+\node[module] (HH) at (1.5,-10) {M1\\Hardware};
+\node[module] (Error) at (4,-10) {M21\\Error};
+\node[module] (Logging) at (6.5,-10) {M22\\Logging};
+\node[module] (Config) at (9,-10) {M23\\Config};
+
+% UI -> API (all UI modules use API)
+\draw[direct] (Canvas) -- (API);
+\draw[direct] (Search) -- (API);
+\draw[direct] (Auth) -- (API);
+\draw[direct] (Upload) -- (API);
+
+% API -> Services (API uses all service modules)
+\draw[direct] (API) -- (SearchSvc);
+\draw[direct] (API) -- (AuthZ);
+\draw[direct] (API) -- (Session);
+\draw[direct] (API) to[out=-90, in=90] (ProcOrch);
+\draw[direct] (API) to[out=-90, in=90] (MatchOrch);
+
+% Services -> ML (orchestrators coordinate ML)
+\draw[direct] (ProcOrch) to[out=-90, in=90] (EdgeMatch);
+\draw[direct] (ProcOrch) to[out=-90, in=90] (ScriptClass);
+\draw[direct] (ProcOrch) to[out=-90, in=90] (OCR);
+\draw[direct] (MatchOrch) -- (EdgeMatch);
+\draw[direct] (MatchOrch) -- (Damage);
+\draw[direct] (MatchOrch) -- (ScriptClass);
+\draw[direct] (MatchOrch) to[out=-90, in=90] (TextSim);
+
+% Services -> Data (key data access)
+\draw[direct] (SearchSvc) to[out=-90, in=90] (FragStore);
+\draw[direct] (SearchSvc) to[out=-90, in=90] (Catalog);
+\draw[direct] (AuthZ) to[out=-90, in=90] (User);
+\draw[direct] (Session) to[out=-90, in=90] (User);
+\draw[direct] (Session) to[out=-90, in=90] (Project);
+\draw[direct] (ProcOrch) to[out=-90, in=90] (FragStore);
+
+% ML -> Data (ML modules use FragStore)
+\draw[direct] (EdgeMatch) to[out=-90, in=90] (FragStore);
+\draw[direct] (ScriptClass) to[out=-90, in=90] (Catalog);
+
+% Data -> Foundation (all data modules use foundation)
+\draw[direct] (FragStore) to[out=-90, in=90] (HH);
+\draw[direct] (FragStore) to[out=-90, in=90] (Error);
+\draw[direct] (FragStore) to[out=-90, in=90] (Logging);
+\draw[direct] (FragStore) to[out=-90, in=90] (Config);
+\draw[direct] (Catalog) to[out=-90, in=90] (Error);
+\draw[direct] (Catalog) to[out=-90, in=90] (Logging);
+\draw[direct] (Catalog) to[out=-90, in=90] (Config);
+\draw[direct] (User) to[out=-90, in=90] (Error);
+\draw[direct] (User) to[out=-90, in=90] (Logging);
+\draw[direct] (User) to[out=-90, in=90] (Config);
+\draw[direct] (Project) to[out=-90, in=90] (Error);
+\draw[direct] (Project) to[out=-90, in=90] (Logging);
+\draw[direct] (Project) to[out=-90, in=90] (Config);
+
+\end{tikzpicture}
+\caption{Use hierarchy among modules (simplified view showing key dependencies)}
 \label{FigUH}
 \end{figure}
+
+\subsection{Uses Hierarchy Description}
+
+The uses hierarchy follows a strict layered architecture where modules at each level depend only on services provided by lower levels. The diagram shows direct dependencies between modules, with arrows indicating the uses relationship.
+
+\subsubsection{Layer 5: User Interface}
+All UI modules communicate exclusively through the API layer:
+\begin{itemize}
+\item \textbf{Canvas (M2), Search (M3), Auth (M4), Upload (M5)} all directly use \textbf{API (M6)}
+\item UI modules have no direct access to service, data, or ML layers, ensuring clean separation between presentation and business logic
+\end{itemize}
+
+\subsubsection{Layer 4: API Gateway}
+\textbf{API (M6)} serves as the central gateway and coordinates all service layer modules:
+\begin{itemize}
+\item Directly uses all five service modules: \textbf{SearchSvc (M7)}, \textbf{AuthZ (M8)}, \textbf{Session (M9)}, \textbf{ProcOrch (M10)}, and \textbf{MatchOrch (M11)}
+\item Provides unified RESTful interface to all backend services for the UI layer
+\item Handles request routing, validation, response formatting, and rate limiting
+\item Acts as the single entry point for all business logic operations
+\end{itemize}
+
+\subsubsection{Layer 3: Service Orchestration}
+Service modules implement business logic and coordinate lower-level modules:
+
+\paragraph{Data Access Services:}
+\begin{itemize}
+\item \textbf{SearchSvc (M7)} uses \textbf{FragmentStore (M12)} and \textbf{Catalog (M13)} to perform search and filtering operations across fragments
+\item \textbf{AuthZ (M8)} uses \textbf{User (M14)} for credential verification and role-based authorization
+\item \textbf{Session (M9)} uses \textbf{User (M14)} and \textbf{Project (M15)} to manage user sessions and collaborative workspace state
+\end{itemize}
+
+\paragraph{Orchestration Services:}
+\begin{itemize}
+\item \textbf{ProcOrch (M10)} orchestrates image processing pipelines by using:
+  \begin{itemize}
+  \item \textbf{FragmentStore (M12)} for accessing fragment images
+  \item \textbf{EdgeMatch (M16)} for edge detection during preprocessing
+  \item \textbf{ScriptClass (M18)} for initial script classification
+  \item \textbf{OCR (M19)} for text extraction from fragment images
+  \end{itemize}
+\item \textbf{MatchOrch (M11)} coordinates fragment matching by using:
+  \begin{itemize}
+  \item \textbf{EdgeMatch (M16)} for edge profile comparison
+  \item \textbf{Damage (M17)} for damage pattern analysis
+  \item \textbf{ScriptClass (M18)} for script similarity comparison
+  \item \textbf{TextSim (M20)} for comparing extracted text between fragments
+  \end{itemize}
+\end{itemize}
+
+Note that ProcOrch focuses on preprocessing and feature extraction, while MatchOrch focuses on comparing fragments and ranking matches.
+
+\subsubsection{Layer 2: Machine Learning}
+ML modules provide specialized analysis capabilities:
+\begin{itemize}
+\item \textbf{EdgeMatch (M16)} uses \textbf{FragmentStore (M12)} to access fragment images for edge detection and comparison
+\item \textbf{ScriptClass (M18)} uses both \textbf{Catalog (M13)} for script taxonomy metadata and \textbf{FragmentStore (M12)} for fragment images
+\item Other ML modules (\textbf{Damage (M17), OCR (M19), TextSim (M20)}) also use \textbf{FragmentStore (M12)} for data access (connections shown representatively through EdgeMatch to reduce visual complexity)
+\item ML modules are always coordinated by service orchestrators (ProcOrch or MatchOrch), never invoked directly by the API
+\end{itemize}
+
+\subsubsection{Layer 1: Data Storage}
+Data modules encapsulate all persistence operations and provide CRUD interfaces:
+\begin{itemize}
+\item \textbf{FragmentStore (M12)} uses:
+  \begin{itemize}
+  \item \textbf{Hardware Hiding (M1)} for file system and storage operations
+  \item \textbf{Error Handling (M21)} for exception management
+  \item \textbf{Logging (M22)} for audit trails of fragment operations
+  \item \textbf{Config (M23)} for storage configuration parameters
+  \end{itemize}
+\item \textbf{Catalog (M13)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for managing controlled vocabularies and metadata schemas
+\item \textbf{User (M14)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for user profile management and authentication data
+\item \textbf{Project (M15)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for collaborative workspace data
+\end{itemize}
+
+All data modules depend heavily on foundation modules to ensure reliable, configurable, and auditable data operations.
+
+\subsubsection{Layer 0: Foundation}
+Foundation modules provide cross-cutting system services with no dependencies on other system modules:
+\begin{itemize}
+\item \textbf{Hardware Hiding (M1)} abstracts operating system and file system operations, used by FragmentStore for persistent storage
+\item \textbf{Error Handling (M21)} provides exception management and error reporting, used by all data modules and propagated throughout upper layers
+\item \textbf{Logging (M22)} records system events, user actions, and audit trails, used extensively by data and service layers
+\item \textbf{Config (M23)} manages application configuration from files and environment variables, used by all data modules and some services
+\end{itemize}
+
+\subsubsection{Key Architectural Properties}
+
+The uses hierarchy exhibits several important design properties:
+
+\begin{enumerate}
+\item \textbf{Strict Layering:} All dependencies flow downward through the layer hierarchy. Modules only use modules in lower layers, never peers or higher layers, ensuring clear separation of concerns.
+
+\item \textbf{API Gateway Pattern:} The API module (M6) serves as the single entry point for all UI modules, providing a unified interface to backend services and preventing direct UI-to-service coupling.
+
+\item \textbf{Orchestration Pattern:} Complex workflows involving multiple ML modules are coordinated by dedicated orchestrator services (ProcOrch and MatchOrch), which hide the complexity of multi-model coordination from the API layer.
+
+\item \textbf{Data Encapsulation:} All persistent data access flows through dedicated data modules (M12-M15), preventing direct database access from service or ML layers and enabling consistent data validation and access control.
+
+\item \textbf{Foundation Ubiquity:} Utility modules (Error, Logging, Config) are used throughout the system, particularly by the data layer. The diagram shows representative uses of these modules by all data modules, though they are actually used more broadly throughout the system.
+
+\item \textbf{DAG Structure:} The dependency graph forms a directed acyclic graph with no circular dependencies, which enables:
+  \begin{itemize}
+  \item Independent development and testing of each layer
+  \item Incremental system integration from bottom to top
+  \item Module substitution without affecting higher layers
+  \item Clear understanding of system dependencies and impact analysis
+  \end{itemize}
+
+\item \textbf{Testable Subsets:} Each layer represents a testable subset of the system. Layer 0 can be tested independently, Layer 1 requires only Layer 0, and so on, supporting systematic integration testing.
+
+\item \textbf{Separation of Concerns:} The architecture clearly separates presentation (Layer 5), API interface (Layer 4), business logic (Layer 3), specialized algorithms (Layer 2), persistence (Layer 1), and system utilities (Layer 0).
+\end{enumerate}
+
+This hierarchical organization supports maintainability, testability, and evolution of the system over time.
 
 %\section*{References}
 
 \section{User Interfaces}
 
-\wss{Design of user interface for software and hardware.  Attach an appendix if
-needed. Drawings, Sketches, Figma}
+The Sanskrit Manuscript Reconstruction Platform provides a web-based interface designed for Buddhist Studies scholars to interact with manuscript fragments. The interface is built using React with TypeScript and styled using CSS to ensure consistency and responsiveness.
+
+\subsection{Primary Interface Components}
+
+\subsubsection{Authentication Interface}
+\begin{itemize}
+    \item \textbf{Login Screen:} Secure credential entry with username and password fields
+    \item \textbf{Session Management:} Token-based authentication with automatic session persistence
+    \item \textbf{Error Handling:} Clear error messages for invalid credentials (``Invalid username or password'')
+\end{itemize}
+
+\subsubsection{Fragment Upload and Management}
+\begin{itemize}
+    \item \textbf{Upload Interface:} Drag-and-drop or file browser support for image uploads (JPG, PNG, TIFF formats, max 50 MB)
+    \item \textbf{Preprocessing Visualization:} Real-time display of orientation correction with confidence scores
+    \item \textbf{Fragment Browser:} Thumbnail grid view of uploaded fragments with metadata overlay
+\end{itemize}
+
+\subsubsection{Interactive Canvas Workspace}
+\begin{itemize}
+    \item \textbf{Drag-and-Drop Canvas:} Visual workspace for arranging and comparing fragments
+    \item \textbf{Fragment Manipulation:} Rotation, zoom, and positioning controls with snap-to-edge functionality
+    \item \textbf{Session Persistence:} Save and restore workspace arrangements
+    \item \textbf{Response Time Target:} UI drag/drop feedback latency under 200 ms
+\end{itemize}
+
+\subsubsection{Search and Filter Interface}
+\begin{itemize}
+    \item \textbf{Search Bar:} Fragment ID search with autocomplete
+    \item \textbf{Metadata Filters:} Multi-criteria filtering (script type, line count, fragment size)
+    \item \textbf{Results Display:} Grid or list view with sortable columns
+    \item \textbf{Export Options:} Download filtered results as CSV or PDF
+\end{itemize}
+
+\subsubsection{Matching Suggestions Display}
+\begin{itemize}
+    \item \textbf{Ranked Match List:} Top-ranked fragment matches with similarity scores and confidence levels
+    \item \textbf{Visual Comparison:} Side-by-side or overlay view for comparing fragments
+    \item \textbf{Trust Signals:} Confidence scores, edge pattern overlays, and match explanations
+\end{itemize}
+
+\subsubsection{Transcription Assistance}
+\begin{itemize}
+    \item \textbf{OCR Output Display:} Extracted text with character-level confidence indicators
+    \item \textbf{Script Classification:} Display of identified script type (e.g., Gupta, Tibetan, Chinese) with confidence $\geq$ 70\%
+    \item \textbf{Manual Correction:} Editable text fields for scholarly review and correction
+\end{itemize}
+\newpage
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/InterfaceFlowDiagram.png}
+    \caption{User Interface Flow Diagram showing the complete interaction workflow from login to fragment analysis}
+    \label{fig:interface_flow}
+\end{figure}
 
 \section{Design of Communication Protocols}
 
-\wss{If appropriate}
+The Sanskrit Manuscript Reconstruction Platform uses a client-server architecture with RESTful API communication between the frontend and backend services. This section describes the communication protocols and data exchange formats.
+
+\subsection{API Architecture}
+
+\subsubsection{Backend API Layer}
+The backend API is implemented using Flask, FastAPI, or Django (final selection to be determined during implementation) and provides versioned RESTful endpoints for all system operations.
+
+\textbf{API Design Principles:}
+\begin{itemize}
+    \item \textbf{RESTful Convention:} Resource-based URLs with standard HTTP methods (GET, POST, PUT, DELETE)
+    \item \textbf{Versioning:} All endpoints include version prefix (e.g., \texttt{/api/v1/})
+    \item \textbf{Status Codes:} Proper HTTP status codes (200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error)
+    \item \textbf{JSON Format:} All request and response bodies use JSON
+    \item \textbf{Schema Validation:} Request/response schemas defined using Pydantic models (backend) and TypeScript interfaces (frontend)
+\end{itemize}
+
+\subsection{Core API Endpoints}
+
+\subsubsection{Authentication Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/auth/login} - User authentication, returns session token
+    \item \texttt{POST /api/v1/auth/logout} - Session termination
+    \item \texttt{GET /api/v1/auth/verify} - Token validation
+\end{itemize}
+
+\subsubsection{Fragment Management Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/fragments/upload} - Upload fragment image (multipart/form-data)
+    \item \texttt{GET /api/v1/fragments/\{id\}} - Retrieve fragment metadata and image URL
+    \item \texttt{GET /api/v1/fragments} - List/search fragments with query parameters
+    \item \texttt{DELETE /api/v1/fragments/\{id\}} - Delete fragment (authorized users only)
+\end{itemize}
+
+\subsubsection{Preprocessing Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/preprocess/orientation} - Trigger orientation correction
+    \item \texttt{GET /api/v1/preprocess/status/\{job\_id\}} - Check preprocessing job status
+\end{itemize}
+
+\subsubsection{Matching and Similarity Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/matching/suggest} - Generate match suggestions for fragment
+    \item \texttt{GET /api/v1/matching/results/\{fragment\_id\}} - Retrieve ranked match list
+\end{itemize}
+
+\subsubsection{OCR and Script Identification Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/ocr/transcribe} - Extract text from fragment image
+    \item \texttt{POST /api/v1/classification/script} - Identify script type
+    \item \texttt{GET /api/v1/ocr/results/\{fragment\_id\}} - Retrieve OCR output
+\end{itemize}
+
+\subsubsection{Session and Workspace Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/v1/sessions} - Create new canvas workspace session
+    \item \texttt{PUT /api/v1/sessions/\{id\}} - Update/save workspace state
+    \item \texttt{GET /api/v1/sessions/\{id\}} - Restore workspace session
+    \item \texttt{DELETE /api/v1/sessions/\{id\}} - Delete session
+\end{itemize}
+
+\subsection{Data Exchange Formats}
+
+\subsubsection{Request Schema Example (Fragment Upload)}
+\begin{verbatim}
+POST /api/v1/fragments/upload
+Content-Type: multipart/form-data
+
+{
+    "file": <binary image data>,
+    "metadata": {
+        "collection": "British Library",
+        "shelfmark": "BL-12345",
+        "provenance": "Gandhara",
+        "notes": "Optional user notes"
+    }
+}
+\end{verbatim}
+
+\subsubsection{Response Schema Example (Match Suggestions)}
+\begin{verbatim}
+GET /api/v1/matching/results/{fragment_id}
+Response: 200 OK
+
+{
+    "fragment_id": "BL-12345",
+    "matches": [
+        {
+            "match_id": "BL-67890",
+            "similarity_score": 0.87,
+            "confidence": 0.92,
+            "match_features": ["edge_pattern", "damage_signature"],
+            "thumbnail_url": "/api/v1/fragments/BL-67890/thumbnail"
+        },
+        ...
+    ],
+    "timestamp": "2025-11-11T14:30:00Z"
+}
+\end{verbatim}
+
+\subsection{Inter-Service Communication}
+
+\subsubsection{Backend to ML/AI Cluster}
+The backend orchestration service communicates with AI/ML components using internal API calls or message queues:
+\begin{itemize}
+    \item \textbf{OCR Service:} Asynchronous job queue for text extraction
+    \item \textbf{Matching Service:} Real-time or batch processing for similarity computation
+    \item \textbf{Script Classification Service:} Synchronous inference requests
+\end{itemize}
+
+\subsubsection{Database Communication}
+\begin{itemize}
+    \item \textbf{ORM Layer:} SQLAlchemy for database abstraction (PostgreSQL or SQLite)
+    \item \textbf{Query Optimization:} Indexed searches for metadata filtering
+    \item \textbf{Connection Pooling:} Maintained for concurrent user support (target: 15+ concurrent users)
+\end{itemize}
+
+\subsection{Security and Data Integrity}
+
+\begin{itemize}
+    \item \textbf{Authentication:} Token-based authentication (JWT or similar)
+    \item \textbf{Authorization:} Role-based access control for sensitive operations
+    \item \textbf{Input Validation:} Server-side validation of all API inputs
+    \item \textbf{SQL Injection Prevention:} Parameterized queries via ORM
+    \item \textbf{API Rate Limiting:} Throttling to prevent abuse
+    \item \textbf{HTTPS:} Encrypted communication in production deployment
+\end{itemize}
+
 
 \section{Timeline}
 
-\wss{Schedule of tasks and who is responsible}
+The development of the Sanskrit Manuscript Reconstruction Platform follows a phased approach, with module implementation organized by architectural layer. The timeline ensures that foundational components are established before dependent modules are developed, following the uses hierarchy described in Section \ref{SecUse}.
 
-\wss{You can point to GitHub if this information is included there}
+\subsection{Phase 1: Foundation and Infrastructure (Weeks 1-3)}
+
+\subsubsection{Week 1: Project Setup and Foundation Modules}
+\begin{itemize}
+    \item \textbf{Setup Development Environment}
+    \begin{itemize}
+        \item Configure MongoDB, Node.js/Express backend, and React frontend repositories
+        \item Set up version control, CI/CD pipelines, and development/staging environments
+        \item \textit{Responsible: Full Team}
+    \end{itemize}
+    \item \textbf{Implement Foundation Modules (Layer 0)}
+    \begin{itemize}
+        \item M21: Error Handling Module - Define error types, implement centralized exception handling
+        \item M22: Logging Module - Configure structured logging framework (Winston/Bunyan)
+        \item M23: Configuration Management - Implement environment-based configuration loading
+        \item \textit{Responsible: Yousef Shahin, Aswin Kuganesan}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 2-3: Data Layer Implementation}
+\begin{itemize}
+    \item \textbf{Hardware-Hiding Module}
+    \begin{itemize}
+        \item M1: Implement file storage abstraction (local/cloud storage interface)
+        \item \textit{Responsible: Omar El Aref}
+    \end{itemize}
+    \item \textbf{Data Modules (Layer 1)}
+    \begin{itemize}
+        \item M14: User database schema, authentication data models
+        \item M12: Fragment storage schema, image metadata, CRUD operations
+        \item M13: Catalog metadata structure, controlled vocabularies
+        \item M15: Project workspace schema, collaborative annotations
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 2: Service Layer and API (Weeks 4-6)}
+
+\subsubsection{Week 4: Authentication and Session Management}
+\begin{itemize}
+    \item \textbf{Authentication Services (Layer 3)}
+    \begin{itemize}
+        \item M8: JWT-based authentication, role-based access control
+        \item M9: Session state management, workspace persistence
+        \item \textit{Responsible: Yousef Shahin, Aswin Kuganesan}
+    \end{itemize}
+    \item \textbf{API Gateway (Layer 4)}
+    \begin{itemize}
+        \item M6: Express.js RESTful API setup, authentication endpoints
+        \item \textit{Responsible: Omar El Aref}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 5-6: Core Service Modules}
+\begin{itemize}
+    \item \textbf{Service Orchestration (Layer 3)}
+    \begin{itemize}
+        \item M7: Fragment search and filtering logic, query optimization
+        \item M10: Image preprocessing pipeline orchestration, job queue management
+        \item M11: ML model result aggregation, confidence scoring (initial implementation without ML models)
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+    \item \textbf{API Endpoint Completion}
+    \begin{itemize}
+        \item Complete all RESTful endpoints for fragment management, search, sessions, and preprocessing
+        \item \textit{Responsible: Omar El Aref, Yousef Shahin}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 3: Machine Learning Integration (Weeks 7-10)}
+
+\subsubsection{Week 7-8: ML Infrastructure and Basic Models}
+\begin{itemize}
+    \item \textbf{ML Service Setup}
+    \begin{itemize}
+        \item Python ML service infrastructure, REST API for ML models
+        \item Model serving framework (Flask/FastAPI for Python services)
+        \item \textit{Responsible: Aswin Kuganesan, Umar Khan}
+    \end{itemize}
+    \item \textbf{Initial ML Modules (Layer 2)}
+    \begin{itemize}
+        \item M16: Edge detection and matching algorithm implementation
+        \item M18: Script classification model training and deployment
+        \item \textit{Responsible: Dylan Garner, Yousef Shahin}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 9-10: Advanced ML Models}
+\begin{itemize}
+    \item \textbf{ML Module Completion (Layer 2)}
+    \begin{itemize}
+        \item M17: Damage pattern analysis and similarity scoring
+        \item M19: OCR model integration (using existing libraries like Tesseract/EasyOCR, fine-tuned for ancient scripts)
+        \item M20: Text similarity comparison using embeddings
+        \item \textit{Responsible: Omar El Aref, Aswin Kuganesan}
+    \end{itemize}
+    \item \textbf{Orchestrator Integration}
+    \begin{itemize}
+        \item Connect ML modules to M10 and M11
+        \item Implement weighted scoring and confidence calculation
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 4: User Interface Development (Weeks 8-11)}
+
+\textit{Note: UI development runs partially in parallel with ML integration}
+
+\subsubsection{Week 8-9: Core UI Components}
+\begin{itemize}
+    \item \textbf{Authentication UI (Layer 5)}
+    \begin{itemize}
+        \item M4: Login/logout interface, user registration, session display
+        \item \textit{Responsible: Yousef Shahin}
+    \end{itemize}
+    \item \textbf{Fragment Management UI}
+    \begin{itemize}
+        \item M5: File upload interface with drag-and-drop, metadata forms
+        \item M3: Search bar, filtering interface, results display
+        \item \textit{Responsible: Omar El Aref, Aswin Kuganesan}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 10-11: Interactive Canvas}
+\begin{itemize}
+    \item \textbf{Canvas Workspace (Layer 5)}
+    \begin{itemize}
+        \item M2: Drag-and-drop canvas for fragment arrangement
+        \item Real-time match visualization, collaborative workspace features
+        \item Integration with M11 for displaying suggestions
+        \item \textit{Responsible: Umar Khan, Dylan Garner}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Phase 5: Testing and Refinement (Weeks 12-14)}
+
+\subsubsection{Week 12: Integration Testing}
+\begin{itemize}
+    \item \textbf{Test Infrastructure}
+    \begin{itemize}
+        \item Mock implementations for all services and ML components
+        \item \textit{Responsible: Full Team}
+    \end{itemize}
+    \item \textbf{Layer-by-Layer Integration Testing}
+    \begin{itemize}
+        \item Test data layer with foundation modules
+        \item Test service layer with data layer
+        \item Test ML integration with orchestrators
+        \item Test UI with complete backend
+        \item \textit{Responsible: Full Team}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Week 13: Performance Optimization and ML Tuning}
+\begin{itemize}
+    \item Database query optimization, API response time tuning
+    \item ML model fine-tuning based on test fragment dataset
+    \item Concurrent user testing (target: 15+ users)
+    \item \textit{Responsible: Yousef Shahin, Aswin Kuganesan, Omar El Aref}
+\end{itemize}
+
+\subsubsection{Week 14: User Acceptance Testing and Documentation}
+\begin{itemize}
+    \item User testing with domain experts (Buddhist Studies scholars)
+    \item Bug fixes and usability improvements
+    \item Complete API documentation
+    \item User manual and deployment documentation
+    \item \textit{Responsible: Full Team}
+\end{itemize}
+
+\subsection{Phase 6: Deployment and Monitoring (Week 15)}
+
+\begin{itemize}
+    \item Production environment setup and deployment
+    \item Monitoring and logging infrastructure configuration
+    \item Performance monitoring and error tracking setup
+    \item Handoff and training for stakeholders
+    \item \textit{Responsible: Full Team}
+\end{itemize}
+
+\textbf{Note:} For detailed task assignments, sprint planning, and issue tracking, refer to the project's GitHub repository at: \texttt{https://github.com/DylanG5/sanskrit-cipher}
 
 \bibliographystyle {plainnat}
 \bibliography{../../../refs/References}
