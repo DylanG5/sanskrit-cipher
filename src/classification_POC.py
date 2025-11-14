@@ -51,10 +51,10 @@ class FragmentDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        img_path = os.path.join(self.img_dir, row["filename"])
+        img_path = os.path.join(self.img_dir, row["File Name"])
         img = Image.open(img_path).convert("RGB")
         img = self.transform(img)
-        label = int(min(row["lines"], self.max_lines))
+        label = int(min(row["Line Count"], self.max_lines))
         return img, label
 
 
@@ -135,9 +135,9 @@ def eval_model(model, dataloader, criterion, device):
 # ------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Train CNN to predict line counts in fragment images (PyTorch)")
-    parser.add_argument("--images_dir", type=str, default="./images")
-    parser.add_argument("--labels_csv", type=str, default="./labels.csv")
-    parser.add_argument("--out_dir", type=str, default="./output")
+    parser.add_argument("--images_dir", type=str, default="./src/images")
+    parser.add_argument("--labels_csv", type=str, default="./src/labels.csv")
+    parser.add_argument("--out_dir", type=str, default="./src/output")
     parser.add_argument("--img_size", type=int, default=224)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=25)
@@ -155,12 +155,12 @@ def main():
 
     # -------------------- Data --------------------
     df = pd.read_csv(args.labels_csv)
-    assert "filename" in df.columns and "lines" in df.columns
+    assert "File Name" in df.columns and "Line Count" in df.columns
 
-    strat = df["lines"].clip(0, args.max_lines).astype(int)
+    strat = df["Line Count"].clip(0, args.max_lines).astype(int)
     train_val_df, test_df = train_test_split(df, test_size=args.test_split, random_state=args.seed, stratify=strat)
     val_size_rel = args.val_split / (1 - args.test_split)
-    train_df, val_df = train_test_split(train_val_df, test_size=val_size_rel, random_state=args.seed, stratify=train_val_df["lines"].clip(0, args.max_lines).astype(int))
+    train_df, val_df = train_test_split(train_val_df, test_size=val_size_rel, random_state=args.seed, stratify=train_val_df["Line Count"].clip(0, args.max_lines).astype(int))
 
     print(f"Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")
 
