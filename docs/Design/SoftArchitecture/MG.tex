@@ -285,14 +285,18 @@ actually be implemented.
 
 The design of the system is intended to satisfy the requirements developed in
 the SRS. In this stage, the system is decomposed into modules. The connection
-between requirements and modules is listed in Table~\ref{TblRT}.
+between requirements and modules is listed in Table~\ref{TblRT}. \newline
 
-\wss{The intention of this section is to document decisions that are made
-  ``between'' the requirements and the design.  To satisfy some requirements,
-  design decisions need to be made.  Rather than make these decisions implicit,
-  they are explicitly recorded here.  For instance, if a program has security
-  requirements, a specific design decision may be made to satisfy those
-  requirements with a password.}
+FR1.1 (User Authentication) is implemented through the \mref{mAuth} and \mref{mAuthZ} modules which manage credential verification and secure access control. 
+Similarly, FR1.2 (Fragment Management) and FR1.3 (Display Fragments) are supported by the \mref{mCanvas}, \mref{mUpload}, and \mref{mFragStore} modules that 
+enable fragment visualization and organization. The ML-oriented requirements FR3.1-FR3.3 are implemented by specialized modules such as \mref{mEdgeMatch}, 
+\mref{mDamage}, and \mref{mScriptClass}, coordinated by \mref{mMatchOrch}.
+
+Non-functional requirements are distributed across multiple layers of the system. NFR1.1 (Usability) and NFR1.2 (Performance) are primarily addressed 
+by front-end and orchestration modules to ensure responsiveness and ease of interaction. NFR2.1 (Scalability) and NFR2.2 (Reliability) are achieved through 
+the use of modular orchestration, structured data storage, and robust error handling in modules such as \mref{mProcOrch}, \mref{mCatalog}, and \mref{mError}. 
+Finally, NFR3.1-NFR3.3 (Accuracy, Efficiency, and Maintainability) govern the design of the AI/ML cluster, ensuring that the models (\mref{mEdgeMatch}, 
+\mref{mDamage}, \mref{mTextSim}) can be retrained, tuned, and maintained without disrupting other components.
 
 \section{Module Decomposition} \label{SecMD}
 
@@ -310,7 +314,7 @@ Only the leaf modules in the hierarchy have to be implemented. If a dash
 (\emph{--}) is shown, this means that the module is not a leaf and will not have
 to be implemented.
 
-\subsection{Hardware Hiding Modules (\mref{mHH})}
+\subsection{Hardware Hiding Modules}
 
 \begin{description}
 \item[Secrets:]The data structure and algorithm used to implement the virtual
@@ -320,6 +324,17 @@ to be implemented.
   software. So, the system can use it to display outputs or to accept inputs.
 \item[Implemented By:] OS
 \end{description}
+
+\subsubsection{HW.ImageStorage (\mref{mHWImageStorage})}
+
+\begin{description}
+\item[Secrets:] Data structure and algorithms used to implement the image storage
+\item[Services:] This module provides platform-specific file operations such as image storage and retrieval, and it serves as virtual hardware for the system.  
+\item[Implemented By:] Cloud or Local Storage Interface
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
 
 \subsection{Behaviour-Hiding Module}
 
@@ -331,6 +346,181 @@ to be implemented.
   hardware-hiding module and the software decision module. The programs in this
   module will need to change if there are changes in the SRS.
 \item[Implemented By:] --
+\end{description}
+
+\subsubsection{UI.Canvas (\mref{mCanvas})}
+
+\begin{description}
+\item[Secrets:] The implementation of the interactive canvas for fragment manipulation.
+\item[Services:] Provides an interactive interface to arrange multiple fragments and displays match suggestions
+\item[Implemented By:] Front-End Web Client (React/Next.js component)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{UI.Search (\mref{mSearch})}
+
+\begin{description}
+\item[Secrets:] The user interface design for search and filtering functionality.
+\item[Services:] Provides a search interface for fragments, and supports search by script type, line count, and fragment size.
+\item[Implemented By:] Front-End Web Client (React/Next.js component)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{UI.Auth (\mref{mAuth})}
+
+\begin{description}
+\item[Secrets:] The user interface for authentication and user management.
+\item[Services:] Provides login/logout interface, user registration, role-based access control UI, and session management display.
+\item[Implemented By:] Front-End Authentication Component
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{UI.Upload (\mref{mUpload})}
+
+\begin{description}
+\item[Secrets:] The user interface for uploading fragment images and metadata.
+\item[Services:] Provides a file upload interface to select and submit images to the backend for processing after validation.
+\item[Implemented By:] Front-End Web Client (React/Next.js component)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.API (\mref{mAPI})}
+
+\begin{description}
+\item[Secrets:] The RESTful API endpoint definitions and routing logic.
+\item[Services:] Sends incoming HTTP requests from the UI to services and handles request validation
+\item[Implemented By:] Backend API Gateway (FastAPI, Flask, or Node.js)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.Search (\mref{mSearchSvc})}
+
+\begin{description}
+\item[Secrets:] The search algorithm and query optimization logic.
+\item[Services:] This module performs efficient fragment searches over metadata and fragments, and it can export the results as a PDF or CSV file
+\item[Implemented By:] Backend Search Service 
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.AuthZ (\mref{mAuthZ})}
+
+\begin{description}
+\item[Secrets:] The authentication and authorization implementation.
+\item[Services:] This module validates user credentials and tokens, and it enforces access control for protected operations
+\item[Implemented By:] Authentication & Authorization Microservice
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.Session (\mref{mSession})}
+
+\begin{description}
+\item[Secrets:] The session state management and persistence mechanism.
+\item[Services:] Manages user sessions and provides storage and retrieval of the saved user workspace
+\item[Implemented By:] Backend Session Manager
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.ProcOrch (\mref{mProcOrch})}
+
+\begin{description}
+\item[Secrets:] The orchestration logic for image processing pipelines.
+\item[Services:] Coordinates preprocessing workflows for images uploaded by user, and manages job queues for ML tasks
+\item[Implemented By:] Workflow Orchestrator
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Svc.MatchOrch (\mref{mMatchOrch})}
+
+\begin{description}
+\item[Secrets:] The algorithm for combining results from multiple ML models.
+\item[Services:] Aggregates and sorts results from all ML models and provides confidence scores
+\item[Implemented By:] Backend Orchestrator Service
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Data.FragmentStore (\mref{mFragStore})}
+
+\begin{description}
+\item[Secrets:] The database schema and queries for fragment storage.
+\item[Services:] Stores and retrieves fragment entities such as fragment IDs, associated image IDs, script labels, line counts, and status flags  
+\item[Implemented By:] Data Access Layer
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Data.Catalog (\mref{mCatalog})}
+
+\begin{description}
+\item[Secrets:] The catalog metadata structure and taxonomy.
+\item[Services:] Stores mappings between internal fragments and external catalogue identifiers
+\item[Implemented By:] Metadata Database
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Data.User (\mref{mUser})}
+
+\begin{description}
+\item[Secrets:] The user data model and storage.
+\item[Services:] Stores all user information such as accounts, credentials, roles and profile information for authentication and access control purposes
+\item[Implemented By:] User Account Database Table
+\item[Type of Module:] Record
+\end{description}
+
+\subsubsection{Data.Project (\mref{mProject})}
+
+\begin{description}
+\item[Secrets:] The project data structure for collaborative work.
+\item[Services:] Manages project workspaces and collections and stores project-specific fragment groupings
+\item[Implemented By:] Project Database Schema
+\item[Type of Module:] Record
+\end{description}
+
+\subsubsection{ML.EdgeMatch (\mref{mEdgeMatch})}
+
+\begin{description}
+\item[Secrets:] Model details including weights and hyperparameters, segmentation mask and edge matching algorithms.
+\item[Services:] Provides edge match similarity probability and computes edge features for images.
+\item[Implemented By:] AI/ML Cluster (Python-based ML Service)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.Damage (\mref{mDamage})}
+
+\begin{description}
+\item[Secrets:] Physical damage information and hyperparameters for damage segmentation.
+\item[Services:] Determines similarity score for damage and generates signatures for damage in fragments. 
+\item[Implemented By:] AI/ML Cluster (Python-based ML Service)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.ScriptClass (\mref{mScriptClass})}
+
+\begin{description}
+\item[Secrets:] Model architecture and hyperparameters, and script label and metadata.
+\item[Services:] Determines the type of script based on text in the script and provides the script label with a confidence score.
+\item[Implemented By:] AI/ML Cluster (Text Classification Service)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.OCR (\mref{mOCR})}
+
+\begin{description} 
+\item[Secrets:] Hyperparameters, weights, thresholds and algorithms used for OCR model
+\item[Services:] This module analyzes fragments to find transcribed text with associated confidence scores, and it provides approximate accuracy values.
+\item[Implemented By:] AI/ML Cluster (OCR Model Server)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.TextSim (\mref{mTextSim})}
+
+\begin{description}
+\item[Secrets:] Vectorization and normalization methods, and algorithm used for checking similarity
+\item[Services:] Converts text to embedding vector and compares similarity between text segments using OCR or manual transcription
+\item[Implemented By:] AI/ML Cluster (Text Similarity Service)
+\item[Type of Module:] Abstract Object
 \end{description}
 
 \subsection{Software Decision Module}
@@ -346,7 +536,43 @@ to be implemented.
 \item[Implemented By:] --
 \end{description}
 
-\subsubsection{Etc.}
+\subsubsection{Util.Error (\mref{mError})}
+
+\begin{description}
+\item[Secrets:] The error handling and exception management plan
+\item[Services:] Defines standard error types and provides centralized error handling across all modules
+\item[Implemented By:] Shared Backend Utility Package
+\item[Type of Module:] Library
+\end{description}
+
+
+\subsubsection{Util.Logging (\mref{mLogging})}
+
+\begin{description}
+\item[Secrets:] The logging implementation and structure of the log format
+\item[Services:] This module records system events and user actions, and it provides structured logging for information, warnings and errors.
+\item[Implemented By:] Shared Logging Framework
+\item[Type of Module:] Library
+\end{description}
+
+
+\subsubsection{Util.Config (\mref{mConfig})}
+
+\begin{description}
+\item[Secrets:] The configuration format and loading mechanism
+\item[Services:] Loads configuration from files and provides read-only access to configuration values by providing the value or boolean based on key given.
+\item[Implemented By:] Configuration Manager
+\item[Type of Module:] Library
+\end{description}
+
+\subsubsection{Util.TestStub (\mref{mTestStubs})}
+
+\begin{description}
+\item[Secrets:] The mock implementations and mock model outputs
+\item[Services:] This module provides stub implementations of services and ML components, and it simulates ML model responses
+\item[Implemented By:] Test Utilities
+\item[Type of Module:] Library
+\end{description}
 
 \section{Traceability Matrix} \label{SecTM}
 
@@ -361,17 +587,25 @@ requirements and between the modules and the anticipated changes.
 \toprule
 \textbf{Req.} & \textbf{Modules}\\
 \midrule
-R1 & \mref{mHH}, \mref{mInput}, \mref{mParams}, \mref{mControl}\\
-R2 & \mref{mInput}, \mref{mParams}\\
-R3 & \mref{mVerify}\\
-R4 & \mref{mOutput}, \mref{mControl}\\
-R5 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R6 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R7 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R8 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R9 & \mref{mVerifyOut}\\
-R10 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}\\
-R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
+FR1.1 & \mref{mAuth}, \mref{mAuthZ}, \mref{mSession}, \mref{mUser}\\
+FR1.2 & \mref{mCanvas}, \mref{mUpload}, \mref{mAPI}, \mref{mProcOrch}, \mref{mFragStore}, \mref{mCatalog}\\
+FR1.3 & \mref{mCanvas}, \mref{mSearch}, \mref{mAPI}\\
+FR1.4 & \mref{mCanvas}, \mref{mMatchOrch}, \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}, \mref{mFragStore}\\
+FR1.5 & \mref{mCanvas}, \mref{mAuth}, \mref{mSession}, \mref{mProject}\\
+NFR1.1 & \mref{mCanvas}, \mref{mSearch}, \mref{mAuth}, \mref{mUpload}\\
+NFR1.2 & \mref{mHWImageStorage}, \mref{mCanvas}, \mref{mUpload}, \mref{mAPI}\\
+FR2.1 & \mref{mAPI}, \mref{mAuthZ}, \mref{mSession}, \mref{mMatchOrch}\\
+FR2.2 & \mref{mAuthZ}, \mref{mSession}, \mref{mUser}\\
+FR2.3 & \mref{mFragStore}, \mref{mCatalog}, \mref{mUser}, \mref{mProject}\\
+NFR2.1 & \mref{mAPI}, \mref{mProcOrch}, \mref{mMatchOrch}, \mref{mHWImageStorage}\\
+NFR2.2 & \mref{mFragStore}, \mref{mCatalog}, \mref{mUser}, \mref{mProject}, \mref{mError}, \mref{mLogging}, \mref{mConfig}\\
+FR3.1 & \mref{mEdgeMatch}, \mref{mMatchOrch}\\
+FR3.2 & \mref{mScriptClass}, \mref{mMatchOrch}\\
+FR3.3 & \mref{mDamage}, \mref{mMatchOrch}\\
+NFR3.1 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}\\
+NFR3.2 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}, \mref{mProcOrch}, \mref{mMatchOrch}\\
+NFR3.3 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}, \mref{mLogging}, \mref{mConfig}, \mref{mTestStubs}\\
+
 \bottomrule
 \end{tabular}
 \caption{Trace Between Requirements and Modules}
@@ -384,18 +618,21 @@ R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
 \toprule
 \textbf{AC} & \textbf{Modules}\\
 \midrule
-\acref{acHardware} & \mref{mHH}\\
-\acref{acInput} & \mref{mInput}\\
-\acref{acParams} & \mref{mParams}\\
-\acref{acVerify} & \mref{mVerify}\\
-\acref{acOutput} & \mref{mOutput}\\
-\acref{acVerifyOut} & \mref{mVerifyOut}\\
-\acref{acODEs} & \mref{mODEs}\\
-\acref{acEnergy} & \mref{mEnergy}\\
-\acref{acControl} & \mref{mControl}\\
-\acref{acSeqDS} & \mref{mSeqDS}\\
-\acref{acSolver} & \mref{mSolver}\\
-\acref{acPlot} & \mref{mPlot}\\
+\acref{acHardware} & \mref{mHWImageStorage}, \mref{mConfig}\\
+\acref{acInput} & \mref{mUpload}, \mref{mProcOrch}, \mref{mHWImageStorage}\\
+\acref{acAuth} & \mref{mAuth}, \mref{mAuthZ}, \mref{mUser}, \mref{mSession}, \mref{mAPI}\\
+\acref{acUpload} & \mref{mUpload}, \mref{mProcOrch}, \mref{mFragStore}\\
+\acref{acSearch} & \mref{mSearch}, \mref{mSearchSvc}, \mref{mCatalog}\\
+\acref{acEdgeMatch} & \mref{mEdgeMatch}, \mref{mMatchOrch}\\
+\acref{acDamage} & \mref{mDamage}, \mref{mMatchOrch}\\
+\acref{acScript} & \mref{mScriptClass}, \mref{mMatchOrch}\\
+\acref{acOCR} & \mref{mOCR}, \mref{mProcOrch}\\
+\acref{acTextSim} & \mref{mTextSim}, \mref{mMatchOrch}\\
+\acref{acCanvas} & \mref{mCanvas}, \mref{mSearch}, \mref{mUpload}\\
+\acref{acFragStore} & \mref{mFragStore}, \mref{mCatalog}, \mref{mProject}\\
+\acref{acCatalog} & \mref{mCatalog}, \mref{mSearchSvc}\\
+\acref{acMatchOrch} & \mref{mMatchOrch}, \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}\\
+\acref{acSession} & \mref{mSession}, \mref{mUser}, \mref{mProject}, \mref{mAuthZ}\\
 \bottomrule
 \end{tabular}
 \caption{Trace Between Anticipated Changes and Modules}
