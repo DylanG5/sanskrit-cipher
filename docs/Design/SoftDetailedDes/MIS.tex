@@ -75,9 +75,6 @@ See SRS Documentation at \wss{give url}
 
 \newpage
 
-\listoftables
-
-\newpage
 
 \pagenumbering{arabic}
 
@@ -294,28 +291,43 @@ This level includes supporting components that are primarily design decisions ra
 
 \section*{Appendix --- Reflection}
 
-\wss{Not required for CAS 741 projects}
-
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Problem Analysis and Design.
 
-\input{../../Reflection.tex}
 
 \begin{enumerate}
   \item What went well while writing this deliverable? 
+  
+    \hspace{2em} One aspect that went particularly well was identifying the appropriate notation and determining which modules needed to be included in the design. Our team communicated effectively throughout this process, which helped us maintain a shared understanding of the system and its structure. Because we already had a strong grasp of the project vision, it was relatively easy to map our ideas into a formal design representation. As a result, we were able to present a clear and coherent picture of the system architecture that reflects both the requirements and the intended functionality.
+
   \item What pain points did you experience during this deliverable, and how
     did you resolve them?
+
+    \hspace{2em} The main challenge we encountered was thinking through the lower-level implementation details. At this stage, we have not yet progressed far into the actual coding, so some of the design decisions, especially those related to specific algorithms, data structures, and system interactions required educated assumptions rather than concrete experience. We addressed this by focusing on higher-level abstractions and deferring detailed implementation decisions until we gain more clarity during development. This allowed us to complete the deliverable while still leaving room for necessary adjustments later.
+
   \item Which of your design decisions stemmed from speaking to your client(s)
   or a proxy (e.g. your peers, stakeholders, potential users)? For those that
   were not, why, and where did they come from?
+
+    \hspace{2em} Many of our design decisions, especially those involving the user interface, were directly influenced by conversations with our supervisor, Dr. Shayne. Since he does not come from a technical background, he primarily expressed his needs in terms of how he wanted to interact with the system. This naturally shaped the UI and the workflow we designed for scholars. Additionally, the inclusion of segmentation-based machine learning came from his explicit request; he emphasized that automated assistance in identifying and matching fragments would significantly improve his research workflow. These inputs helped anchor our design choices in real user needs.
+
   \item While creating the design doc, what parts of your other documents (e.g.
   requirements, hazard analysis, etc), it any, needed to be changed, and why?
+
+    \hspace{2em} Very few changes were needed to our previous documents. Because this is a pre-approved project with a well-defined problem and scope, many of the requirements and expectations were already laid out for us in the project description. As a result, our earlier documents, such as the SRS and Hazard Analysis, aligned naturally with the design work we did here. We did not need to revisit or adjust them significantly, beyond minor wording refinements and consistency updates.
+
   \item What are the limitations of your solution?  Put another way, given
   unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)
+
+    \hspace{2em} With unlimited resources, one of the most impactful improvements would be investing in more powerful AI infrastructure, such as GPUs dedicated to training and evaluating models. This would allow us to train new segmentation or matching models more frequently and at a much larger scale. We would also aim to build a more advanced fragment-matching pipeline with higher accuracy and more robust behaviour across different manuscript types. Additionally, we would elevate the quality of the UI significantly, improving performance, adding more interactive tools, and making the interface cleaner and more intuitive. Overall, the entire system could operate at a higher level of precision, speed, and sophistication.
+
   \item Give a brief overview of other design solutions you considered.  What
   are the benefits and tradeoffs of those other designs compared with the chosen
   design?  From all the potential options, why did you select the documented design?
   (LO\_Explores)
+
+    \hspace{2em} We did not explore many alternative designs because, from early discussions, the entire team already shared a clear mental model of how the system should operate. Our frequent conversations kept us aligned on the major components and workflow, so we naturally converged on a single coherent design. Although this meant we did not formally evaluate multiple competing solutions, the advantage was that we were able to focus our efforts on developing one strong, detailed design rather than splitting time considering options that did not align with the client’s expectations. Given the clarity of the problem and the constraints provided, the chosen design was the most straightforward and appropriate path forward.
+
 \end{enumerate}
 
 
