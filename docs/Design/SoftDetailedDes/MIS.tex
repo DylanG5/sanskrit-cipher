@@ -19,6 +19,9 @@
 \usepackage[section]{placeins}
 \usepackage{caption}
 \usepackage{fullpage}
+\usepackage{booktabs}
+\usepackage[T1]{fontenc}
+
 
 \hypersetup{
 bookmarks=true,     % show bookmarks bar?
@@ -76,85 +79,130 @@ See SRS Documentation at \wss{give url}
 
 \section{Introduction}
 
-The following document details the Module Interface Specifications for
-\wss{Fill in your project name and description}
+The following document details the Module Interface Specifications (MIS) for the Sanskrit Manuscript Fragment Reconstruction Platform (SMFRP). This system supports researchers and scholars in reconstructing fragmented Sanskrit manuscripts by providing a unified digital workspace that integrates fragment management, intelligent matching, and image-based reconstruction tools.
 
-Complementary documents include the System Requirement Specifications
-and Module Guide.  The full documentation and implementation can be
-found at \url{...}.  \wss{provide the url for your repo}
+The MIS defines the external behavior and interfaces for each software module in the system. Each module is specified in terms of its responsibilities, provided services, hidden state (secrets), environment variables, and exported access programs. These specifications are written at the right level of abstraction, focusing on logical interfaces and responsibilities rather than low-level implementation details such as programming language syntax or data structures.
+
+This document ensures that the system achieves consistency, and minimal coupling across modules. The defined interfaces promote high cohesion, and generality, enabling independent development, verification, and maintenance of each module.
+
+\subsection*{Complementary Documents}
+\begin{itemize}
+    \item \textbf{System Requirements Specification (SRS)} – Defines the system’s functional and non-functional requirements. The SRS can be accessed at: \href{https://github.com/DylanG5/sanskrit-ciphers-requirements/tree/ab899d5d07b554c8e80fb4fc8a8adaa181a0c81a}{SRS}
+    \item \textbf{Module Guide (MG)} – Outlines the overall software architecture, module decomposition, and dependency hierarchy.
+\end{itemize}
+
+\subsection*{Repository}
+The full project documentation and implementation can be found in the team’s \href{https://github.com/DylanG5/sanskrit-cipher}{GitHub repository}  
 
 \section{Notation}
 
-\wss{You should describe your notation.  You can use what is below as
-  a starting point.}
+In this section, we define the notation used throughout the Module Interface Specification. The purpose of this notation is to describe, in a clear and consistent manner, what each module provides and requires, without referencing any specific programming language or implementation detail.
 
-The structure of the MIS for modules comes from \citet{HoffmanAndStrooper1995},
-with the addition that template modules have been adapted from
-\cite{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
-\citet{HoffmanAndStrooper1995}.  For instance, the symbol := is used for a
-multiple assignment statement and conditional rules follow the form $(c_1
-\Rightarrow r_1 | c_2 \Rightarrow r_2 | ... | c_n \Rightarrow r_n )$.
+Each module in this MIS is described in terms of:
+\begin{itemize}
+    \item \textbf{State Variables} – The module’s internal data that is not visible externally.
+    \item \textbf{Environment Variables} – Data received from or affecting the external environment (e.g., databases, file storage, APIs).
+    \item \textbf{Exported Constants and Access Programs} – The operations, services, or functions the module provides to other modules.
+\end{itemize}
 
-The following table summarizes the primitive data types used by \progname. 
+This approach focuses on interface behavior, not implementation syntax (such as JSON or Python code), ensuring that the interfaces remain consistent.
 
-\begin{center}
-\renewcommand{\arraystretch}{1.2}
-\noindent 
-\begin{tabular}{l l p{7.5cm}} 
-\toprule 
-\textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\ 
+\subsection{Primitive Data Types}
+
+\begin{table}[H]
+\centering
+\caption{Primitive Data Types}
+\begin{tabular}{lll}
+\toprule
+\textbf{Data Type} & \textbf{Notation} & \textbf{Description} \\
 \midrule
-character & char & a single symbol or digit\\
-integer & $\mathbb{Z}$ & a number without a fractional component in (-$\infty$, $\infty$) \\
-natural number & $\mathbb{N}$ & a number without a fractional component in [1, $\infty$) \\
-real & $\mathbb{R}$ & any number in (-$\infty$, $\infty$)\\
+Character & \texttt{char} & A single symbol or letter. \\
+Integer & \texttt{int} & Whole numbers with no fractional part. \\
+Real & \texttt{float} & Numbers with decimal or fractional parts. \\
+Boolean & \texttt{bool} & Represents logical truth values (true or false). \\
 \bottomrule
-\end{tabular} 
-\end{center}
+\end{tabular}
+\end{table}
 
-\noindent
-The specification of \progname \ uses some derived data types: sequences, strings, and
-tuples. Sequences are lists filled with elements of the same data type. Strings
-are sequences of characters. Tuples contain a list of values, potentially of
-different types. In addition, \progname \ uses functions, which
-are defined by the data types of their inputs and outputs. Local functions are
-described by giving their type signature followed by their specification.
+\subsection{Derived Data Types}
+
+In addition to the primitive types above, the system specification also makes use of the following derived or composite types:
+
+\begin{itemize}
+    \item \textbf{Sequence:} An ordered collection of elements of the same data type. Example: A list of fragment identifiers or saved user sessions.
+    \item \textbf{String:} A sequence of characters, typically used for textual input, labels, or metadata fields.
+    \item \textbf{Tuple:} An ordered collection of values that may be of different data types. Commonly used to represent grouped entities such as \texttt{(FragmentId, ConfidenceScore)} or \texttt{(x, y, width, height)}.
+    \item \textbf{Record / Object:} A structured type that groups named fields with defined data types, such as \texttt{\{id: FragmentId, script: String, confidence: Float\}}.
+    \item \textbf{Function:} A mapping defined by the types of its inputs and outputs. Functions are specified by their type signatures (inputs/outputs) and behavior (preconditions, postconditions, and effects).
+\end{itemize}
+
+\subsection{Interface and Parameter Conventions}
+
+This section explains how interfaces and operations are written in the MIS. The goal is to make them easy to read and understand while staying general enough to apply to any implementation.
+
+\begin{itemize}
+    \item \textbf{Inputs and Outputs:} Labeled as \texttt{in:} and \texttt{out:} in operation definitions. Example: \texttt{search(in: SearchQuery, out: SearchResult)}
+    \item \textbf{Operation Format:} \texttt{functionName(in: InputType, out: OutputType) → may throw ErrorType}
+    \item \textbf{Module Naming Convention:} Each module name follows the format \texttt{Layer.Module}, for example: \texttt{UI.Canvas}, \texttt{Svc.MatchOrch}, or \texttt{Data.FragmentStore}.
+    \item \textbf{Boolean Conditions:} Represented using logical symbols such as $\land$ (and), $\lor$ (or), $\lnot$ (not), and $\implies$ (implies).
+\end{itemize}
+
 
 \section{Module Decomposition}
 
-The following table is taken directly from the Module Guide document for this project.
+
+
+The following section summarizes the module hierarchy for the \textit{Sanskrit Manuscript Fragment Reconstruction Platform}. It is consistent with the \textbf{Module Guide (MG)} for this project and represents how the system has been decomposed into modules at different abstraction levels.
+
+Each level in the hierarchy captures a different design concern:
+
+\begin{itemize}
+    \item \textbf{Hardware-Hiding Level:} Interfaces directly with the system’s physical or platform-dependent resources.
+    \item \textbf{Behaviour-Hiding Level:} Encapsulates the main functional behavior of the system, implementing the use cases described in the SRS.
+    \item \textbf{Software Decision Level:} Contains lower-level utility modules and software decisions that simplify implementation but are not visible to the user.
+\end{itemize}
+
+\subsection{Module Hierarchy}
 
 \begin{table}[h!]
 \centering
-\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
-\toprule
-\textbf{Level 1} & \textbf{Level 2}\\
-\midrule
-
-{Hardware-Hiding} & ~ \\
-\midrule
-
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding} & Input Parameters\\
-& Output Format\\
-& Output Verification\\
-& Temperature ODEs\\
-& Energy Equations\\ 
-& Control Module\\
-& Specification Parameters Module\\
-\midrule
-
-\multirow{3}{0.3\textwidth}{Software Decision} & {Sequence Data Structure}\\
-& ODE Solver\\
-& Plotting\\
-\bottomrule
-
-\end{tabular}
 \caption{Module Hierarchy}
-\label{TblMH}
+\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Level 1} & \textbf{Level 2 Modules} \\
+\midrule
+Hardware-Hiding (HW) & Image Storage Interface \\
+\addlinespace
+Behaviour-Hiding & 
+\begin{minipage}[t]{0.7\linewidth}
+\textbf{User Interface (UI):} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload}\\
+\textbf{Service Layer (Svc):} \texttt{Svc.API}, \texttt{Svc.Search}, \texttt{Svc.AuthZ}, \texttt{Svc.Session}, \texttt{Svc.ProcOrch}, \texttt{Svc.MatchOrch}\\
+\textbf{Data Management (Data):} \texttt{Data.FragmentStore}, \texttt{Data.Catalog}, \texttt{Data.User}, \texttt{Data.Project}\\
+\textbf{Machine Learning Modules (ML):} \texttt{ML.EdgeMatch}, \texttt{ML.Damage}, \texttt{ML.ScriptClass}, \texttt{ML.OCR}, \texttt{ML.TextSim}
+\end{minipage} \\
+\addlinespace
+Software Decision & 
+\begin{minipage}[t]{0.7\linewidth}
+Utility and Support Modules (Error Handling, Logging, Configuration Management, Test Stubs)
+\end{minipage} \\
+\bottomrule
+\end{tabular}
 \end{table}
 
 \newpage
-~\newpage
+
+\subsection{Description of Levels}
+
+\subsubsection{Hardware-Hiding Level}
+This level hides all hardware and platform dependencies from the rest of the system. It includes interfaces that communicate with the file storage system, image repositories, and cloud infrastructure. These components provide a uniform interface for accessing images and metadata regardless of the underlying storage medium.
+
+\subsubsection{Behaviour-Hiding Level}
+This level defines the functional behavior of the system, implementing the requirements outlined in the SRS. It includes the user-facing modules (UI), the application logic (Service Layer), data persistence (Data Layer), and intelligent processing (ML Layer). These modules interact through clearly defined service interfaces, promoting modularity and separation of concerns.
+
+\subsubsection{Software Decision Level}
+This level includes supporting components that are primarily design decisions rather than functional necessities. These modules include configuration handlers, utility libraries, and testing or logging frameworks that support development, debugging, and maintenance.
+
 
 \section{MIS of \wss{Module Name}} \label{Module} \wss{Use labels for
   cross-referencing}
