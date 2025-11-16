@@ -293,11 +293,8 @@ def main():
 # ------------------------------
 # Inference helper
 # ------------------------------
+
 def predict_image(model_path, image_path, meta_path="./output/meta.json", device=None):
-    """
-    Load a trained model and predict the number of lines in a given image.
-    Returns: (predicted_lines, confidence)
-    """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -330,8 +327,11 @@ def predict_image(model_path, image_path, meta_path="./output/meta.json", device
         probs = torch.softmax(outputs, dim=1)
         pred_class = probs.argmax(dim=1).item()
         confidence = probs.max().item()
+        
+        # Get all probabilities as a dictionary
+        all_probs = {i: probs[0][i].item() for i in range(num_classes)}
     
-    return pred_class, confidence
+    return pred_class, confidence, all_probs
 
 
 if __name__ == "__main__":
