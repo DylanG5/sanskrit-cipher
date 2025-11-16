@@ -67,7 +67,7 @@ The `classification_model_test.py` script tests the trained model on new images.
 
 #### Setup Test Images
 
-Edit the `image_test_list` in `classification_model_test.py`:
+Edit the `image_test_list` in `classification_model_test.py` with the image paths you want to test:
 
 ```python
 image_test_list = [
