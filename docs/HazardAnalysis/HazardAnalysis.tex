@@ -4,6 +4,7 @@
 \usepackage{tabularx}
 \usepackage{hyperref}
 \usepackage{multirow}
+\usepackage[round]{natbib}
 
 \hypersetup{
     colorlinks=true,       % false: boxed links; true: colored links
@@ -51,12 +52,12 @@ October 10th 2025 & Yousef Shahin & Created the roadmap\\
 ~\newpage
 
 \tableofcontents
+\listoftables
 
 ~\newpage
 
 \pagenumbering{arabic}
 
-\wss{You are free to modify this template.}
 
 \section{Introduction}
 
@@ -167,7 +168,7 @@ Table~\ref{TblPotentialLosses} summarizes the potential losses that could occur 
 
 \section{System Boundaries and Components}
 
-This hazard analysis treats the system as four major component groups that interact to support scholarly reconstruction of manuscript fragments. (For full details, refer to the SRS, Section~S.1.)
+This hazard analysis treats the system as four major component groups that interact to support scholarly reconstruction of manuscript fragments. (For full details, refer to the SRS \citep{SRS-Sanskrit-Ciphers}, Section~S.1.)
 
 \subsection*{Major Component Groups}
 \begin{itemize}
@@ -212,7 +213,7 @@ This hazard analysis treats the system as four major component groups that inter
   \item \textbf{Datastores} are system-of-record for this application only; they do not write back to external catalogues/corpora.
 \end{itemize}
 
-See SRS Section~S.1 for the detailed component descriptions and interfaces. Note that here I have separated the backend and data storage to make it a little clearer to visualize the components but data storage will be treated as backend for the project.
+See SRS Section~S.1 for the detailed component descriptions and interfaces. Note that here we have separated the backend and data storage to make it a little clearer to visualize the components but data storage will be treated as backend for the project.
 
 \section{Critical Assumptions}
 
@@ -514,6 +515,14 @@ The implementation roadmap prioritizes requirements that:
 
     \item \textbf{Fit within capstone timeline:} Advanced features requiring significant infrastructure work (2FA, distributed orchestration, comprehensive auditing) are deferred to ensure the team can deliver a functional system within two terms while maintaining approximately 10 hours per week per team member.
 \end{enumerate}
+
+\newpage{}
+
+\bibliographystyle{plainnat}
+
+\bibliography{../../refs/References}
+
+
 
 \newpage{}
 
