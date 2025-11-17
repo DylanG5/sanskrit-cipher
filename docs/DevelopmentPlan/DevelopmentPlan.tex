@@ -309,28 +309,33 @@ Testing will present unique challenges because:
 
 \subsection{Demonstration Plan}
 
-To address these risks and demonstrate feasibility, our POC will focus on proving that the core technical challenges can be overcome. Each demonstration component directly targets our identified risks:
+To focus on the most important technical risks and reflect our current bandwidth, the POC will demonstrate four core elements: segmentation, baseline matching, basic feature extraction, and a simple working UI. Each part connects to the major risks identified earlier.
 
 \begin{itemize}
-\item \textbf{OCR Functionality Demonstration} (\textit{Addresses: Inconsistent OCR Performance}): Show OCR engines successfully extracting text from sample manuscript fragments with varying quality levels. We will demonstrate text extraction from both clear and degraded fragments to validate OCR consistency approaches and prove we can handle the script variations and deteriorated characters typical in ancient Buddhist texts.
 
-\item \textbf{Image Segmentation and Normalization} (\textit{Addresses: OCR Integration Challenges}): Demonstrate fragment segmentation algorithms that can isolate individual fragments from composite images and normalize them for consistent analysis (rotation correction, standardization). This proves we can handle the multi-angle photography and irregular fragment shapes that challenge existing tools.
+\item \textbf{Image Segmentation} (\textit{Addresses: Preprocessing Reliability}):
+We will show the system segmenting a composite image into individual fragments. This demonstrates that we can isolate fragments cleanly, which is necessary before running matching or feature extraction.
 
-\item \textbf{Basic Feature Extraction} (\textit{Addresses: AI Model Training Without Ground Truth}): Show extraction of key features from fragments including edges, text content, and damage patterns that could be used for matching. This demonstrates our unsupervised approach can identify meaningful similarity features without verified training examples.
+\item \textbf{Deterministic Edge Matching Baseline} (\textit{Addresses: No Ground Truth Data}):
+We will show a simple edge-matching algorithm running on puzzle piece images. This lets us demonstrate that the matching logic works in a controlled setting before applying it to manuscript fragments. It gives us a predictable baseline to compare future methods against and helps validate our early matching approach.
 
-\item \textbf{Prototype Similarity Metrics} (\textit{Addresses: Lack of Positive Training Examples}): Implement basic similarity algorithms that compare normalized fragments and provide confidence scores. We will demonstrate multiple validation approaches including edge matching, damage pattern correlation, and text similarity that can work without confirmed fragment pairs.
+\item \textbf{Basic One-Criteria Feature Model} (\textit{Addresses: Early Feature Extraction Needs}):
+We will extract one simple metadata feature from each fragment—for example, estimated line counts. This shows that we can begin tagging fragments with useful information that will later support filtering and search.
 
-\item \textbf{Interactive Workspace} (\textit{Addresses: Usability and Interface Challenges}): Create a basic interface where users can upload fragments, view OCR results, and see preliminary similarity suggestions. This proves the system can handle the scholars' workflow requirements and maintain performance with multiple high-resolution images.
+\item \textbf{Basic Working UI Prototype} (\textit{Addresses: Usability and Workflow Uncertainty}):
+We will show a simple functional UI where users can upload fragments and view basic outputs like segmentation results or metadata. This helps confirm the direction of the workflow researchers will use.
+
 \end{itemize}
 
-This demonstration will prove the technical feasibility of the core components. The POC focuses on demonstrating that our technical approach can extract and compare the right types of features for fragment matching. While the absence of ground truth data presents challenges, we will explore unsupervised learning techniques and develop validation approaches that can work with the available data.
+These four components together demonstrate that we can successfully preprocess images through segmentation, generate early matching signals, extract basic fragment features, and provide a working interface. The POC gives confidence that our technical approach is feasible and sets the foundation for more advanced development.
 
 \textbf{Success Metrics for POC:}
+
 \begin{itemize}
-\item OCR extracts readable text from 60\% of test fragments
-\item Image normalization successfully corrects orientation in 95\% of test cases
-\item Feature extraction identifies edge patterns, damage signatures, and text regions
-\item Similarity algorithm produces consistent rankings across multiple runs
+\item Segmentation correctly separates individual fragments in at least 90\% of test images.
+\item Edge-matching algorithm produces the same top-k matches across runs with at least 80\% consistency.
+\item Metadata feature produces the same output on repeated uploads with at least 70\% consistency.
+\item Basic UI handles image uploads and displays results without errors in at least 95\% of test cases.
 \end{itemize}
 
 \section{Expected Technology}
