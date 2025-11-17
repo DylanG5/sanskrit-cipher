@@ -12,6 +12,9 @@
 *.cb2
 .*.lb
 
+## src stuff
+test_images/
+
 ## Intermediate documents:
 *.dvi
 *.xdv
