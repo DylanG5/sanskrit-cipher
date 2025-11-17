@@ -62,6 +62,8 @@ sanskrit-cipher/
 ├── src/                     # Source code
 │   └── web/                # Web application components
 │       └── web-canvas/     # React/TypeScript frontend with interactive canvas
-│
+│    └── segmentation/ 
+|    └── classification/
+|    └── edge_matching/
 └── test/                    # Test cases and testing infrastructure
 ```
