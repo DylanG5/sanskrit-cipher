@@ -1,0 +1,323 @@
+import React, { useState, useRef, useCallback } from 'react';
+import { FragmentFilters, DEFAULT_FILTERS } from '../types/filters';
+
+interface FilterPanelProps {
+  filters: FragmentFilters;
+  onFiltersChange: (filters: FragmentFilters) => void;
+  availableScripts: string[];
+  matchCount: number;
+  totalCount: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  width: number;
+  onWidthChange: (width: number) => void;
+}
+
+const FilterPanel: React.FC<FilterPanelProps> = ({
+  filters,
+  onFiltersChange,
+  availableScripts,
+  matchCount,
+  totalCount,
+  isOpen,
+  onToggle,
+  width,
+  onWidthChange,
+}) => {
+  const [localFilters, setLocalFilters] = useState<FragmentFilters>(filters);
+  const [isResizing, setIsResizing] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handleLineCountMinChange = (value: string) => {
+    const num = value === '' ? undefined : parseInt(value);
+    setLocalFilters({ ...localFilters, lineCountMin: num });
+  };
+
+  const handleLineCountMaxChange = (value: string) => {
+    const num = value === '' ? undefined : parseInt(value);
+    setLocalFilters({ ...localFilters, lineCountMax: num });
+  };
+
+  const handleScriptToggle = (script: string) => {
+    const scripts = localFilters.scripts.includes(script)
+      ? localFilters.scripts.filter(s => s !== script)
+      : [...localFilters.scripts, script];
+    setLocalFilters({ ...localFilters, scripts });
+  };
+
+  const handleEdgePieceChange = (value: boolean | null) => {
+    setLocalFilters({ ...localFilters, isEdgePiece: value });
+  };
+
+  const handleApply = () => {
+    onFiltersChange(localFilters);
+  };
+
+  const handleReset = () => {
+    setLocalFilters(DEFAULT_FILTERS);
+    onFiltersChange(DEFAULT_FILTERS);
+  };
+
+  const hasActiveFilters =
+    localFilters.lineCountMin !== undefined ||
+    localFilters.lineCountMax !== undefined ||
+    localFilters.scripts.length > 0 ||
+    localFilters.isEdgePiece !== null;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const newWidth = window.innerWidth - e.clientX;
+    // Constrain width between 280px and 450px
+    if (newWidth >= 280 && newWidth <= 450) {
+      onWidthChange(newWidth);
+    }
+  }, [onWidthChange]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  React.useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  return (
+    <>
+      {/* Toggle button when closed */}
+      {!isOpen && (
+        <button
+          onClick={onToggle}
+          className="fixed right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-slate-700 to-slate-800 text-white px-3 py-6 rounded-l-lg shadow-lg hover:from-slate-600 hover:to-slate-700 transition-all duration-200 z-30 group"
+          title="Open filters"
+        >
+          <div className="flex flex-col items-center gap-2">
+            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span className="text-xs font-medium" style={{ writingMode: 'vertical-rl' }}>Filters</span>
+            {hasActiveFilters && (
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+            )}
+          </div>
+        </button>
+      )}
+
+      {/* Filter Panel */}
+      {isOpen && (
+        <div
+          ref={panelRef}
+          style={{ width: `${width}px` }}
+          className="bg-gradient-to-b from-slate-50 to-slate-100 border-l border-slate-300 overflow-y-auto shadow-inner flex flex-col flex-shrink-0 relative"
+        >
+          {/* Header */}
+          <div className="p-4 bg-gradient-to-r from-slate-700 to-slate-800 text-white sticky top-0 z-10 shadow-md">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <h2 className="text-lg font-semibold">Filter Fragments</h2>
+              </div>
+              <button
+                onClick={onToggle}
+                className="text-slate-300 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-all duration-200"
+                title="Close filters"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Match count */}
+            <div className="bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-300">Showing</span>
+                <span className="font-semibold text-white">
+                  {matchCount} / {totalCount} fragments
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Controls */}
+          <div className="flex-1 p-4 space-y-6">
+            {/* Line Count Filter */}
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Line Count</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs text-slate-600 mb-1">Min</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={localFilters.lineCountMin ?? ''}
+                    onChange={(e) => handleLineCountMinChange(e.target.value)}
+                    placeholder="Any"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
+                <div className="text-slate-400 mt-5">—</div>
+                <div className="flex-1">
+                  <label className="block text-xs text-slate-600 mb-1">Max</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={localFilters.lineCountMax ?? ''}
+                    onChange={(e) => handleLineCountMaxChange(e.target.value)}
+                    placeholder="Any"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              {(localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined) && (
+                <p className="mt-2 text-xs text-slate-500">
+                  {localFilters.lineCountMin ?? '0'} - {localFilters.lineCountMax ?? '∞'} lines
+                </p>
+              )}
+            </div>
+
+            {/* Script Type Filter */}
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Script Type</h3>
+              </div>
+              {availableScripts.length > 0 ? (
+                <div className="space-y-2">
+                  {availableScripts.map((script) => (
+                    <label
+                      key={script}
+                      className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors group"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={localFilters.scripts.includes(script)}
+                        onChange={() => handleScriptToggle(script)}
+                        className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                      />
+                      <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">
+                        {script}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500 italic">No script types available</p>
+              )}
+              {localFilters.scripts.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-slate-200">
+                  <p className="text-xs text-slate-600">
+                    Selected: <span className="font-medium">{localFilters.scripts.join(', ')}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Edge Piece Filter */}
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Edge Piece</h3>
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="edgePiece"
+                    checked={localFilters.isEdgePiece === null}
+                    onChange={() => handleEdgePieceChange(null)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="edgePiece"
+                    checked={localFilters.isEdgePiece === true}
+                    onChange={() => handleEdgePieceChange(true)}
+                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Yes</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="edgePiece"
+                    checked={localFilters.isEdgePiece === false}
+                    onChange={() => handleEdgePieceChange(false)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">No</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="p-4 bg-white border-t border-slate-300 sticky bottom-0 space-y-2">
+            <button
+              onClick={handleApply}
+              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Apply Filters
+            </button>
+            <button
+              onClick={handleReset}
+              disabled={!hasActiveFilters}
+              className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Reset Filters
+            </button>
+          </div>
+
+          {/* Resize Handle */}
+          <div
+            onMouseDown={handleMouseDown}
+            className={`absolute top-0 left-0 w-1 h-full cursor-col-resize hover:bg-blue-500 transition-colors group ${
+              isResizing ? 'bg-blue-500' : 'bg-transparent'
+            }`}
+            title="Drag to resize"
+          >
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="bg-blue-500 text-white rounded-full p-1 shadow-lg">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default FilterPanel;
