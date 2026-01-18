@@ -237,10 +237,10 @@ Hardware-Hiding (HW) & Image Storage Interface \\
 \addlinespace
 Behaviour-Hiding & 
 \begin{minipage}[t]{0.7\linewidth}
-\textbf{User Interface (UI):} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload}\\
+\textbf{User Interface (UI):} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload}, \texttt{UI.SaveSession}, \texttt{UI.LoadSession}\\
 \textbf{Service Layer (Svc):} \texttt{Svc.API}, \texttt{Svc.Search}, \texttt{Svc.AuthZ}, \texttt{Svc.Session}, \texttt{Svc.ProcOrch}, \texttt{Svc.MatchOrch}\\
 \textbf{Data Management (Data):} \texttt{Data.FragmentStore}, \texttt{Data.Catalog}, \texttt{Data.User}, \texttt{Data.Project}\\
-\textbf{Machine Learning Modules (ML):} \texttt{ML.EdgeMatch}, \texttt{ML.Damage}, \texttt{ML.ScriptClass}, \texttt{ML.OCR}, \texttt{ML.TextSim}
+\textbf{Machine Learning Modules (ML):} \texttt{ML.EdgeMatch}, \texttt{ML.ScriptClass}, \texttt{ML.TextSim}, \texttt{ML.Segmentation}, \texttt{ML.CircleRecognition}, \texttt{ML.LineCount}, \texttt{ML.EdgeClassification}
 \end{minipage} \\
 \addlinespace
 Software Decision & 
@@ -729,6 +729,190 @@ This module provides the interface for querying the fragment database, filtering
 \begin{itemize}
     \item \texttt{renderResultsTable(results)} – updates DOM table from latest \texttt{SearchResultPage}.
     \item \texttt{validateSearchQuery(q)} – checks filter ranges and required fields.
+\end{itemize}
+
+
+
+\section{MIS of UI.SaveSession} \label{UI.SaveSession}
+
+\subsection{Module}
+\textbf{UI.SaveSession} \; (Session Save Interface)
+
+This module provides the user interface for saving the current workspace state, including fragment arrangements, annotations, and reconstruction progress. It allows users to name and persist their work for later retrieval.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Svc.Session} – for persisting session data to backend storage.
+    \item \texttt{UI.Canvas} – for retrieving current canvas state.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MAX\_SESSION\_NAME\_LENGTH = 100}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{UI.SaveSession - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.2cm} p{3.2cm} p{4.1cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{renderSaveDialog} & \texttt{none} & \texttt{none} & \texttt{UIRenderError} \\
+\texttt{saveCurrentSession} & \texttt{name: String} & \texttt{SessionID} & \texttt{ValidationError, NetworkError} \\
+\texttt{validateSessionName} & \texttt{name: String} & \texttt{bool} & \texttt{ValidationError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{sessionName: String}
+    \item \texttt{saveInProgress: bool}
+    \item \texttt{lastSavedID: SessionID or null}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Browser DOM for dialog rendering.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item User is authenticated and has valid session context.
+    \item Canvas state is available and valid at time of save.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{renderSaveDialog()}:
+\begin{itemize}
+    \item transition: displays modal dialog with input field for session name and save button.
+    \item output: none.
+    \item exception: \texttt{UIRenderError} if dialog cannot be rendered.
+\end{itemize}
+
+\noindent \texttt{saveCurrentSession(name)}:
+\begin{itemize}
+    \item transition: validates session name; captures current canvas state from \texttt{UI.Canvas}; sends save request to \texttt{Svc.Session}; updates \texttt{lastSavedID} on success.
+    \item output: \texttt{SessionID} assigned by backend.
+    \item exception: \texttt{ValidationError} if name invalid; \texttt{NetworkError} if save fails.
+\end{itemize}
+
+\noindent \texttt{validateSessionName(name)}:
+\begin{itemize}
+    \item output: \texttt{true} if name meets length and character requirements.
+    \item exception: \texttt{ValidationError} if name invalid.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{showSuccessMessage(id)} – displays confirmation with session ID.
+    \item \texttt{closeDialog()} – closes save dialog and clears state.
+\end{itemize}
+
+
+
+\section{MIS of UI.LoadSession} \label{UI.LoadSession}
+
+\subsection{Module}
+\textbf{UI.LoadSession} \; (Session Load Interface)
+
+This module provides the user interface for browsing, selecting, and loading previously saved workspace sessions. It displays session metadata and allows users to restore their reconstruction work.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Svc.Session} – for retrieving available sessions and loading session data.
+    \item \texttt{UI.Canvas} – for applying loaded state to the canvas.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{SESSIONS\_PAGE\_SIZE = 10}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{UI.LoadSession - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.2cm} p{3.2cm} p{4.1cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{renderLoadDialog} & \texttt{none} & \texttt{none} & \texttt{UIRenderError} \\
+\texttt{fetchSessionList} & \texttt{none} & \texttt{SessionList} & \texttt{NetworkError} \\
+\texttt{loadSession} & \texttt{id: SessionID} & \texttt{none} & \texttt{NotFoundError, NetworkError} \\
+\texttt{deleteSession} & \texttt{id: SessionID} & \texttt{bool} & \texttt{NetworkError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item \texttt{availableSessions: SessionList}
+    \item \texttt{selectedSessionID: SessionID or null}
+    \item \texttt{loadInProgress: bool}
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Browser DOM for dialog rendering and session list display.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item User is authenticated and has valid session context.
+    \item Session data retrieved from backend is valid and compatible with current system version.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{renderLoadDialog()}:
+\begin{itemize}
+    \item transition: displays modal dialog with list of saved sessions and load button.
+    \item output: none.
+    \item exception: \texttt{UIRenderError} if dialog cannot be rendered.
+\end{itemize}
+
+\noindent \texttt{fetchSessionList()}:
+\begin{itemize}
+    \item transition: requests list of available sessions from \texttt{Svc.Session}; updates \texttt{availableSessions}.
+    \item output: \texttt{SessionList} containing session metadata (ID, name, date, preview).
+    \item exception: \texttt{NetworkError} if request fails.
+\end{itemize}
+
+\noindent \texttt{loadSession(id)}:
+\begin{itemize}
+    \item transition: retrieves session data from \texttt{Svc.Session}; applies state to \texttt{UI.Canvas}; closes load dialog.
+    \item output: none.
+    \item exception: \texttt{NotFoundError} if session does not exist; \texttt{NetworkError} if retrieval fails.
+\end{itemize}
+
+\noindent \texttt{deleteSession(id)}:
+\begin{itemize}
+    \item transition: sends delete request to \texttt{Svc.Session}; removes session from \texttt{availableSessions} on success.
+    \item output: \texttt{true} if deletion successful.
+    \item exception: \texttt{NetworkError} if deletion fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{renderSessionList()} – updates DOM with session list.
+    \item \texttt{confirmDelete(id)} – shows confirmation dialog before deletion.
+    \item \texttt{closeDialog()} – closes load dialog and clears state.
 \end{itemize}
 
 \section{MIS of Svc.API} \label{Svc.API}
@@ -1664,79 +1848,6 @@ This module provides model-based similarity estimates based on fragment edge con
 
 
 
-\section{MIS of ML.Damage} \label{ML.Damage}
-
-\subsection{Module}
-\textbf{ML.Damage} \; (Damage Pattern Recognition Model)
-
-This module characterizes damage patterns (tears, stains, burn marks) and computes similarity between fragments based on shared damage signatures.
-
-\subsection{Uses}
-\begin{itemize}
-    \item \texttt{HW.ImageStorage}.
-\end{itemize}
-
-\subsection{Syntax}
-
-\subsubsection{Exported Constants}
-\begin{itemize}
-    \item \texttt{DAMAGE\_SIGNATURE\_DIM}
-\end{itemize}
-
-\subsubsection{Exported Access Programs}
-
-\begin{table}[H]
-\centering
-\small
-\caption{ML.Damage - Exported Access Programs}
-\begin{tabular}{p{4.5cm} p{4.8cm} p{2cm} p{2.7cm}}
-\toprule
-\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
-\midrule
-\texttt{computeDamageSignature} & \texttt{id: ImageID} & \texttt{DamageSignature} & \texttt{ModelError} \\
-\texttt{scoreDamageSimilarity} & \texttt{a: DamageSignature, b: DamageSignature} & \texttt{float} & \texttt{ModelError} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Semantics}
-
-\subsubsection{State Variables}
-\begin{itemize}
-    \item Optional cached model configuration.
-\end{itemize}
-
-\subsubsection{Environment Variables}
-\begin{itemize}
-    \item Same model runtime as other ML modules.
-\end{itemize}
-
-\subsubsection{Assumptions}
-\begin{itemize}
-    \item Damage features can be extracted from normalized images.
-\end{itemize}
-
-\subsubsection{Access Routine Semantics}
-
-\noindent \texttt{computeDamageSignature(id)}:
-\begin{itemize}
-    \item output: feature vector encoding damage pattern characteristics.
-    \item exception: \texttt{ModelError} on failure.
-\end{itemize}
-
-\noindent \texttt{scoreDamageSimilarity(a, b)}:
-\begin{itemize}
-    \item output: similarity score in \([0, 1]\).
-    \item exception: \texttt{ModelError} if input invalid.
-\end{itemize}
-
-\subsubsection{Local Functions}
-\begin{itemize}
-    \item \texttt{segmentDamageRegions(img)} – internal helper for feature extraction.
-\end{itemize}
-
-
-
 \section{MIS of ML.ScriptClass} \label{ML.ScriptClass}
 
 \subsection{Module}
@@ -1803,89 +1914,16 @@ This module classifies the script type of a fragment (for example, Gupta Brāhm�
 
 
 
-\section{MIS of ML.OCR} \label{ML.OCR}
-
-\subsection{Module}
-\textbf{ML.OCR} \; (Sanskrit OCR and Transcription Model)
-
-This module performs OCR on manuscript fragments, returning transcribed text and character-level confidence scores.
-
-\subsection{Uses}
-\begin{itemize}
-    \item \texttt{HW.ImageStorage}.
-\end{itemize}
-
-\subsection{Syntax}
-
-\subsubsection{Exported Constants}
-\begin{itemize}
-    \item \texttt{MIN\_ACCEPTABLE\_CONFIDENCE} – used to flag low-confidence characters.
-\end{itemize}
-
-\subsubsection{Exported Access Programs}
-
-\begin{table}[H]
-\centering
-\small
-\caption{ML.OCR - Exported Access Programs}
-\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
-\toprule
-\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
-\midrule
-\texttt{runOCR} & \texttt{id: ImageID} & \texttt{OCRResult} & \texttt{ModelError} \\
-\texttt{estimateAccuracy} & \texttt{gt: String, pred: String} & \texttt{float} & \texttt{None} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Semantics}
-
-\subsubsection{State Variables}
-\begin{itemize}
-    \item OCR model weights and configuration.
-\end{itemize}
-
-\subsubsection{Environment Variables}
-\begin{itemize}
-    \item Model runtime and any external OCR library.
-\end{itemize}
-
-\subsubsection{Assumptions}
-\begin{itemize}
-    \item Input images obey preprocessing constraints (orientation, resolution).
-\end{itemize}
-
-\subsubsection{Access Routine Semantics}
-
-\noindent \texttt{runOCR(id)}:
-\begin{itemize}
-    \item output: \texttt{OCRResult} containing recognized text and confidence scores.
-    \item exception: \texttt{ModelError} if inference fails.
-\end{itemize}
-
-\noindent \texttt{estimateAccuracy(gt, pred)}:
-\begin{itemize}
-    \item output: approximate accuracy value, for example using character-level Levenshtein-based metric.
-    \item exception: none.
-\end{itemize}
-
-\subsubsection{Local Functions}
-\begin{itemize}
-    \item \texttt{normalizeText(str)} – harmonizes text for fair comparison.
-\end{itemize}
-
-
-
 \section{MIS of ML.TextSim} \label{ML.TextSim}
 
 \subsection{Module}
 \textbf{ML.TextSim} \; (Textual Content Similarity Model)
 
-This module computes semantic similarity between text segments derived from OCR or manual transcription.
+This module computes semantic similarity between text segments derived from transcribed text or manual annotations.
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{ML.OCR} – as a source of text.
+    \item \texttt{Data.FragmentStore} – for accessing fragment text content.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1945,6 +1983,311 @@ This module computes semantic similarity between text segments derived from OCR 
 \subsubsection{Local Functions}
 \begin{itemize}
     \item \texttt{cosineSimilarity(a, b)} – core similarity computation.
+\end{itemize}
+
+
+
+\section{MIS of ML.Segmentation} \label{ML.Segmentation}
+
+\subsection{Module}
+\textbf{ML.Segmentation} \; (Fragment Segmentation Model)
+
+This module performs image segmentation to identify and isolate individual fragment regions from manuscript images. It detects fragment boundaries and separates multiple fragments that may appear in a single scanned image.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage} – for retrieving images to segment.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MIN\_FRAGMENT\_SIZE} – minimum area threshold for valid fragments.
+    \item \texttt{SEGMENTATION\_CONFIDENCE\_THRESHOLD = 0.7}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.Segmentation - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{segmentImage} & \texttt{id: ImageID} & \texttt{SegmentationResult} & \texttt{ModelError} \\
+\texttt{extractFragments} & \texttt{id: ImageID, masks: SegmentMaskList} & \texttt{Sequence[ImageID]} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Segmentation model weights and configuration.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Model runtime environment for deep learning inference.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Input images have been preprocessed (orientation correction, resolution normalization).
+    \item Fragments in the image have sufficient contrast with the background.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{segmentImage(id)}:
+\begin{itemize}
+    \item output: \texttt{SegmentationResult} containing binary masks and bounding boxes for detected fragments.
+    \item exception: \texttt{ModelError} if segmentation fails or image cannot be processed.
+\end{itemize}
+
+\noindent \texttt{extractFragments(id, masks)}:
+\begin{itemize}
+    \item transition: creates separate image files for each detected fragment region; stores them via \texttt{HW.ImageStorage}.
+    \item output: sequence of new \texttt{ImageID} values for extracted fragments.
+    \item exception: \texttt{ModelError} if extraction or storage fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{applyMorphology(mask)} – cleans segmentation masks using morphological operations.
+    \item \texttt{filterSmallRegions(masks)} – removes regions below \texttt{MIN\_FRAGMENT\_SIZE}.
+\end{itemize}
+
+
+
+\section{MIS of ML.CircleRecognition} \label{ML.CircleRecognition}
+
+\subsection{Module}
+\textbf{ML.CircleRecognition} \; (Circle Detection and Recognition Model)
+
+This module detects circular marks, holes, or decorative elements in manuscript fragments. These features can serve as additional matching criteria when aligning fragments.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage} – for accessing fragment images.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MIN\_CIRCLE\_RADIUS} – minimum detectable circle size in pixels.
+    \item \texttt{MAX\_CIRCLE\_RADIUS} – maximum detectable circle size in pixels.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.CircleRecognition - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{detectCircles} & \texttt{id: ImageID} & \texttt{CircleList} & \texttt{ModelError} \\
+\texttt{matchCirclePatterns} & \texttt{a: CircleList, b: CircleList} & \texttt{float} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Detection parameters and thresholds.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Image processing library (e.g., OpenCV).
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Circles are sufficiently distinct from background texture.
+    \item Images are preprocessed and normalized.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{detectCircles(id)}:
+\begin{itemize}
+    \item output: \texttt{CircleList} containing center coordinates, radii, and confidence scores for detected circles.
+    \item exception: \texttt{ModelError} if detection fails.
+\end{itemize}
+
+\noindent \texttt{matchCirclePatterns(a, b)}:
+\begin{itemize}
+    \item output: similarity score in \([0, 1]\) based on spatial arrangement and properties of circles.
+    \item exception: \texttt{ModelError} if matching algorithm fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{computeSpatialHash(circles)} – creates geometric hash for circle arrangement.
+    \item \texttt{filterOverlappingCircles(circles)} – removes duplicate detections.
+\end{itemize}
+
+
+
+\section{MIS of ML.LineCount} \label{ML.LineCount}
+
+\subsection{Module}
+\textbf{ML.LineCount} \; (Text Line Counting Model)
+
+This module analyzes manuscript fragments to count the number of text lines present. Line count serves as a useful filtering and matching criterion during fragment search and reconstruction.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage} – for accessing fragment images.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{MIN\_LINE\_SPACING} – minimum expected spacing between lines in pixels.
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.LineCount - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{countLines} & \texttt{id: ImageID} & \texttt{LineCountResult} & \texttt{ModelError} \\
+\texttt{detectLineRegions} & \texttt{id: ImageID} & \texttt{Sequence[BoundingBox]} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Line detection model parameters.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Image processing and model inference environment.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Text lines are approximately horizontal after preprocessing.
+    \item Sufficient contrast exists between text and background.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{countLines(id)}:
+\begin{itemize}
+    \item output: \texttt{LineCountResult} containing the number of detected lines and confidence score.
+    \item exception: \texttt{ModelError} if counting fails or image quality insufficient.
+\end{itemize}
+
+\noindent \texttt{detectLineRegions(id)}:
+\begin{itemize}
+    \item output: sequence of \texttt{BoundingBox} objects defining the spatial extent of each text line.
+    \item exception: \texttt{ModelError} if line detection fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{projectHorizontally(img)} – creates horizontal projection histogram for line detection.
+    \item \texttt{findLineBoundaries(projection)} – identifies line separation points in projection.
+\end{itemize}
+
+
+
+\section{MIS of ML.EdgeClassification} \label{ML.EdgeClassification}
+
+\subsection{Module}
+\textbf{ML.EdgeClassification} \; (Edge Type Classification Model)
+
+This module classifies fragment edges into categories such as torn, cut, original (manuscript boundary), or burned. Edge type classification helps improve matching accuracy by ensuring compatible edge pairs are compared.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{HW.ImageStorage} – for accessing fragment images.
+    \item \texttt{ML.EdgeMatch} – edge signatures may be shared for classification.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{EDGE\_TYPES = \\{torn, cut, original, burned, unknown\\}}
+    \item \texttt{MIN\_CLASSIFICATION\_CONFIDENCE = 0.6}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.EdgeClassification - Exported Access Programs}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{classifyEdges} & \texttt{id: ImageID} & \texttt{EdgeClassificationResult} & \texttt{ModelError} \\
+\texttt{getEdgeType} & \texttt{id: ImageID, edge: EdgeRegion} & \texttt{EdgeTypePrediction} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Edge classification model weights.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Model runtime for deep learning inference.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Fragment edges are clearly visible in preprocessed images.
+    \item Training data covers representative examples of each edge type.
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{classifyEdges(id)}:
+\begin{itemize}
+    \item output: \texttt{EdgeClassificationResult} containing edge type predictions for all detected edges with confidence scores.
+    \item exception: \texttt{ModelError} if classification fails.
+\end{itemize}
+
+\noindent \texttt{getEdgeType(id, edge)}:
+\begin{itemize}
+    \item output: \texttt{EdgeTypePrediction} for a specific edge region containing predicted type and confidence.
+    \item exception: \texttt{ModelError} if edge region invalid or classification fails.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{extractEdgeFeatures(img, region)} – computes texture and shape features for edge region.
+    \item \texttt{normalizeConfidences(predictions)} – adjusts confidence scores to sum to 1.0.
 \end{itemize}
 
 
