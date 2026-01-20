@@ -1,0 +1,60 @@
+# ML Pipeline Configuration for Sanskrit Cipher
+
+# Database settings
+database:
+  path: "../web/web-canvas/electron/resources/database/fragments.db"
+
+# Data directory containing fragment images (relative to pipeline root)
+data_dir: "../web/web-canvas/data"
+
+# Cache directory for generated files
+cache_dir: "../web/web-canvas/electron/resources/cache"
+
+# Logging configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  file: "logs/pipeline.log"
+  console: true
+
+# Processor configurations
+# Set enabled: false to disable a processor
+processors:
+  segmentation:
+    enabled: true
+    model_path: "../segmentation/best.pt"
+    config:
+      confidence_threshold: 0.25
+      iou_threshold: 0.45
+      model_version: "1.0"
+
+  classification:
+    enabled: true
+    model_path: "../classification/output/best_model.pt"
+    meta_path: "../classification/output/meta.json"
+    config:
+      batch_size: 16
+      model_version: "1.0"
+
+  scaledetection:
+    enabled: true
+    # No model_path needed (uses EasyOCR + computer vision)
+    config:
+      model_version: "1.0"
+      visualize: true  # Save debug images showing detected ticks
+      visualize_output_dir: "../scale_detection_feature/debug_visualizations"
+      skip_processed: true  # Skip already-processed fragments
+      ocr_enabled: true  # Use EasyOCR for unit detection
+
+# Processing options
+processing:
+  # Continue processing even if individual fragments fail
+  continue_on_error: true
+
+  # Skip fragments already processed with the same model version
+  skip_processed: true
+
+  # Save progress checkpoint every N fragments
+  checkpoint_interval: 100
+
+  # Number of parallel workers (future enhancement)
+  num_workers: 1
