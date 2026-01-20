@@ -178,13 +178,17 @@ change.
 \item[\refstepcounter{acnum} \actheacnum \label{acEdgeMatch}:] The machine
   learning model used for edge matching detection.
 \item[\refstepcounter{acnum} \actheacnum \label{acDamage}:] The algorithm for
-  damage pattern analysis.
+  fragment segmentation and feature extraction.
 \item[\refstepcounter{acnum} \actheacnum \label{acScript}:] The method for
   script classification and similarity matching.
-\item[\refstepcounter{acnum} \actheacnum \label{acOCR}:] The optical character
-  recognition engine used for text extraction.
 \item[\refstepcounter{acnum} \actheacnum \label{acTextSim}:] The algorithm for
   text similarity comparison.
+\item[\refstepcounter{acnum} \actheacnum \label{acLineCount}:] The algorithm for
+  detecting and counting text lines in fragments.
+\item[\refstepcounter{acnum} \actheacnum \label{acCircleRec}:] The algorithm for
+  detecting circular marks and patterns.
+\item[\refstepcounter{acnum} \actheacnum \label{acEdgeClass}:] The algorithm for
+  classifying edge types (torn, cut, original, burned).
 \item[\refstepcounter{acnum} \actheacnum \label{acCanvas}:] The user interface
   framework for the interactive canvas.
 \item[\refstepcounter{acnum} \actheacnum \label{acFragStore}:] The database
@@ -232,6 +236,8 @@ actually be implemented.
 \item [\refstepcounter{mnum} \mthemnum \label{mSearch}:] UI.Search Module
 \item [\refstepcounter{mnum} \mthemnum \label{mAuth}:] UI.Auth Module
 \item [\refstepcounter{mnum} \mthemnum \label{mUpload}:] UI.Upload Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSaveSession}:] UI.SaveSession Module
+\item [\refstepcounter{mnum} \mthemnum \label{mLoadSession}:] UI.LoadSession Module
 \item [\refstepcounter{mnum} \mthemnum \label{mAPI}:] Svc.API Module
 \item [\refstepcounter{mnum} \mthemnum \label{mSearchSvc}:] Svc.Search Module
 \item [\refstepcounter{mnum} \mthemnum \label{mAuthZ}:] Svc.AuthZ Module
@@ -243,10 +249,12 @@ actually be implemented.
 \item [\refstepcounter{mnum} \mthemnum \label{mUser}:] Data.User Module
 \item [\refstepcounter{mnum} \mthemnum \label{mProject}:] Data.Project Module
 \item [\refstepcounter{mnum} \mthemnum \label{mEdgeMatch}:] ML.EdgeMatch Module
-\item [\refstepcounter{mnum} \mthemnum \label{mDamage}:] ML.Damage Module
 \item [\refstepcounter{mnum} \mthemnum \label{mScriptClass}:] ML.ScriptClass Module
-\item [\refstepcounter{mnum} \mthemnum \label{mOCR}:] ML.OCR Module
 \item [\refstepcounter{mnum} \mthemnum \label{mTextSim}:] ML.TextSim Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSegmentation}:] ML.Segmentation Module
+\item [\refstepcounter{mnum} \mthemnum \label{mCircleRecognition}:] ML.CircleRecognition Module
+\item [\refstepcounter{mnum} \mthemnum \label{mLineCount}:] ML.LineCount Module
+\item [\refstepcounter{mnum} \mthemnum \label{mEdgeClassification}:] ML.EdgeClassification Module
 \item [\refstepcounter{mnum} \mthemnum \label{mError}:] Error Handling Module
 \item [\refstepcounter{mnum} \mthemnum \label{mLogging}:] Logging Module
 \item [\refstepcounter{mnum} \mthemnum \label{mConfig}:] Configuration Management Module
@@ -264,13 +272,15 @@ actually be implemented.
 {Hardware-Hiding} & Image Storage Interface \\
 \midrule
 
-\multirow{15}{0.3\textwidth}{Behaviour-Hiding} & User Interface: UI.Canvas, UI.Search, UI.Auth, UI.Upload\\
+\multirow{15}{0.3\textwidth}{Behaviour-Hiding} & User Interface: UI.Canvas, UI.Search, UI.Auth, UI.Upload,\\
+& \quad\quad\quad\quad\quad\quad UI.SaveSession, UI.LoadSession\\
 & Service Layer: Svc.API, Svc.Search, Svc.AuthZ, Svc.Session,\\
 & \quad\quad\quad\quad\quad\quad Svc.ProcOrch, Svc.MatchOrch\\
 & Data Management: Data.FragmentStore, Data.Catalog,\\
 & \quad\quad\quad\quad\quad\quad Data.User, Data.Project\\
-& Machine Learning Modules: ML.EdgeMatch, ML.Damage,\\
-& \quad\quad\quad\quad\quad\quad ML.ScriptClass, ML.OCR, ML.TextSim\\
+& Machine Learning Modules: ML.EdgeMatch, ML.ScriptClass,\\
+& \quad\quad\quad\quad\quad\quad ML.TextSim, ML.Segmentation, ML.CircleRecognition,\\
+& \quad\quad\quad\quad\quad\quad ML.LineCount, ML.EdgeClassification\\
 \midrule
 
 \multirow{3}{0.3\textwidth}{Software Decision} & Utility and Support Modules (Error Handling, Logging,\\
@@ -284,16 +294,17 @@ The design of the system is intended to satisfy the requirements developed in
 the SRS. In this stage, the system is decomposed into modules. The connection
 between requirements and modules is listed in Table~\ref{TblRT}. \newline
 
-FR1.1 (User Authentication) is implemented through the \mref{mAuth} and \mref{mAuthZ} modules which manage credential verification and secure access control. 
-Similarly, FR1.2 (Fragment Management) and FR1.3 (Display Fragments) are supported by the \mref{mCanvas}, \mref{mUpload}, and \mref{mFragStore} modules that 
-enable fragment visualization and organization. The ML-oriented requirements FR3.1-FR3.3 are implemented by specialized modules such as \mref{mEdgeMatch}, 
-\mref{mDamage}, and \mref{mScriptClass}, coordinated by \mref{mMatchOrch}.
+FR1.1 (User Authentication) is implemented through the \mref{mAuth} and \mref{mAuthZ} modules which manage credential verification and secure access control.
+Similarly, FR1.2 (Fragment Management) and FR1.3 (Display Fragments) are supported by the \mref{mCanvas}, \mref{mUpload}, and \mref{mFragStore} modules that
+enable fragment visualization and organization. Session management is enhanced by \mref{mSaveSession} and \mref{mLoadSession} modules for workspace persistence.
+The ML-oriented requirements FR3.1-FR3.3 are implemented by specialized modules such as \mref{mEdgeMatch},
+\mref{mScriptClass}, \mref{mSegmentation}, and \mref{mEdgeClassification}, coordinated by \mref{mMatchOrch}.
 
-Non-functional requirements are distributed across multiple layers of the system. NFR1.1 (Usability) and NFR1.2 (Performance) are primarily addressed 
-by front-end and orchestration modules to ensure responsiveness and ease of interaction. NFR2.1 (Scalability) and NFR2.2 (Reliability) are achieved through 
-the use of modular orchestration, structured data storage, and robust error handling in modules such as \mref{mProcOrch}, \mref{mCatalog}, and \mref{mError}. 
-Finally, NFR3.1-NFR3.3 (Accuracy, Efficiency, and Maintainability) govern the design of the AI/ML cluster, ensuring that the models (\mref{mEdgeMatch}, 
-\mref{mDamage}, \mref{mTextSim}) can be retrained, tuned, and maintained without disrupting other components.
+Non-functional requirements are distributed across multiple layers of the system. NFR1.1 (Usability) and NFR1.2 (Performance) are primarily addressed
+by front-end and orchestration modules to ensure responsiveness and ease of interaction. NFR2.1 (Scalability) and NFR2.2 (Reliability) are achieved through
+the use of modular orchestration, structured data storage, and robust error handling in modules such as \mref{mProcOrch}, \mref{mCatalog}, and \mref{mError}.
+Finally, NFR3.1-NFR3.3 (Accuracy, Efficiency, and Maintainability) govern the design of the AI/ML cluster, ensuring that the models (\mref{mEdgeMatch},
+\mref{mSegmentation}, \mref{mTextSim}, \mref{mLineCount}, \mref{mCircleRecognition}, \mref{mEdgeClassification}) can be retrained, tuned, and maintained without disrupting other components.
 
 \section{Module Decomposition} \label{SecMD}
 
@@ -377,6 +388,24 @@ to be implemented.
 \begin{description}
 \item[Secrets:] The user interface for uploading fragment images and metadata.
 \item[Services:] Provides a file upload interface to select and submit images to the backend for processing after validation.
+\item[Implemented By:] Front-End Web Client (React/Next.js component)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{UI.SaveSession (\mref{mSaveSession})}
+
+\begin{description}
+\item[Secrets:] The user interface for saving workspace state and session data.
+\item[Services:] Provides a dialog interface to name and save the current workspace state, including fragment arrangements and annotations, for later retrieval.
+\item[Implemented By:] Front-End Web Client (React/Next.js component)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{UI.LoadSession (\mref{mLoadSession})}
+
+\begin{description}
+\item[Secrets:] The user interface for browsing and loading saved sessions.
+\item[Services:] Provides a dialog interface to browse, select, and load previously saved workspace sessions, displaying session metadata and enabling restoration of reconstruction work.
 \item[Implemented By:] Front-End Web Client (React/Next.js component)
 \item[Type of Module:] Abstract Object
 \end{description}
@@ -481,16 +510,6 @@ to be implemented.
 \end{description}
 
 
-\subsubsection{ML.Damage (\mref{mDamage})}
-
-\begin{description}
-\item[Secrets:] Physical damage information and hyperparameters for damage segmentation.
-\item[Services:] Determines similarity score for damage and generates signatures for damage in fragments. 
-\item[Implemented By:] AI/ML Cluster (Python-based ML Service)
-\item[Type of Module:] Abstract Object
-\end{description}
-
-
 \subsubsection{ML.ScriptClass (\mref{mScriptClass})}
 
 \begin{description}
@@ -501,22 +520,52 @@ to be implemented.
 \end{description}
 
 
-\subsubsection{ML.OCR (\mref{mOCR})}
-
-\begin{description} 
-\item[Secrets:] Hyperparameters, weights, thresholds and algorithms used for OCR model
-\item[Services:] This module analyzes fragments to find transcribed text with associated confidence scores, and it provides approximate accuracy values.
-\item[Implemented By:] AI/ML Cluster (OCR Model Server)
-\item[Type of Module:] Abstract Object
-\end{description}
-
-
 \subsubsection{ML.TextSim (\mref{mTextSim})}
 
 \begin{description}
 \item[Secrets:] Vectorization and normalization methods, and algorithm used for checking similarity
-\item[Services:] Converts text to embedding vector and compares similarity between text segments using OCR or manual transcription
+\item[Services:] Converts text to embedding vector and compares similarity between text segments using transcribed text or manual annotations
 \item[Implemented By:] AI/ML Cluster (Text Similarity Service)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.Segmentation (\mref{mSegmentation})}
+
+\begin{description}
+\item[Secrets:] Deep learning model weights and configuration for image segmentation.
+\item[Services:] Performs image segmentation to identify and isolate individual fragment regions from manuscript images, detecting fragment boundaries and separating multiple fragments from a single scanned image.
+\item[Implemented By:] AI/ML Cluster (Python-based ML Service)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.CircleRecognition (\mref{mCircleRecognition})}
+
+\begin{description}
+\item[Secrets:] Detection parameters and thresholds for circle recognition algorithms.
+\item[Services:] Detects circular marks, holes, or decorative elements in manuscript fragments. These features serve as additional matching criteria when aligning fragments.
+\item[Implemented By:] AI/ML Cluster (Python-based ML Service)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.LineCount (\mref{mLineCount})}
+
+\begin{description}
+\item[Secrets:] Line detection model parameters and spacing thresholds.
+\item[Services:] Analyzes manuscript fragments to count the number of text lines present. Line count serves as a useful filtering and matching criterion during fragment search and reconstruction.
+\item[Implemented By:] AI/ML Cluster (Python-based ML Service)
+\item[Type of Module:] Abstract Object
+\end{description}
+
+
+\subsubsection{ML.EdgeClassification (\mref{mEdgeClassification})}
+
+\begin{description}
+\item[Secrets:] Edge classification model weights and feature extraction methods.
+\item[Services:] Classifies fragment edges into categories such as torn, cut, original (manuscript boundary), or burned. Edge type classification improves matching accuracy by ensuring compatible edge pairs are compared.
+\item[Implemented By:] AI/ML Cluster (Python-based ML Service)
 \item[Type of Module:] Abstract Object
 \end{description}
 
@@ -585,23 +634,23 @@ requirements and between the modules and the anticipated changes.
 \textbf{Req.} & \textbf{Modules}\\
 \midrule
 FR1.1 & \mref{mAuth}, \mref{mAuthZ}, \mref{mSession}, \mref{mUser}\\
-FR1.2 & \mref{mCanvas}, \mref{mUpload}, \mref{mAPI}, \mref{mProcOrch}, \mref{mFragStore}, \mref{mCatalog}\\
-FR1.3 & \mref{mCanvas}, \mref{mSearch}, \mref{mAPI}\\
-FR1.4 & \mref{mCanvas}, \mref{mMatchOrch}, \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}, \mref{mFragStore}\\
-FR1.5 & \mref{mCanvas}, \mref{mAuth}, \mref{mSession}, \mref{mProject}\\
-NFR1.1 & \mref{mCanvas}, \mref{mSearch}, \mref{mAuth}, \mref{mUpload}\\
+FR1.2 & \mref{mCanvas}, \mref{mUpload}, \mref{mAPI}, \mref{mProcOrch}, \mref{mFragStore}, \mref{mCatalog}, \mref{mSegmentation}\\
+FR1.3 & \mref{mCanvas}, \mref{mSearch}, \mref{mAPI}, \mref{mLineCount}\\
+FR1.4 & \mref{mCanvas}, \mref{mMatchOrch}, \mref{mEdgeMatch}, \mref{mScriptClass}, \mref{mTextSim}, \mref{mFragStore}, \mref{mCircleRecognition}, \mref{mEdgeClassification}\\
+FR1.5 & \mref{mCanvas}, \mref{mAuth}, \mref{mSession}, \mref{mProject}, \mref{mSaveSession}, \mref{mLoadSession}\\
+NFR1.1 & \mref{mCanvas}, \mref{mSearch}, \mref{mAuth}, \mref{mUpload}, \mref{mSaveSession}, \mref{mLoadSession}\\
 NFR1.2 & \mref{mHWImageStorage}, \mref{mCanvas}, \mref{mUpload}, \mref{mAPI}\\
 FR2.1 & \mref{mAPI}, \mref{mAuthZ}, \mref{mSession}, \mref{mMatchOrch}\\
 FR2.2 & \mref{mAuthZ}, \mref{mSession}, \mref{mUser}\\
 FR2.3 & \mref{mFragStore}, \mref{mCatalog}, \mref{mUser}, \mref{mProject}\\
 NFR2.1 & \mref{mAPI}, \mref{mProcOrch}, \mref{mMatchOrch}, \mref{mHWImageStorage}\\
 NFR2.2 & \mref{mFragStore}, \mref{mCatalog}, \mref{mUser}, \mref{mProject}, \mref{mError}, \mref{mLogging}, \mref{mConfig}\\
-FR3.1 & \mref{mEdgeMatch}, \mref{mMatchOrch}\\
+FR3.1 & \mref{mEdgeMatch}, \mref{mMatchOrch}, \mref{mEdgeClassification}\\
 FR3.2 & \mref{mScriptClass}, \mref{mMatchOrch}\\
-FR3.3 & \mref{mDamage}, \mref{mMatchOrch}\\
-NFR3.1 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}\\
-NFR3.2 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}, \mref{mProcOrch}, \mref{mMatchOrch}\\
-NFR3.3 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}, \mref{mLogging}, \mref{mConfig}, \mref{mTestStubs}\\
+FR3.3 & \mref{mSegmentation}, \mref{mMatchOrch}, \mref{mCircleRecognition}, \mref{mLineCount}\\
+NFR3.1 & \mref{mEdgeMatch}, \mref{mScriptClass}, \mref{mTextSim}, \mref{mSegmentation}, \mref{mCircleRecognition}, \mref{mLineCount}, \mref{mEdgeClassification}\\
+NFR3.2 & \mref{mEdgeMatch}, \mref{mScriptClass}, \mref{mTextSim}, \mref{mSegmentation}, \mref{mCircleRecognition}, \mref{mLineCount}, \mref{mEdgeClassification}, \mref{mProcOrch}, \mref{mMatchOrch}\\
+NFR3.3 & \mref{mEdgeMatch}, \mref{mScriptClass}, \mref{mTextSim}, \mref{mSegmentation}, \mref{mCircleRecognition}, \mref{mLineCount}, \mref{mEdgeClassification}, \mref{mLogging}, \mref{mConfig}, \mref{mTestStubs}\\
 
 \bottomrule
 \end{tabular}
@@ -620,16 +669,18 @@ NFR3.3 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \m
 \acref{acAuth} & \mref{mAuth}, \mref{mAuthZ}, \mref{mUser}, \mref{mSession}, \mref{mAPI}\\
 \acref{acUpload} & \mref{mUpload}, \mref{mProcOrch}, \mref{mFragStore}\\
 \acref{acSearch} & \mref{mSearch}, \mref{mSearchSvc}, \mref{mCatalog}\\
-\acref{acEdgeMatch} & \mref{mEdgeMatch}, \mref{mMatchOrch}\\
-\acref{acDamage} & \mref{mDamage}, \mref{mMatchOrch}\\
+\acref{acEdgeMatch} & \mref{mEdgeMatch}, \mref{mMatchOrch}, \mref{mEdgeClassification}\\
+\acref{acDamage} & \mref{mSegmentation}, \mref{mMatchOrch}\\
 \acref{acScript} & \mref{mScriptClass}, \mref{mMatchOrch}\\
-\acref{acOCR} & \mref{mOCR}, \mref{mProcOrch}\\
 \acref{acTextSim} & \mref{mTextSim}, \mref{mMatchOrch}\\
-\acref{acCanvas} & \mref{mCanvas}, \mref{mSearch}, \mref{mUpload}\\
+\acref{acCanvas} & \mref{mCanvas}, \mref{mSearch}, \mref{mUpload}, \mref{mSaveSession}, \mref{mLoadSession}\\
 \acref{acFragStore} & \mref{mFragStore}, \mref{mCatalog}, \mref{mProject}\\
 \acref{acCatalog} & \mref{mCatalog}, \mref{mSearchSvc}\\
-\acref{acMatchOrch} & \mref{mMatchOrch}, \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \mref{mTextSim}\\
-\acref{acSession} & \mref{mSession}, \mref{mUser}, \mref{mProject}, \mref{mAuthZ}\\
+\acref{acMatchOrch} & \mref{mMatchOrch}, \mref{mEdgeMatch}, \mref{mScriptClass}, \mref{mTextSim}, \mref{mSegmentation}, \mref{mCircleRecognition}, \mref{mLineCount}, \mref{mEdgeClassification}\\
+\acref{acSession} & \mref{mSession}, \mref{mUser}, \mref{mProject}, \mref{mAuthZ}, \mref{mSaveSession}, \mref{mLoadSession}\\
+\acref{acLineCount} & \mref{mLineCount}, \mref{mMatchOrch}, \mref{mSearchSvc}\\
+\acref{acCircleRec} & \mref{mCircleRecognition}, \mref{mMatchOrch}\\
+\acref{acEdgeClass} & \mref{mEdgeClassification}, \mref{mMatchOrch}, \mref{mEdgeMatch}\\
 \bottomrule
 \end{tabular}
 \caption{Trace Between Anticipated Changes and Modules}
@@ -650,49 +701,55 @@ NFR3.3 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \m
 % Layer 5 - UI
 \node[layer] at (-2,10) {Layer 5: UI};
 \node[module] (Canvas) at (0,10) {M2\\Canvas};
-\node[module] (Search) at (3,10) {M3\\Search};
-\node[module] (Auth) at (6,10) {M4\\Auth};
-\node[module] (Upload) at (9,10) {M5\\Upload};
+\node[module] (Search) at (2.5,10) {M3\\Search};
+\node[module] (Auth) at (5,10) {M4\\Auth};
+\node[module] (Upload) at (7.5,10) {M5\\Upload};
+\node[module] (SaveSession) at (10,10) {M6\\Save};
+\node[module] (LoadSession) at (12.5,10) {M7\\Load};
 
 % Layer 4 - API
 \node[layer] at (-2,6) {Layer 4: API};
-\node[module] (API) at (4.5,6) {M6\\API};
+\node[module] (API) at (5,6) {M8\\API};
 
 % Layer 3 - Services
 \node[layer, text width=2.5cm, align=left] at (-2,2) {Layer 3:\\Services};
-\node[module] (SearchSvc) at (0,2) {M7\\Search};
-\node[module] (AuthZ) at (2.5,2) {M8\\AuthZ};
-\node[module] (Session) at (5,2) {M9\\Session};
-\node[module] (ProcOrch) at (7.5,2) {M10\\Proc};
-\node[module] (MatchOrch) at (10,2) {M11\\Match};
+\node[module] (SearchSvc) at (0,2) {M9\\Search};
+\node[module] (AuthZ) at (2.5,2) {M10\\AuthZ};
+\node[module] (Session) at (5,2) {M11\\Session};
+\node[module] (ProcOrch) at (7.5,2) {M12\\Proc};
+\node[module] (MatchOrch) at (10,2) {M13\\Match};
 
 % Layer 2 - ML
 \node[layer] at (-2,-2) {Layer 2: ML};
-\node[module] (EdgeMatch) at (1,-2) {M16\\Edge};
-\node[module] (Damage) at (3.5,-2) {M17\\Damage};
-\node[module] (ScriptClass) at (6,-2) {M18\\Script};
-\node[module] (OCR) at (8.5,-2) {M19\\OCR};
-\node[module] (TextSim) at (11,-2) {M20\\Text};
+\node[module] (EdgeMatch) at (0,-2) {M18\\Edge};
+\node[module] (ScriptClass) at (2.5,-2) {M19\\Script};
+\node[module] (TextSim) at (5,-2) {M20\\Text};
+\node[module] (Segmentation) at (7.5,-2) {M21\\Seg};
+\node[module] (CircleRec) at (10,-2) {M22\\Circle};
+\node[module] (LineCount) at (12.5,-2) {M23\\Line};
+\node[module] (EdgeClass) at (15,-2) {M24\\EdgeCl};
 
 % Layer 1 - Data
 \node[layer] at (-2,-6) {Layer 1: Data};
-\node[module] (FragStore) at (2.5,-6) {M12\\Frags};
-\node[module] (Catalog) at (5.5,-6) {M13\\Catalog};
-\node[module] (User) at (8,-6) {M14\\User};
-\node[module] (Project) at (10.5,-6) {M15\\Project};
+\node[module] (FragStore) at (2.5,-6) {M14\\Frags};
+\node[module] (Catalog) at (5.5,-6) {M15\\Catalog};
+\node[module] (User) at (8,-6) {M16\\User};
+\node[module] (Project) at (10.5,-6) {M17\\Project};
 
 % Layer 0 - Foundation
 \node[layer, text width=2.5cm, align=left] at (-2,-10) {Layer 0:\\Foundation};
 \node[module] (HH) at (1.5,-10) {M1\\Hardware};
-\node[module] (Error) at (4,-10) {M21\\Error};
-\node[module] (Logging) at (6.5,-10) {M22\\Logging};
-\node[module] (Config) at (9,-10) {M23\\Config};
+\node[module] (Error) at (4,-10) {M25\\Error};
+\node[module] (Logging) at (6.5,-10) {M26\\Logging};
+\node[module] (Config) at (9,-10) {M27\\Config};
 
 % UI -> API (all UI modules use API)
 \draw[direct] (Canvas) -- (API);
 \draw[direct] (Search) -- (API);
 \draw[direct] (Auth) -- (API);
 \draw[direct] (Upload) -- (API);
+\draw[direct] (SaveSession) -- (API);
+\draw[direct] (LoadSession) -- (API);
 
 % API -> Services (API uses all service modules)
 \draw[direct] (API) -- (SearchSvc);
@@ -704,11 +761,13 @@ NFR3.3 & \mref{mEdgeMatch}, \mref{mDamage}, \mref{mScriptClass}, \mref{mOCR}, \m
 % Services -> ML (orchestrators coordinate ML)
 \draw[direct] (ProcOrch) to[out=-90, in=90] (EdgeMatch);
 \draw[direct] (ProcOrch) to[out=-90, in=90] (ScriptClass);
-\draw[direct] (ProcOrch) to[out=-90, in=90] (OCR);
+\draw[direct] (ProcOrch) to[out=-90, in=90] (Segmentation);
 \draw[direct] (MatchOrch) -- (EdgeMatch);
-\draw[direct] (MatchOrch) -- (Damage);
 \draw[direct] (MatchOrch) -- (ScriptClass);
 \draw[direct] (MatchOrch) to[out=-90, in=90] (TextSim);
+\draw[direct] (MatchOrch) to[out=-90, in=90] (CircleRec);
+\draw[direct] (MatchOrch) to[out=-90, in=90] (LineCount);
+\draw[direct] (MatchOrch) to[out=-90, in=90] (EdgeClass);
 
 % Services -> Data (key data access)
 \draw[direct] (SearchSvc) to[out=-90, in=90] (FragStore);
@@ -749,14 +808,15 @@ The uses hierarchy follows a strict layered architecture where modules at each l
 \subsubsection{Layer 5: User Interface}
 All UI modules communicate exclusively through the API layer:
 \begin{itemize}
-\item \textbf{Canvas (M2), Search (M3), Auth (M4), Upload (M5)} all directly use \textbf{API (M6)}
+\item \textbf{Canvas (M2), Search (M3), Auth (M4), Upload (M5), SaveSession (M6), LoadSession (M7)} all directly use \textbf{API (M8)}
 \item UI modules have no direct access to service, data, or ML layers, ensuring clean separation between presentation and business logic
+\item \textbf{SaveSession (M6)} and \textbf{LoadSession (M7)} provide dedicated interfaces for workspace persistence and retrieval
 \end{itemize}
 
 \subsubsection{Layer 4: API Gateway}
-\textbf{API (M6)} serves as the central gateway and coordinates all service layer modules:
+\textbf{API (M8)} serves as the central gateway and coordinates all service layer modules:
 \begin{itemize}
-\item Directly uses all five service modules: \textbf{SearchSvc (M7)}, \textbf{AuthZ (M8)}, \textbf{Session (M9)}, \textbf{ProcOrch (M10)}, and \textbf{MatchOrch (M11)}
+\item Directly uses all five service modules: \textbf{SearchSvc (M9)}, \textbf{AuthZ (M10)}, \textbf{Session (M11)}, \textbf{ProcOrch (M12)}, and \textbf{MatchOrch (M13)}
 \item Provides unified RESTful interface to all backend services for the UI layer
 \item Handles request routing, validation, response formatting, and rate limiting
 \item Acts as the single entry point for all business logic operations
@@ -767,26 +827,28 @@ Service modules implement business logic and coordinate lower-level modules:
 
 \paragraph{Data Access Services:}
 \begin{itemize}
-\item \textbf{SearchSvc (M7)} uses \textbf{FragmentStore (M12)} and \textbf{Catalog (M13)} to perform search and filtering operations across fragments
-\item \textbf{AuthZ (M8)} uses \textbf{User (M14)} for credential verification and role-based authorization
-\item \textbf{Session (M9)} uses \textbf{User (M14)} and \textbf{Project (M15)} to manage user sessions and collaborative workspace state
+\item \textbf{SearchSvc (M9)} uses \textbf{FragmentStore (M14)} and \textbf{Catalog (M15)} to perform search and filtering operations across fragments
+\item \textbf{AuthZ (M10)} uses \textbf{User (M16)} for credential verification and role-based authorization
+\item \textbf{Session (M11)} uses \textbf{User (M16)} and \textbf{Project (M17)} to manage user sessions and collaborative workspace state
 \end{itemize}
 
 \paragraph{Orchestration Services:}
 \begin{itemize}
-\item \textbf{ProcOrch (M10)} orchestrates image processing pipelines by using:
+\item \textbf{ProcOrch (M12)} orchestrates image processing pipelines by using:
   \begin{itemize}
-  \item \textbf{FragmentStore (M12)} for accessing fragment images
-  \item \textbf{EdgeMatch (M16)} for edge detection during preprocessing
-  \item \textbf{ScriptClass (M18)} for initial script classification
-  \item \textbf{OCR (M19)} for text extraction from fragment images
+  \item \textbf{FragmentStore (M14)} for accessing fragment images
+  \item \textbf{EdgeMatch (M18)} for edge detection during preprocessing
+  \item \textbf{ScriptClass (M19)} for initial script classification
+  \item \textbf{Segmentation (M21)} for isolating individual fragments from images
   \end{itemize}
-\item \textbf{MatchOrch (M11)} coordinates fragment matching by using:
+\item \textbf{MatchOrch (M13)} coordinates fragment matching by using:
   \begin{itemize}
-  \item \textbf{EdgeMatch (M16)} for edge profile comparison
-  \item \textbf{Damage (M17)} for damage pattern analysis
-  \item \textbf{ScriptClass (M18)} for script similarity comparison
+  \item \textbf{EdgeMatch (M18)} for edge profile comparison
+  \item \textbf{ScriptClass (M19)} for script similarity comparison
   \item \textbf{TextSim (M20)} for comparing extracted text between fragments
+  \item \textbf{CircleRecognition (M22)} for matching circular marks and holes
+  \item \textbf{LineCount (M23)} for filtering by text line count
+  \item \textbf{EdgeClassification (M24)} for classifying edge types (torn, cut, original, burned)
   \end{itemize}
 \end{itemize}
 
@@ -795,25 +857,29 @@ Note that ProcOrch focuses on preprocessing and feature extraction, while MatchO
 \subsubsection{Layer 2: Machine Learning}
 ML modules provide specialized analysis capabilities:
 \begin{itemize}
-\item \textbf{EdgeMatch (M16)} uses \textbf{FragmentStore (M12)} to access fragment images for edge detection and comparison
-\item \textbf{ScriptClass (M18)} uses both \textbf{Catalog (M13)} for script taxonomy metadata and \textbf{FragmentStore (M12)} for fragment images
-\item Other ML modules (\textbf{Damage (M17), OCR (M19), TextSim (M20)}) also use \textbf{FragmentStore (M12)} for data access (connections shown representatively through EdgeMatch to reduce visual complexity)
+\item \textbf{EdgeMatch (M18)} uses \textbf{FragmentStore (M14)} to access fragment images for edge detection and comparison
+\item \textbf{ScriptClass (M19)} uses both \textbf{Catalog (M15)} for script taxonomy metadata and \textbf{FragmentStore (M14)} for fragment images
+\item \textbf{Segmentation (M21)} performs image segmentation to isolate individual fragments from scanned images
+\item \textbf{CircleRecognition (M22)} detects circular marks, holes, or decorative elements for matching
+\item \textbf{LineCount (M23)} counts text lines for filtering and matching criteria
+\item \textbf{EdgeClassification (M24)} classifies fragment edges (torn, cut, original, burned) to improve matching accuracy
+\item Other ML modules (\textbf{TextSim (M20)}) also use \textbf{FragmentStore (M14)} for data access (connections shown representatively to reduce visual complexity)
 \item ML modules are always coordinated by service orchestrators (ProcOrch or MatchOrch), never invoked directly by the API
 \end{itemize}
 
 \subsubsection{Layer 1: Data Storage}
 Data modules encapsulate all persistence operations and provide CRUD interfaces:
 \begin{itemize}
-\item \textbf{FragmentStore (M12)} uses:
+\item \textbf{FragmentStore (M14)} uses:
   \begin{itemize}
   \item \textbf{Hardware Hiding (M1)} for file system and storage operations
-  \item \textbf{Error Handling (M21)} for exception management
-  \item \textbf{Logging (M22)} for audit trails of fragment operations
-  \item \textbf{Config (M23)} for storage configuration parameters
+  \item \textbf{Error Handling (M25)} for exception management
+  \item \textbf{Logging (M26)} for audit trails of fragment operations
+  \item \textbf{Config (M27)} for storage configuration parameters
   \end{itemize}
-\item \textbf{Catalog (M13)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for managing controlled vocabularies and metadata schemas
-\item \textbf{User (M14)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for user profile management and authentication data
-\item \textbf{Project (M15)} uses \textbf{Error Handling (M21)}, \textbf{Logging (M22)}, and \textbf{Config (M23)} for collaborative workspace data
+\item \textbf{Catalog (M15)} uses \textbf{Error Handling (M25)}, \textbf{Logging (M26)}, and \textbf{Config (M27)} for managing controlled vocabularies and metadata schemas
+\item \textbf{User (M16)} uses \textbf{Error Handling (M25)}, \textbf{Logging (M26)}, and \textbf{Config (M27)} for user profile management and authentication data
+\item \textbf{Project (M17)} uses \textbf{Error Handling (M25)}, \textbf{Logging (M26)}, and \textbf{Config (M27)} for collaborative workspace data
 \end{itemize}
 
 All data modules depend heavily on foundation modules to ensure reliable, configurable, and auditable data operations.
@@ -822,9 +888,9 @@ All data modules depend heavily on foundation modules to ensure reliable, config
 Foundation modules provide cross-cutting system services with no dependencies on other system modules:
 \begin{itemize}
 \item \textbf{Hardware Hiding (M1)} abstracts operating system and file system operations, used by FragmentStore for persistent storage
-\item \textbf{Error Handling (M21)} provides exception management and error reporting, used by all data modules and propagated throughout upper layers
-\item \textbf{Logging (M22)} records system events, user actions, and audit trails, used extensively by data and service layers
-\item \textbf{Config (M23)} manages application configuration from files and environment variables, used by all data modules and some services
+\item \textbf{Error Handling (M25)} provides exception management and error reporting, used by all data modules and propagated throughout upper layers
+\item \textbf{Logging (M26)} records system events, user actions, and audit trails, used extensively by data and service layers
+\item \textbf{Config (M27)} manages application configuration from files and environment variables, used by all data modules and some services
 \end{itemize}
 
 \subsubsection{Key Architectural Properties}
@@ -834,11 +900,11 @@ The uses hierarchy exhibits several important design properties:
 \begin{enumerate}
 \item \textbf{Strict Layering:} All dependencies flow downward through the layer hierarchy. Modules only use modules in lower layers, never peers or higher layers, ensuring clear separation of concerns.
 
-\item \textbf{API Gateway Pattern:} The API module (M6) serves as the single entry point for all UI modules, providing a unified interface to backend services and preventing direct UI-to-service coupling.
+\item \textbf{API Gateway Pattern:} The API module (M8) serves as the single entry point for all UI modules, providing a unified interface to backend services and preventing direct UI-to-service coupling.
 
 \item \textbf{Orchestration Pattern:} Complex workflows involving multiple ML modules are coordinated by dedicated orchestrator services (ProcOrch and MatchOrch), which hide the complexity of multi-model coordination from the API layer.
 
-\item \textbf{Data Encapsulation:} All persistent data access flows through dedicated data modules (M12-M15), preventing direct database access from service or ML layers and enabling consistent data validation and access control.
+\item \textbf{Data Encapsulation:} All persistent data access flows through dedicated data modules (M14-M17), preventing direct database access from service or ML layers and enabling consistent data validation and access control.
 
 \item \textbf{Foundation Ubiquity:} Utility modules (Error, Logging, Config) are used throughout the system, particularly by the data layer. The diagram shows representative uses of these modules by all data modules, though they are actually used more broadly throughout the system.
 
