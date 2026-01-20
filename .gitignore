@@ -280,3 +280,60 @@ TSWLatexianTemp*
 
 # DS_Store file from Mac computers
 .DS_Store
+
+# Fragment images (~20GB, stored locally, not in git)
+# Images are managed locally by team members
+src/web/web-canvas/data/BLL*/
+src/web/web-canvas/data/IOL*/
+src/web/web-canvas/data/OR*/
+src/web/web-canvas/data/**/*.jpg
+src/web/web-canvas/data/**/*.png
+
+# Keep directory structure in git
+!src/web/web-canvas/data/.gitkeep
+!src/web/web-canvas/data/README.md
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+*.egg-info/
+.eggs/
+*.egg
+
+# ML/data outputs (large files)
+outputs/
+output/
+runs/
+debug_visualizations/
+**/match_visualizations/
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+
+# Test images in classification
+src/classification/*.jpg
+src/classification/*.png
+
+# Serena config
+.serena/
+
+# Architecture diagrams (local)
+*.drawio
+
+# Electron build artifacts
+src/web/web-canvas/.vite/
+src/web/web-canvas/out/
+
+# Cache directories
+**/cache/
+**/.cache/
+src/web/web-canvas/electron/resources/cache/

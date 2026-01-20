@@ -8,3 +8,4 @@ torchvision>=0.15.0
 
 # Edge matching dependencies
 scipy>=1.11.0
+pytesseract
