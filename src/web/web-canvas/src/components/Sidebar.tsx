@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { ManuscriptFragment } from '../types/fragment';
 import FragmentMetadata from './FragmentMetadata';
+import VirtualizedFragmentList from './VirtualizedFragmentList';
 
 interface SidebarProps {
   fragments: ManuscriptFragment[];
@@ -9,12 +10,29 @@ interface SidebarProps {
   onWidthChange: (width: number) => void;
   isOpen: boolean;
   onToggle: () => void;
+  isLoading?: boolean;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ fragments, onDragStart, width, onWidthChange, isOpen, onToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  fragments,
+  onDragStart,
+  width,
+  onWidthChange,
+  isOpen,
+  onToggle,
+  isLoading = false,
+  onLoadMore,
+  hasMore = false,
+  isLoadingMore = false,
+}) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(window.innerHeight - 120); // Header + padding
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   const handleFragmentClick = (fragment: ManuscriptFragment, e: React.MouseEvent) => {
     // Don't show metadata if we're starting a drag
@@ -56,6 +74,16 @@ const Sidebar: React.FC<SidebarProps> = ({ fragments, onDragStart, width, onWidt
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
+  // Update container height on window resize
+  React.useEffect(() => {
+    const handleResize = () => {
+      setContainerHeight(window.innerHeight - 120);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <>
       {/* Toggle button when closed */}
@@ -82,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ fragments, onDragStart, width, onWidt
       <div
         ref={sidebarRef}
         style={{ width: `${width}px` }}
-        className="bg-gradient-to-b from-slate-50 to-slate-100 border-r border-slate-300 overflow-y-auto relative shadow-inner flex-shrink-0"
+        className="bg-gradient-to-b from-slate-50 to-slate-100 border-r border-slate-300 relative shadow-inner flex-shrink-0 overflow-hidden"
       >
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
@@ -103,7 +131,18 @@ const Sidebar: React.FC<SidebarProps> = ({ fragments, onDragStart, width, onWidt
             </button>
           </div>
 
-          {fragments.length === 0 ? (
+          {isLoading ? (
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 text-center">
+              <div className="bg-slate-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-8 h-8 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <p className="text-slate-600 text-sm font-medium mb-1">Loading fragments...</p>
+              <p className="text-slate-400 text-xs">Please wait</p>
+            </div>
+          ) : fragments.length === 0 ? (
             <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 text-center">
               <div className="bg-slate-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
                 <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,56 +153,17 @@ const Sidebar: React.FC<SidebarProps> = ({ fragments, onDragStart, width, onWidt
               <p className="text-slate-400 text-xs">Try adjusting your filters</p>
             </div>
           ) : (
-          <div className="space-y-3">
-            {fragments.map((fragment) => (
-              <div
-                key={fragment.id}
-                draggable
-                onDragStart={(e) => onDragStart(fragment, e)}
-                onClick={(e) => handleFragmentClick(fragment, e)}
-                className="cursor-move bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 p-3 border border-slate-200 relative group hover:border-blue-300"
-              >
-                <img
-                  src={fragment.thumbnailPath}
-                  alt={fragment.name}
-                  className="w-full h-32 object-contain mb-2 pointer-events-none"
-                  draggable={false}
-                />
-                <div className="flex justify-between items-center gap-2">
-                  <p className="text-xs text-slate-700 truncate flex-1 font-medium" title={fragment.name}>
-                    {fragment.name}
-                  </p>
-                  {/* Info button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFragmentClick(fragment, e);
-                    }}
-                    className="flex-shrink-0 text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                    title="View metadata"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
-                </div>
-                {/* Metadata indicator badge - improved design */}
-                {fragment.metadata && (
-                  <div className="absolute top-2 right-2 group/badge">
-                    <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md ring-2 ring-white">
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/>
-                      </svg>
-                    </div>
-                    <div className="absolute top-full right-0 mt-1 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none">
-                      Has metadata
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <VirtualizedFragmentList
+            fragments={fragments}
+            onDragStart={onDragStart}
+            onFragmentClick={handleFragmentClick}
+            containerHeight={containerHeight}
+            onLoadMore={onLoadMore}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            scrollPosition={scrollPosition}
+            onScrollPositionChange={setScrollPosition}
+          />
           )}
         </div>
 

@@ -8,6 +8,13 @@ interface ToolbarProps {
   onDeleteSelected: () => void;
   onClearCanvas: () => void;
   onResetView: () => void;
+  onSave: () => void;
+  onToggleNotes: () => void;
+  isGridVisible: boolean;
+  onToggleGrid: () => void;
+  isFilterPanelOpen: boolean;
+  onToggleFilters: () => void;
+  hasActiveFilters: boolean;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -17,6 +24,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onDeleteSelected,
   onClearCanvas,
   onResetView,
+  onSave,
+  onToggleNotes,
+  isGridVisible,
+  onToggleGrid,
+  isFilterPanelOpen,
+  onToggleFilters,
+  hasActiveFilters,
 }) => {
   const navigate = useNavigate();
   return (
@@ -84,11 +98,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
             <button
               onClick={onLockSelected}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105"
-              title="Lock selected fragments"
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 group relative"
+              title="Lock selected fragments - prevents moving/editing"
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -100,16 +114,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                 />
               </svg>
-              <span className="text-sm font-medium">Lock</span>
+              <span className="text-sm font-semibold">Lock</span>
             </button>
 
             <button
               onClick={onUnlockSelected}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105"
-              title="Unlock selected fragments"
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 group relative"
+              title="Unlock selected fragments - allows moving/editing"
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -121,16 +135,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
                 />
               </svg>
-              <span className="text-sm font-medium">Unlock</span>
+              <span className="text-sm font-semibold">Unlock</span>
             </button>
 
             <button
               onClick={onDeleteSelected}
-              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105"
-              title="Delete selected fragments"
+              className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105"
+              title="Delete selected fragments from canvas"
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -142,7 +156,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                 />
               </svg>
-              <span className="text-sm font-medium">Delete</span>
+              <span className="text-sm font-semibold">Delete</span>
             </button>
 
             <div className="w-px h-8 bg-slate-600 mx-1"></div>
@@ -171,6 +185,59 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </button>
 
         <button
+          onClick={onToggleGrid}
+          className={`px-3 py-2 rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md ${
+            isGridVisible
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+          }`}
+          title={isGridVisible ? "Hide grid" : "Show grid (25px = 1cm)"}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+            />
+          </svg>
+          <span className="text-sm font-medium">Grid</span>
+        </button>
+
+        <button
+          onClick={onToggleFilters}
+          className={`px-3 py-2 rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md relative ${
+            isFilterPanelOpen
+              ? 'bg-purple-600 hover:bg-purple-700 text-white'
+              : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+          }`}
+          title={isFilterPanelOpen ? "Close filters" : "Open filters"}
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
+          </svg>
+          <span className="text-sm font-medium">Filters</span>
+          {hasActiveFilters && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border-2 border-slate-800 animate-pulse"></div>
+          )}
+        </button>
+
+        <button
           onClick={onClearCanvas}
           className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md"
           title="Clear all fragments from canvas"
@@ -189,6 +256,50 @@ const Toolbar: React.FC<ToolbarProps> = ({
             />
           </svg>
           <span className="text-sm font-medium">Clear Canvas</span>
+        </button>
+
+        <div className="w-px h-8 bg-slate-600 mx-1"></div>
+
+        <button
+          onClick={onSave}
+          className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105"
+          title="Save canvas progress"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+            />
+          </svg>
+          <span className="text-sm font-medium">Save</span>
+        </button>
+
+        <button
+          onClick={onToggleNotes}
+          className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md hover:scale-105"
+          title="Toggle notes panel"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+          <span className="text-sm font-medium">Notes</span>
         </button>
       </div>
     </div>

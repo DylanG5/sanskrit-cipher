@@ -8,6 +8,12 @@ export interface ManuscriptFragment {
     lineCount?: number;
     script?: string;
     isEdgePiece?: boolean;
+    // Scale information from ruler detection
+    scale?: {
+      unit: 'cm' | 'mm';  // Physical unit
+      pixelsPerUnit: number;  // Pixels per unit in original image
+      detectionStatus: 'success' | 'error';  // Detection result
+    };
   };
 }
 
