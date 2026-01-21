@@ -77,6 +77,9 @@ export function registerIpcHandlers(): void {
     if (filters?.search) {
       query += ' AND fragment_id LIKE ?';
       params.push(`%${filters.search}%`);
+      console.log('Search query:', filters.search);
+      console.log('SQL LIKE pattern:', `%${filters.search}%`);
+      console.log('Full SQL query:', query);
     }
 
     // Add ordering

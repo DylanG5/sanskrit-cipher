@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
@@ -9,12 +9,14 @@ import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
 import { getAllFragments, getFragmentCount } from "../services/fragment-service";
 import { isElectron } from "../services/electron-api";
+import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
 
 // Default page size for pagination
 const PAGE_SIZE = 100;
 
 function CanvasPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Fragment state - now loaded from database
   const [fragments, setFragments] = useState<ManuscriptFragment[]>([]);
@@ -38,6 +40,12 @@ function CanvasPage() {
   const [gridScale, setGridScale] = useState(25); // pixels per cm
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Search state
+  const [initialSearchQuery, setInitialSearchQuery] = useState<string | null>(null);
+  const [selectedFragmentId, setSelectedFragmentId] = useState<string | null>(null);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [hasAutoPlaced, setHasAutoPlaced] = useState(false);
 
   // Load fragments from database (initial load)
   const loadFragments = useCallback(async () => {
@@ -76,6 +84,10 @@ function CanvasPage() {
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
+      }
+      if (filters.search) {
+        apiFilters.search = filters.search;
+        console.log('Loading fragments with search filter:', filters.search);
       }
 
       // Fetch fragments and count in parallel
@@ -140,6 +152,28 @@ function CanvasPage() {
       setIsLoadingMore(false);
     }
   }, [isLoadingMore, fragments.length, totalCount, currentOffset, filters]);
+
+  // Initialize search from location state
+  useEffect(() => {
+    const searchQueryFromLocation = location.state?.searchQuery;
+    const selectedFragmentIdFromLocation = location.state?.selectedFragmentId;
+
+    console.log('Location state received:', {
+      searchQuery: searchQueryFromLocation,
+      selectedFragmentId: selectedFragmentIdFromLocation
+    });
+
+    // Always apply the search filter to ensure the selected fragment is loaded
+    if (searchQueryFromLocation) {
+      setInitialSearchQuery(searchQueryFromLocation);
+      setIsSearchMode(true);
+      setFilters(prev => ({ ...prev, search: searchQueryFromLocation }));
+    }
+
+    if (selectedFragmentIdFromLocation) {
+      setSelectedFragmentId(selectedFragmentIdFromLocation);
+    }
+  }, [location.state?.searchQuery, location.state?.selectedFragmentId]);
 
   // Load fragments on mount and when filters change
   useEffect(() => {
@@ -231,6 +265,109 @@ function CanvasPage() {
     };
   };
 
+  // Auto-place fragment in center of canvas (for search results)
+  const autoPlaceFragment = useCallback(async (fragment: ManuscriptFragment) => {
+    const img = new Image();
+    img.src = fragment.imagePath;
+
+    img.onload = () => {
+      const originalWidth = img.naturalWidth;
+      const originalHeight = img.naturalHeight;
+
+      // Calculate display size (auto-scaled if scale data available)
+      const { width, height } = calculateDisplaySize(
+        fragment,
+        originalWidth,
+        originalHeight
+      );
+
+      // Center on canvas (approximate canvas dimensions)
+      const canvasWidth = 1200;
+      const canvasHeight = 800;
+      const { x, y } = calculateCenteredPosition(
+        canvasWidth,
+        canvasHeight,
+        width,
+        height
+      );
+
+      const newCanvasFragment: CanvasFragment = {
+        id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+        fragmentId: fragment.id,
+        name: fragment.name,
+        imagePath: fragment.imagePath,
+        x,
+        y,
+        width,
+        height,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        isLocked: false,
+        isSelected: true, // Select the auto-placed fragment
+      };
+
+      setCanvasFragments([newCanvasFragment]);
+      setSelectedFragmentIds([newCanvasFragment.id]);
+      setHasAutoPlaced(true);
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load fragment image:', fragment.id);
+      setHasAutoPlaced(true); // Mark as attempted even on error
+    };
+  }, []);
+
+  // Auto-place first matching fragment when search results load
+  useEffect(() => {
+    if (isSearchMode && fragments.length > 0 && !hasAutoPlaced) {
+      let fragmentToPlace: ManuscriptFragment | null = null;
+
+      console.log('Auto-placement triggered:', {
+        selectedFragmentId,
+        initialSearchQuery,
+        fragmentCount: fragments.length,
+        fragmentIds: fragments.slice(0, 10).map(f => f.id)
+      });
+
+      // If user selected a specific fragment from autocomplete, use that
+      if (selectedFragmentId) {
+        fragmentToPlace = fragments.find(f => f.id === selectedFragmentId) || null;
+        console.log('Looking for selected fragment:', selectedFragmentId);
+        console.log('Found fragment:', fragmentToPlace?.id);
+
+        if (!fragmentToPlace) {
+          // Check if it's a partial match issue
+          const partialMatch = fragments.find(f =>
+            f.id.includes(selectedFragmentId) || selectedFragmentId.includes(f.id)
+          );
+          console.log('Partial match found:', partialMatch?.id);
+
+          // Also check the exact IDs in the array
+          const hasExactMatch = fragments.some(f => f.id === selectedFragmentId);
+          console.log('Has exact match in array:', hasExactMatch);
+          console.log('Fragment IDs containing search term:',
+            fragments.filter(f => f.id.toLowerCase().includes('or11878')).map(f => f.id)
+          );
+        }
+      }
+
+      // Otherwise, use the first result sorted by relevance
+      if (!fragmentToPlace && initialSearchQuery) {
+        const sortedFragments = sortBySearchRelevance(fragments, initialSearchQuery);
+        fragmentToPlace = sortedFragments[0] || null;
+        console.log('Using first sorted fragment:', fragmentToPlace?.id);
+      }
+
+      if (fragmentToPlace) {
+        console.log('Auto-placing fragment:', fragmentToPlace.id, 'imagePath:', fragmentToPlace.imagePath);
+        autoPlaceFragment(fragmentToPlace);
+      } else {
+        console.log('No fragment to place');
+      }
+    }
+  }, [isSearchMode, fragments, hasAutoPlaced, initialSearchQuery, selectedFragmentId, autoPlaceFragment]);
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
@@ -277,6 +414,15 @@ function CanvasPage() {
     draggedFragmentRef.current = null;
     dropPositionRef.current = null;
   };
+
+  // Clear search and reset to normal mode
+  const handleClearSearch = useCallback(() => {
+    setIsSearchMode(false);
+    setInitialSearchQuery(null);
+    setSelectedFragmentId(null);
+    setFilters(prev => ({ ...prev, search: undefined }));
+    setHasAutoPlaced(false);
+  }, []);
 
   // Lock selected fragments
   const handleLockSelected = () => {
@@ -397,6 +543,8 @@ function CanvasPage() {
           onLoadMore={loadMoreFragments}
           hasMore={fragments.length < totalCount}
           isLoadingMore={isLoadingMore}
+          searchQuery={initialSearchQuery}
+          onClearSearch={handleClearSearch}
         />
 
         <div

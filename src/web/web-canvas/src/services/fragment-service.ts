@@ -18,7 +18,7 @@ export type { ApiFilters as FragmentApiFilters };
 /**
  * Convert database fragment record to UI ManuscriptFragment type
  */
-function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragment {
+export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragment {
   return {
     id: record.fragment_id,
     name: record.fragment_id,
