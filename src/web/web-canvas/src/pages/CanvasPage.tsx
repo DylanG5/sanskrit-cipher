@@ -46,6 +46,7 @@ function CanvasPage() {
   const [selectedFragmentId, setSelectedFragmentId] = useState<string | null>(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [hasAutoPlaced, setHasAutoPlaced] = useState(false);
+  const [sidebarSearchQuery, setSidebarSearchQuery] = useState<string>('');
 
   // Load fragments from database (initial load)
   const loadFragments = useCallback(async () => {
@@ -424,6 +425,14 @@ function CanvasPage() {
     setHasAutoPlaced(false);
   }, []);
 
+  // Handle sidebar search
+  const handleSidebarSearch = useCallback((query: string) => {
+    setSidebarSearchQuery(query);
+    // Update filters to trigger database search
+    setFilters(prev => ({ ...prev, search: query || undefined }));
+    setCurrentOffset(0); // Reset pagination
+  }, []);
+
   // Lock selected fragments
   const handleLockSelected = () => {
     const updatedFragments = canvasFragments.map((f) =>
@@ -545,6 +554,7 @@ function CanvasPage() {
           isLoadingMore={isLoadingMore}
           searchQuery={initialSearchQuery}
           onClearSearch={handleClearSearch}
+          onSidebarSearch={handleSidebarSearch}
         />
 
         <div

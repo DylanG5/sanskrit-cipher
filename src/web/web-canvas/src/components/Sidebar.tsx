@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ManuscriptFragment } from '../types/fragment';
 import FragmentMetadata from './FragmentMetadata';
 import VirtualizedFragmentList from './VirtualizedFragmentList';
@@ -16,6 +16,7 @@ interface SidebarProps {
   isLoadingMore?: boolean;
   searchQuery?: string | null;
   onClearSearch?: () => void;
+  onSidebarSearch?: (query: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -31,12 +32,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   isLoadingMore = false,
   searchQuery = null,
   onClearSearch,
+  onSidebarSearch,
 }) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(window.innerHeight - 120); // Header + padding
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleFragmentClick = (fragment: ManuscriptFragment, e: React.MouseEvent) => {
     // Don't show metadata if we're starting a drag
@@ -88,6 +92,33 @@ const Sidebar: React.FC<SidebarProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Debounced database search when local search query changes
+  useEffect(() => {
+    if (!onSidebarSearch) return;
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // If search is empty, clear the search
+    if (!localSearchQuery.trim()) {
+      onSidebarSearch('');
+      return;
+    }
+
+    // Debounce the search by 300ms
+    debounceTimeoutRef.current = setTimeout(() => {
+      onSidebarSearch(localSearchQuery.trim());
+    }, 300);
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [localSearchQuery, onSidebarSearch]);
+
   return (
     <>
       {/* Toggle button when closed */}
@@ -135,7 +166,49 @@ const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
 
-          {/* Search indicator */}
+          {/* Local search bar */}
+          <div className="mb-3 relative">
+            <div className="relative">
+              <input
+                type="text"
+                value={localSearchQuery}
+                onChange={(e) => setLocalSearchQuery(e.target.value)}
+                placeholder="Search fragments..."
+                className="w-full pl-10 pr-10 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-slate-400 text-slate-700"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {localSearchQuery && (
+                <button
+                  onClick={() => {
+                    setLocalSearchQuery('');
+                    if (onSidebarSearch) {
+                      onSidebarSearch('');
+                    }
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                  title="Clear search"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {localSearchQuery && (
+              <div className="mt-1 text-xs text-slate-500">
+                Searching database...
+              </div>
+            )}
+          </div>
+
+          {/* Search indicator (from landing page search) */}
           {searchQuery && (
             <div className="mb-3 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center justify-between">
@@ -180,8 +253,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
               </div>
-              <p className="text-slate-600 text-sm font-medium mb-1">No matching fragments</p>
-              <p className="text-slate-400 text-xs">Try adjusting your filters</p>
+              <p className="text-slate-600 text-sm font-medium mb-1">
+                {localSearchQuery ? 'No matching fragments' : 'No fragments available'}
+              </p>
+              <p className="text-slate-400 text-xs">
+                {localSearchQuery ? 'Try a different search term' : 'Try adjusting your filters'}
+              </p>
             </div>
           ) : (
           <VirtualizedFragmentList
