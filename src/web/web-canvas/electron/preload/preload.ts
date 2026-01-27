@@ -76,6 +76,10 @@ const electronAPI = {
   images: {
     getPath: (relativePath: string): Promise<string> =>
       ipcRenderer.invoke('images:getPath', relativePath),
+    hasSegmented: (fragmentId: string): Promise<{ success: boolean; exists: boolean }> =>
+      ipcRenderer.invoke('images:hasSegmented', fragmentId),
+    batchHasSegmented: (fragmentIds: string[]): Promise<ApiResponse<Record<string, boolean>>> =>
+      ipcRenderer.invoke('images:batchHasSegmented', fragmentIds),
   },
   projects: {
     list: (): Promise<ApiResponse<Project[]>> =>
@@ -88,6 +92,8 @@ const electronAPI = {
       ipcRenderer.invoke('projects:load', projectId),
     delete: (projectId: number): Promise<ApiResponse<null> & { deleted?: boolean }> =>
       ipcRenderer.invoke('projects:delete', projectId),
+    rename: (projectId: number, newName: string): Promise<ApiResponse<null>> =>
+      ipcRenderer.invoke('projects:rename', projectId, newName),
   },
 };
 

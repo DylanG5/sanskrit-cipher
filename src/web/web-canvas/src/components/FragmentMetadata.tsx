@@ -108,6 +108,28 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({ fragment, onClose }
                 </span>
               </div>
             )}
+
+            {/* Scale Information */}
+            {metadata.scale && (
+              <div className="flex justify-between items-center p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-200/50">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                  </svg>
+                  <span className="font-medium text-slate-700 text-sm">Scale</span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-slate-900 bg-white px-3 py-1 rounded-md text-sm font-semibold shadow-sm">
+                    {metadata.scale.pixelsPerUnit.toFixed(1)} px/{metadata.scale.unit}
+                  </span>
+                  <span className={`text-xs mt-1 ${
+                    metadata.scale.detectionStatus === 'success' ? 'text-emerald-600' : 'text-red-500'
+                  }`}>
+                    {metadata.scale.detectionStatus === 'success' ? 'Auto-detected' : 'Detection failed'}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-10">

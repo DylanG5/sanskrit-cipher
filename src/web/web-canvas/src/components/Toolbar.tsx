@@ -15,6 +15,12 @@ interface ToolbarProps {
   isFilterPanelOpen: boolean;
   onToggleFilters: () => void;
   hasActiveFilters: boolean;
+  // Segmentation toggle
+  showSegmented: boolean;
+  onToggleSegmented: () => void;
+  // Session management props
+  projectName?: string;
+  saveStatus?: 'saved' | 'saving' | 'unsaved';
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -31,6 +37,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isFilterPanelOpen,
   onToggleFilters,
   hasActiveFilters,
+  showSegmented,
+  onToggleSegmented,
+  projectName,
+  saveStatus = 'saved',
 }) => {
   const navigate = useNavigate();
   return (
@@ -56,6 +66,40 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <h1 className="text-lg font-bold text-white font-body">
           Fragment Reconstruction
         </h1>
+        {projectName && (
+          <>
+            <span className="text-neutral-500 mx-2">—</span>
+            <span className="text-sm font-medium text-neutral-300 font-body truncate max-w-[200px]" title={projectName}>
+              {projectName}
+            </span>
+          </>
+        )}
+        {/* Save status indicator */}
+        <div className="flex items-center gap-1.5 ml-3">
+          {saveStatus === 'saving' && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium" style={{ color: '#fbbf24' }}>
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Saving...</span>
+            </div>
+          )}
+          {saveStatus === 'saved' && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium" style={{ color: '#10b981' }}>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Saved</span>
+            </div>
+          )}
+          {saveStatus === 'unsaved' && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium" style={{ color: '#f97316' }}>
+              <div className="w-2 h-2 rounded-full bg-current"></div>
+              <span>Unsaved</span>
+            </div>
+          )}
+        </div>
       </div>
       <button
         onClick={() => navigate("/")}
@@ -278,6 +322,43 @@ const Toolbar: React.FC<ToolbarProps> = ({
             />
           </svg>
           <span className="text-sm font-semibold">Grid</span>
+        </button>
+
+        <button
+          onClick={onToggleSegmented}
+          className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg font-body"
+          style={{
+            background: showSegmented ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 'rgba(68, 64, 60, 0.8)',
+            color: showSegmented ? '#ffffff' : '#d6d3d1'
+          }}
+          onMouseEnter={(e) => {
+            if (showSegmented) {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)';
+            } else {
+              e.currentTarget.style.background = 'rgba(87, 83, 78, 0.9)';
+              e.currentTarget.style.color = '#fafaf9';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = showSegmented ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 'rgba(68, 64, 60, 0.8)';
+            e.currentTarget.style.color = showSegmented ? '#ffffff' : '#d6d3d1';
+          }}
+          title={showSegmented ? "Show original images" : "Show segmented images (transparent background)"}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          <span className="text-sm font-semibold">Segmented</span>
         </button>
 
         <button

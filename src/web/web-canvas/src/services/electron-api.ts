@@ -82,6 +82,8 @@ declare global {
       };
       images: {
         getPath: (relativePath: string) => Promise<string>;
+        hasSegmented: (fragmentId: string) => Promise<{ success: boolean; exists: boolean }>;
+        batchHasSegmented: (fragmentIds: string[]) => Promise<ApiResponse<Record<string, boolean>>>;
       };
       projects: {
         list: () => Promise<ApiResponse<Project[]>>;
@@ -89,6 +91,7 @@ declare global {
         save: (projectId: number, canvasState: CanvasStateData, notes: string) => Promise<ApiResponse<null>>;
         load: (projectId: number) => Promise<ApiResponse<{ project: Project; canvasState: CanvasStateData; notes: string }>>;
         delete: (projectId: number) => Promise<ApiResponse<null> & { deleted?: boolean }>;
+        rename: (projectId: number, newName: string) => Promise<ApiResponse<null>>;
       };
     };
   }

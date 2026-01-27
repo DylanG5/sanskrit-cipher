@@ -47,11 +47,24 @@ const registerImageProtocol = () => {
     const decodedUrl = decodeURIComponent(url);
 
     const isDev = !app.isPackaged;
-    const basePath = isDev
-      ? path.join(process.cwd(), 'data')
-      : path.join(process.resourcesPath, 'data');
 
-    const imagePath = path.join(basePath, decodedUrl);
+    let imagePath: string;
+
+    // Check if this is a segmented image request
+    if (decodedUrl.startsWith('segmented/')) {
+      // Segmented images are stored in resources/cache/segmented/
+      const filename = decodedUrl.replace('segmented/', '');
+      const basePath = isDev
+        ? path.join(process.cwd(), 'electron/resources/cache/segmented')
+        : path.join(process.resourcesPath, 'cache/segmented');
+      imagePath = path.join(basePath, filename);
+    } else {
+      // Original images are in the data folder
+      const basePath = isDev
+        ? path.join(process.cwd(), 'data')
+        : path.join(process.resourcesPath, 'data');
+      imagePath = path.join(basePath, decodedUrl);
+    }
 
     try {
       const data = await fs.promises.readFile(imagePath);

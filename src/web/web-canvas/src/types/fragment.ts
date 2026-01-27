@@ -3,6 +3,9 @@ export interface ManuscriptFragment {
   name: string;
   imagePath: string;
   thumbnailPath: string;
+  // Segmentation info
+  segmentedImagePath?: string;  // Path to segmented image if available
+  hasSegmentation?: boolean;     // Quick flag for UI
   // Metadata fields (optional, populated by ML models)
   metadata?: {
     lineCount?: number;

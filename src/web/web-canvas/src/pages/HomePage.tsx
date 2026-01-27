@@ -12,6 +12,11 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredProject, setHoveredProject] = useState<number | null>(null);
 
+  // Rename state
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const renameInputRef = useRef<HTMLInputElement | null>(null);
+
   // Autocomplete state
   const [autocompleteResults, setAutocompleteResults] = useState<ManuscriptFragment[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -121,6 +126,57 @@ const HomePage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
+    }
+  };
+
+  const handleStartRename = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    setEditingProjectId(project.id);
+    setEditingName(project.project_name);
+    // Focus input after state update
+    setTimeout(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    }, 0);
+  };
+
+  const handleRename = async (projectId: number) => {
+    const api = getElectronAPISafe();
+    if (!api || !editingName.trim()) {
+      setEditingProjectId(null);
+      return;
+    }
+
+    try {
+      const response = await api.projects.rename(projectId, editingName.trim());
+      if (response.success) {
+        // Update local state
+        setProjects(prev => prev.map(p =>
+          p.id === projectId ? { ...p, project_name: editingName.trim() } : p
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to rename project:', error);
+    }
+    setEditingProjectId(null);
+  };
+
+  const handleDeleteProject = async (e: React.MouseEvent, projectId: number) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this project? This cannot be undone.')) {
+      return;
+    }
+
+    const api = getElectronAPISafe();
+    if (!api) return;
+
+    try {
+      const response = await api.projects.delete(projectId);
+      if (response.success) {
+        setProjects(prev => prev.filter(p => p.id !== projectId));
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error);
     }
   };
 
@@ -313,12 +369,12 @@ const HomePage: React.FC = () => {
             </div>
           ) : (
             projects.map((project, index) => (
-              <button
+              <div
                 key={project.id}
-                onClick={() => handleProjectClick(project)}
+                onClick={() => editingProjectId !== project.id && handleProjectClick(project)}
                 onMouseEnter={() => setHoveredProject(project.id)}
                 onMouseLeave={() => setHoveredProject(null)}
-                className="w-full text-left p-3.5 rounded-xl border transition-all duration-300 group"
+                className="w-full text-left p-3.5 rounded-xl border transition-all duration-300 group cursor-pointer"
                 style={{
                   animationDelay: `${index * 50}ms`,
                   animation: 'fadeInUp 0.4s ease-out forwards',
@@ -329,12 +385,31 @@ const HomePage: React.FC = () => {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-white truncate transition-colors font-body" style={{
-                      color: hoveredProject === project.id ? '#fed7aa' : '#ffffff'
-                    }}>
-                      {project.project_name}
-                    </h3>
-                    {project.description && (
+                    {editingProjectId === project.id ? (
+                      <input
+                        ref={renameInputRef}
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onBlur={() => handleRename(project.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleRename(project.id);
+                          } else if (e.key === 'Escape') {
+                            setEditingProjectId(null);
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full text-sm font-semibold bg-neutral-700 text-white rounded px-2 py-1 outline-none focus:ring-2 focus:ring-orange-500 font-body"
+                      />
+                    ) : (
+                      <h3 className="text-sm font-semibold text-white truncate transition-colors font-body" style={{
+                        color: hoveredProject === project.id ? '#fed7aa' : '#ffffff'
+                      }}>
+                        {project.project_name}
+                      </h3>
+                    )}
+                    {project.description && editingProjectId !== project.id && (
                       <p className="text-xs text-neutral-400 truncate mt-1.5 font-body">
                         {project.description}
                       </p>
@@ -343,12 +418,29 @@ const HomePage: React.FC = () => {
                       {formatDate(project.updated_at)}
                     </p>
                   </div>
-                  <div className="flex-shrink-0 w-2 h-2 rounded-full transition-all duration-300" style={{
-                    background: hoveredProject === project.id ? '#ea580c' : 'rgba(87, 83, 78, 0.8)',
-                    boxShadow: hoveredProject === project.id ? '0 0 12px rgba(234, 88, 12, 0.6)' : 'none'
-                  }}></div>
+                  {/* Action buttons - show on hover */}
+                  <div className={`flex items-center gap-1 transition-opacity duration-200 ${hoveredProject === project.id ? 'opacity-100' : 'opacity-0'}`}>
+                    <button
+                      onClick={(e) => handleStartRename(e, project)}
+                      className="p-1.5 rounded-lg hover:bg-neutral-600 transition-colors"
+                      title="Rename project"
+                    >
+                      <svg className="w-4 h-4 text-neutral-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteProject(e, project.id)}
+                      className="p-1.5 rounded-lg hover:bg-red-900/50 transition-colors"
+                      title="Delete project"
+                    >
+                      <svg className="w-4 h-4 text-neutral-400 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </button>
+              </div>
             ))
           )}
         </div>
