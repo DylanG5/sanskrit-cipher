@@ -6,6 +6,7 @@
 
 import { ipcMain, app } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
 import { getDatabase } from '../database/connection';
 
 // Types for filter parameters
@@ -77,6 +78,9 @@ export function registerIpcHandlers(): void {
     if (filters?.search) {
       query += ' AND fragment_id LIKE ?';
       params.push(`%${filters.search}%`);
+      console.log('Search query:', filters.search);
+      console.log('SQL LIKE pattern:', `%${filters.search}%`);
+      console.log('Full SQL query:', query);
     }
 
     // Add ordering
@@ -204,6 +208,49 @@ export function registerIpcHandlers(): void {
       : path.join(process.resourcesPath, 'data');
 
     return path.join(basePath, relativePath);
+  });
+
+  /**
+   * Check if segmented image exists for a fragment
+   */
+  ipcMain.handle('images:hasSegmented', async (_event, fragmentId: string) => {
+    const isDev = !app.isPackaged;
+    const basePath = isDev
+      ? path.join(process.cwd(), 'electron/resources/cache/segmented')
+      : path.join(process.resourcesPath, 'cache/segmented');
+
+    const segmentedPath = path.join(basePath, `${fragmentId}_segmented.png`);
+
+    try {
+      await fs.promises.access(segmentedPath, fs.constants.F_OK);
+      return { success: true, exists: true };
+    } catch {
+      return { success: true, exists: false };
+    }
+  });
+
+  /**
+   * Batch check segmented images for multiple fragments
+   */
+  ipcMain.handle('images:batchHasSegmented', async (_event, fragmentIds: string[]) => {
+    const isDev = !app.isPackaged;
+    const basePath = isDev
+      ? path.join(process.cwd(), 'electron/resources/cache/segmented')
+      : path.join(process.resourcesPath, 'cache/segmented');
+
+    const results: Record<string, boolean> = {};
+
+    await Promise.all(fragmentIds.map(async (id) => {
+      const segmentedPath = path.join(basePath, `${id}_segmented.png`);
+      try {
+        await fs.promises.access(segmentedPath, fs.constants.F_OK);
+        results[id] = true;
+      } catch {
+        results[id] = false;
+      }
+    }));
+
+    return { success: true, data: results };
   });
 
   // ============================================
@@ -341,6 +388,22 @@ export function registerIpcHandlers(): void {
       return { success: true, deleted: result.changes > 0 };
     } catch (error) {
       console.error('Error deleting project:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+
+  /**
+   * Rename a project
+   */
+  ipcMain.handle('projects:rename', async (_event, projectId: number, newName: string) => {
+    try {
+      const result = db.prepare(
+        'UPDATE projects SET project_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+      ).run(newName, projectId);
+      return { success: true, changes: result.changes };
+    } catch (error) {
+      console.error('Error renaming project:', error);
       return { success: false, error: String(error) };
     }
   });

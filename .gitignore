@@ -337,3 +337,6 @@ src/web/web-canvas/out/
 **/cache/
 **/.cache/
 src/web/web-canvas/electron/resources/cache/
+
+# latex build folders 
+**/build/

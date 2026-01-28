@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
@@ -7,14 +7,16 @@ import FilterPanel from "../components/FilterPanel";
 import NotesPanel from "../components/NotesPanel";
 import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
-import { getAllFragments, getFragmentCount } from "../services/fragment-service";
-import { isElectron } from "../services/electron-api";
+import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus } from "../services/fragment-service";
+import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData } from "../services/electron-api";
+import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
 
 // Default page size for pagination
 const PAGE_SIZE = 100;
 
 function CanvasPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Fragment state - now loaded from database
   const [fragments, setFragments] = useState<ManuscriptFragment[]>([]);
@@ -36,8 +38,24 @@ function CanvasPage() {
   const [notes, setNotes] = useState("");
   const [isGridVisible, setIsGridVisible] = useState(false);
   const [gridScale, setGridScale] = useState(25); // pixels per cm
+  const [showSegmented, setShowSegmented] = useState(false);
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Search state
+  const [initialSearchQuery, setInitialSearchQuery] = useState<string | null>(null);
+  const [selectedFragmentId, setSelectedFragmentId] = useState<string | null>(null);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [hasAutoPlaced, setHasAutoPlaced] = useState(false);
+  const [sidebarSearchQuery, setSidebarSearchQuery] = useState<string>('');
+
+  // Project state
+  const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
+  const [currentProjectName, setCurrentProjectName] = useState<string>('');
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRestoringRef = useRef(false);
 
   // Load fragments from database (initial load)
   const loadFragments = useCallback(async () => {
@@ -77,6 +95,10 @@ function CanvasPage() {
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
       }
+      if (filters.search) {
+        apiFilters.search = filters.search;
+        console.log('Loading fragments with search filter:', filters.search);
+      }
 
       // Fetch fragments and count in parallel
       const [fragmentsResult, countResult] = await Promise.all([
@@ -84,7 +106,10 @@ function CanvasPage() {
         getFragmentCount(apiFilters),
       ]);
 
-      setFragments(fragmentsResult);
+      // Enrich fragments with segmentation status
+      const enrichedFragments = await enrichWithSegmentationStatus(fragmentsResult);
+
+      setFragments(enrichedFragments);
       setTotalCount(countResult);
       setCurrentOffset(PAGE_SIZE);
     } catch (error) {
@@ -132,7 +157,10 @@ function CanvasPage() {
 
       const moreFragments = await getAllFragments(apiFilters);
 
-      setFragments((prev) => [...prev, ...moreFragments]);
+      // Enrich with segmentation status
+      const enrichedMore = await enrichWithSegmentationStatus(moreFragments);
+
+      setFragments((prev) => [...prev, ...enrichedMore]);
       setCurrentOffset((prev) => prev + PAGE_SIZE);
     } catch (error) {
       console.error("Failed to load more fragments:", error);
@@ -140,6 +168,243 @@ function CanvasPage() {
       setIsLoadingMore(false);
     }
   }, [isLoadingMore, fragments.length, totalCount, currentOffset, filters]);
+
+  // Refs to track current values for auto-save without re-creating callback
+  const canvasFragmentsRef = useRef(canvasFragments);
+  const notesRef = useRef(notes);
+  const currentProjectIdRef = useRef(currentProjectId);
+
+  // Keep refs in sync
+  useEffect(() => {
+    canvasFragmentsRef.current = canvasFragments;
+  }, [canvasFragments]);
+
+  useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
+
+  useEffect(() => {
+    currentProjectIdRef.current = currentProjectId;
+  }, [currentProjectId]);
+
+  // Auto-save function
+  const saveProject = useCallback(async (projectId: number, fragmentsToSave: CanvasFragment[], notesToSave: string) => {
+    const api = getElectronAPISafe();
+    if (!api) return;
+
+    setSaveStatus('saving');
+    try {
+      const canvasState: CanvasStateData = {
+        fragments: fragmentsToSave.map(f => ({
+          fragmentId: f.fragmentId,
+          x: f.x,
+          y: f.y,
+          width: f.width,
+          height: f.height,
+          rotation: f.rotation,
+          scaleX: f.scaleX,
+          scaleY: f.scaleY,
+          isLocked: f.isLocked,
+          zIndex: 0,
+        })),
+      };
+
+      const response = await api.projects.save(projectId, canvasState, notesToSave);
+      if (response.success) {
+        setSaveStatus('saved');
+        setHasUnsavedChanges(false);
+      } else {
+        console.error('Failed to save project:', response.error);
+        setSaveStatus('unsaved');
+      }
+    } catch (error) {
+      console.error('Failed to save project:', error);
+      setSaveStatus('unsaved');
+    }
+  }, []);
+
+  // Debounced auto-save - uses refs to avoid recreating on every state change
+  const triggerAutoSave = useCallback(async () => {
+    if (isRestoringRef.current) return;
+
+    setHasUnsavedChanges(true);
+    setSaveStatus('unsaved');
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save (2 seconds)
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      let projectId = currentProjectIdRef.current;
+
+      // Auto-create project if we don't have one yet
+      if (!projectId) {
+        const api = getElectronAPISafe();
+        if (!api) return;
+
+        try {
+          const timestamp = new Date().toLocaleString();
+          const response = await api.projects.create(
+            `Untitled - ${timestamp}`,
+            'Manuscript reconstruction'
+          );
+
+          if (response.success && response.projectId) {
+            projectId = response.projectId;
+            setCurrentProjectId(projectId);
+            setCurrentProjectName(`Untitled - ${timestamp}`);
+            currentProjectIdRef.current = projectId;
+          }
+        } catch (error) {
+          console.error('Failed to auto-create project:', error);
+          return;
+        }
+      }
+
+      if (projectId) {
+        saveProject(projectId, canvasFragmentsRef.current, notesRef.current);
+      }
+    }, 2000);
+  }, [saveProject]);
+
+  // Create new project if needed
+  const ensureProject = useCallback(async (): Promise<number | null> => {
+    if (currentProjectId) return currentProjectId;
+
+    const api = getElectronAPISafe();
+    if (!api) return null;
+
+    try {
+      const timestamp = new Date().toLocaleString();
+      const response = await api.projects.create(
+        `Untitled - ${timestamp}`,
+        'Manuscript reconstruction'
+      );
+
+      if (response.success && response.projectId) {
+        setCurrentProjectId(response.projectId);
+        setCurrentProjectName(`Untitled - ${timestamp}`);
+        return response.projectId;
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error);
+    }
+    return null;
+  }, [currentProjectId]);
+
+  // Restore project from loaded data
+  const restoreProject = useCallback(async (loadedProject: {
+    project: { id: number; project_name: string };
+    canvasState: { fragments: CanvasFragmentData[] };
+    notes: string;
+  }) => {
+    isRestoringRef.current = true;
+
+    setCurrentProjectId(loadedProject.project.id);
+    setCurrentProjectName(loadedProject.project.project_name);
+    setNotes(loadedProject.notes || '');
+
+    // Restore canvas fragments - need to load image paths
+    const api = getElectronAPISafe();
+    if (!api || !loadedProject.canvasState.fragments.length) {
+      isRestoringRef.current = false;
+      return;
+    }
+
+    const restoredFragments: CanvasFragment[] = [];
+
+    for (const frag of loadedProject.canvasState.fragments) {
+      try {
+        // Get fragment details from database
+        const fragmentResponse = await api.fragments.getById(frag.fragmentId);
+        if (fragmentResponse.success && fragmentResponse.data) {
+          const record = fragmentResponse.data;
+          // Use electron-image protocol, same as fragment-service.ts
+          const imagePath = `electron-image://${record.image_path}`;
+
+          restoredFragments.push({
+            id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+            fragmentId: frag.fragmentId,
+            name: record.fragment_id,
+            imagePath: imagePath,
+            x: frag.x,
+            y: frag.y,
+            width: frag.width || 200,
+            height: frag.height || 200,
+            rotation: frag.rotation,
+            scaleX: frag.scaleX,
+            scaleY: frag.scaleY,
+            isLocked: frag.isLocked,
+            isSelected: false,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to restore fragment:', frag.fragmentId, error);
+      }
+    }
+
+    setCanvasFragments(restoredFragments);
+    setSaveStatus('saved');
+    setHasUnsavedChanges(false);
+
+    // Small delay before allowing auto-save
+    setTimeout(() => {
+      isRestoringRef.current = false;
+    }, 500);
+  }, []);
+
+  // Initialize project from location state
+  useEffect(() => {
+    const projectIdFromLocation = location.state?.projectId;
+    const loadedProjectFromLocation = location.state?.loadedProject;
+
+    if (loadedProjectFromLocation) {
+      restoreProject(loadedProjectFromLocation);
+    } else if (projectIdFromLocation && !loadedProjectFromLocation) {
+      setCurrentProjectId(projectIdFromLocation);
+    }
+  }, [location.state?.projectId, location.state?.loadedProject, restoreProject]);
+
+  // Trigger auto-save when canvas fragments or notes change
+  useEffect(() => {
+    // Only auto-save if there's actually content to save
+    if (canvasFragments.length > 0 || notes) {
+      triggerAutoSave();
+    }
+  }, [canvasFragments, notes, triggerAutoSave]);
+
+  // Cleanup auto-save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Initialize search from location state
+  useEffect(() => {
+    const searchQueryFromLocation = location.state?.searchQuery;
+    const selectedFragmentIdFromLocation = location.state?.selectedFragmentId;
+
+    console.log('Location state received:', {
+      searchQuery: searchQueryFromLocation,
+      selectedFragmentId: selectedFragmentIdFromLocation
+    });
+
+    // Always apply the search filter to ensure the selected fragment is loaded
+    if (searchQueryFromLocation) {
+      setInitialSearchQuery(searchQueryFromLocation);
+      setIsSearchMode(true);
+      setFilters(prev => ({ ...prev, search: searchQueryFromLocation }));
+    }
+
+    if (selectedFragmentIdFromLocation) {
+      setSelectedFragmentId(selectedFragmentIdFromLocation);
+    }
+  }, [location.state?.searchQuery, location.state?.selectedFragmentId]);
 
   // Load fragments on mount and when filters change
   useEffect(() => {
@@ -231,6 +496,119 @@ function CanvasPage() {
     };
   };
 
+  // Auto-place fragment in center of canvas (for search results)
+  const autoPlaceFragment = useCallback(async (fragment: ManuscriptFragment) => {
+    const img = new Image();
+    // Use segmented image if toggle is on and available
+    const imagePath = (showSegmented && fragment.segmentedImagePath) ? fragment.segmentedImagePath : fragment.imagePath;
+    img.src = imagePath;
+
+    img.onload = () => {
+      const originalWidth = img.naturalWidth;
+      const originalHeight = img.naturalHeight;
+
+      // Calculate display size (auto-scaled if scale data available)
+      const { width, height } = calculateDisplaySize(
+        fragment,
+        originalWidth,
+        originalHeight
+      );
+
+      // Center on canvas (approximate canvas dimensions)
+      const canvasWidth = 1200;
+      const canvasHeight = 800;
+      const { x, y } = calculateCenteredPosition(
+        canvasWidth,
+        canvasHeight,
+        width,
+        height
+      );
+
+      const newCanvasFragment: CanvasFragment = {
+        id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+        fragmentId: fragment.id,
+        name: fragment.name,
+        imagePath: imagePath,
+        x,
+        y,
+        width,
+        height,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        isLocked: false,
+        isSelected: true, // Select the auto-placed fragment
+      };
+
+      setCanvasFragments([newCanvasFragment]);
+      setSelectedFragmentIds([newCanvasFragment.id]);
+      setHasAutoPlaced(true);
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load fragment image:', fragment.id);
+      setHasAutoPlaced(true); // Mark as attempted even on error
+    };
+  }, [showSegmented]);
+
+  // Auto-place first matching fragment when search results load
+  useEffect(() => {
+    if (isSearchMode && fragments.length > 0 && !hasAutoPlaced) {
+      let fragmentToPlace: ManuscriptFragment | null = null;
+
+      console.log('Auto-placement triggered:', {
+        selectedFragmentId,
+        initialSearchQuery,
+        fragmentCount: fragments.length,
+        fragmentIds: fragments.slice(0, 10).map(f => f.id)
+      });
+
+      // If user selected a specific fragment from autocomplete, use that
+      if (selectedFragmentId) {
+        fragmentToPlace = fragments.find(f => f.id === selectedFragmentId) || null;
+        console.log('Looking for selected fragment:', selectedFragmentId);
+        console.log('Found fragment:', fragmentToPlace?.id);
+
+        if (!fragmentToPlace) {
+          // Check if it's a partial match issue
+          const partialMatch = fragments.find(f =>
+            f.id.includes(selectedFragmentId) || selectedFragmentId.includes(f.id)
+          );
+          console.log('Partial match found:', partialMatch?.id);
+
+          // Also check the exact IDs in the array
+          const hasExactMatch = fragments.some(f => f.id === selectedFragmentId);
+          console.log('Has exact match in array:', hasExactMatch);
+          console.log('Fragment IDs containing search term:',
+            fragments.filter(f => f.id.toLowerCase().includes('or11878')).map(f => f.id)
+          );
+        }
+      }
+
+      // Otherwise, use the first result sorted by relevance
+      if (!fragmentToPlace && initialSearchQuery) {
+        const sortedFragments = sortBySearchRelevance(fragments, initialSearchQuery);
+        fragmentToPlace = sortedFragments[0] || null;
+        console.log('Using first sorted fragment:', fragmentToPlace?.id);
+      }
+
+      if (fragmentToPlace) {
+        console.log('Auto-placing fragment:', fragmentToPlace.id, 'imagePath:', fragmentToPlace.imagePath);
+        autoPlaceFragment(fragmentToPlace);
+      } else {
+        console.log('No fragment to place');
+      }
+    }
+  }, [isSearchMode, fragments, hasAutoPlaced, initialSearchQuery, selectedFragmentId, autoPlaceFragment]);
+
+  // Get image path based on segmented toggle
+  const getImagePath = useCallback((fragment: ManuscriptFragment) => {
+    if (showSegmented && fragment.segmentedImagePath) {
+      return fragment.segmentedImagePath;
+    }
+    return fragment.imagePath;
+  }, [showSegmented]);
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
@@ -243,7 +621,8 @@ function CanvasPage() {
 
     // Load the image to get its natural dimensions
     const img = new Image();
-    img.src = fragment.imagePath;
+    const imagePath = getImagePath(fragment);
+    img.src = imagePath;
     img.onload = () => {
       const originalWidth = img.naturalWidth;
       const originalHeight = img.naturalHeight;
@@ -259,7 +638,7 @@ function CanvasPage() {
         id: `canvas-fragment-${Date.now()}-${Math.random()}`,
         fragmentId: fragment.id,
         name: fragment.name,
-        imagePath: fragment.imagePath,
+        imagePath: imagePath,
         x: position.x - width / 2,
         y: position.y - height / 2,
         width: width,
@@ -277,6 +656,23 @@ function CanvasPage() {
     draggedFragmentRef.current = null;
     dropPositionRef.current = null;
   };
+
+  // Clear search and reset to normal mode
+  const handleClearSearch = useCallback(() => {
+    setIsSearchMode(false);
+    setInitialSearchQuery(null);
+    setSelectedFragmentId(null);
+    setFilters(prev => ({ ...prev, search: undefined }));
+    setHasAutoPlaced(false);
+  }, []);
+
+  // Handle sidebar search
+  const handleSidebarSearch = useCallback((query: string) => {
+    setSidebarSearchQuery(query);
+    // Update filters to trigger database search
+    setFilters(prev => ({ ...prev, search: query || undefined }));
+    setCurrentOffset(0); // Reset pagination
+  }, []);
 
   // Lock selected fragments
   const handleLockSelected = () => {
@@ -322,27 +718,21 @@ function CanvasPage() {
     setSelectedFragmentIds([]);
   };
 
-  // Save canvas progress (dummy function)
-  const handleSave = () => {
-    const canvasData = {
-      fragments: canvasFragments,
-      notes: notes,
-      timestamp: new Date().toISOString(),
-    };
+  // Save canvas progress to database
+  const handleSave = async () => {
+    // Cancel any pending auto-save
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
 
-    // Create a blob and download as JSON file
-    const dataStr = JSON.stringify(canvasData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `canvas-save-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Ensure we have a project
+    const projectId = await ensureProject();
+    if (!projectId) {
+      console.error('Failed to create or get project');
+      return;
+    }
 
-    alert("Canvas saved successfully!");
+    await saveProject(projectId, canvasFragments, notes);
   };
 
   // Toggle notes panel
@@ -353,6 +743,11 @@ function CanvasPage() {
   // Toggle grid visibility
   const handleToggleGrid = () => {
     setIsGridVisible(!isGridVisible);
+  };
+
+  // Toggle segmented image view
+  const handleToggleSegmented = () => {
+    setShowSegmented(!showSegmented);
   };
 
   // Handle edge match request (dummy function for now)
@@ -383,6 +778,10 @@ function CanvasPage() {
           filters.scripts.length > 0 ||
           filters.isEdgePiece !== null
         }
+        showSegmented={showSegmented}
+        onToggleSegmented={handleToggleSegmented}
+        projectName={currentProjectName}
+        saveStatus={saveStatus}
       />
 
       <div className="flex flex-1 overflow-hidden relative min-w-0">
@@ -397,6 +796,9 @@ function CanvasPage() {
           onLoadMore={loadMoreFragments}
           hasMore={fragments.length < totalCount}
           isLoadingMore={isLoadingMore}
+          searchQuery={initialSearchQuery}
+          onClearSearch={handleClearSearch}
+          onSidebarSearch={handleSidebarSearch}
         />
 
         <div

@@ -18,7 +18,7 @@ export type { ApiFilters as FragmentApiFilters };
 /**
  * Convert database fragment record to UI ManuscriptFragment type
  */
-function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragment {
+export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragment {
   return {
     id: record.fragment_id,
     name: record.fragment_id,
@@ -126,4 +126,36 @@ export async function getAvailableScripts(): Promise<string[]> {
   // Since we don't have ML-populated script_type yet, return empty
   // In the future, add an IPC handler to get distinct script types
   return [];
+}
+
+/**
+ * Enrich fragments with segmentation availability info
+ */
+export async function enrichWithSegmentationStatus(
+  fragments: ManuscriptFragment[]
+): Promise<ManuscriptFragment[]> {
+  if (!isElectron() || fragments.length === 0) {
+    return fragments;
+  }
+
+  const api = getElectronAPI();
+  const fragmentIds = fragments.map(f => f.id);
+
+  try {
+    const response = await api.images.batchHasSegmented(fragmentIds);
+    if (!response.success || !response.data) {
+      return fragments;
+    }
+
+    return fragments.map(fragment => ({
+      ...fragment,
+      hasSegmentation: response.data?.[fragment.id] ?? false,
+      segmentedImagePath: response.data?.[fragment.id]
+        ? `electron-image://segmented/${fragment.id}_segmented.png`
+        : undefined,
+    }));
+  } catch (error) {
+    console.error('Failed to check segmentation status:', error);
+    return fragments;
+  }
 }

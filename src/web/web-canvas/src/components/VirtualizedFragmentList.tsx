@@ -62,16 +62,28 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
             </svg>
           </button>
         </div>
-        {/* Metadata indicator badge */}
-        {fragment.metadata && (
-          <div className="absolute top-2 right-2 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-md px-2 py-1 flex items-center gap-1.5 shadow-md ring-2 ring-white">
-            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-              <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/>
-            </svg>
-            <span className="text-[10px] font-semibold uppercase tracking-wide">Metadata</span>
-          </div>
-        )}
+        {/* Badges container */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
+          {/* Segmentation indicator badge */}
+          {fragment.hasSegmentation && (
+            <div className="bg-gradient-to-br from-violet-500 to-violet-600 text-white rounded-md px-2 py-1 flex items-center gap-1.5 shadow-md ring-2 ring-white">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-[10px] font-semibold uppercase tracking-wide">Segmented</span>
+            </div>
+          )}
+          {/* Metadata indicator badge */}
+          {fragment.metadata && (
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-md px-2 py-1 flex items-center gap-1.5 shadow-md ring-2 ring-white">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/>
+              </svg>
+              <span className="text-[10px] font-semibold uppercase tracking-wide">Metadata</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

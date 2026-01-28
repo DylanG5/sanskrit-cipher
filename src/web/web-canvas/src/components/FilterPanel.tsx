@@ -98,16 +98,25 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       {!isOpen && (
         <button
           onClick={onToggle}
-          className="fixed right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-slate-700 to-slate-800 text-white px-3 py-6 rounded-l-lg shadow-lg hover:from-slate-600 hover:to-slate-700 transition-all duration-200 z-30 group"
+          className="fixed right-0 top-1/2 -translate-y-1/2 text-white px-3 py-6 rounded-l-xl shadow-xl transition-all duration-300 z-30 group font-body"
+          style={{
+            background: 'linear-gradient(270deg, #292524 0%, #44403c 100%)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(270deg, #d97706 0%, #b45309 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(270deg, #292524 0%, #44403c 100%)';
+          }}
           title="Open filters"
         >
-          <div className="flex flex-col items-center gap-2">
-            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          <div className="flex flex-col items-center gap-2.5">
+            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
-            <span className="text-xs font-medium" style={{ writingMode: 'vertical-rl' }}>Filters</span>
+            <span className="text-xs font-bold font-body" style={{ writingMode: 'vertical-rl' }}>Filters</span>
             {hasActiveFilters && (
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#ea580c' }}></div>
             )}
           </div>
         </button>
@@ -117,17 +126,23 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       {isOpen && (
         <div
           ref={panelRef}
-          style={{ width: `${width}px` }}
-          className="bg-gradient-to-b from-slate-50 to-slate-100 border-l border-slate-300 overflow-y-auto shadow-inner flex flex-col flex-shrink-0 relative"
+          style={{
+            width: `${width}px`,
+            background: 'linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%)',
+            borderLeft: '1px solid rgba(120, 113, 108, 0.2)'
+          }}
+          className="overflow-y-auto shadow-lg flex flex-col flex-shrink-0 relative"
         >
           {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-slate-700 to-slate-800 text-white sticky top-0 z-10 shadow-md">
+          <div className="p-4 text-white sticky top-0 z-10 shadow-md font-body" style={{
+            background: 'linear-gradient(90deg, #292524 0%, #1c1917 100%)'
+          }}>
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              <div className="flex items-center gap-2.5">
+                <svg className="w-5 h-5" style={{ color: '#d97706' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
-                <h2 className="text-lg font-semibold">Filter Fragments</h2>
+                <h2 className="text-lg font-bold font-body">Filter Fragments</h2>
               </div>
               <button
                 onClick={onToggle}
@@ -333,20 +348,43 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="p-4 bg-white border-t border-slate-300 sticky bottom-0 space-y-2">
+          <div className="p-4 bg-white sticky bottom-0 space-y-2.5" style={{
+            borderTop: '1px solid rgba(214, 211, 209, 0.4)'
+          }}>
             <button
               onClick={handleApply}
-              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 font-body"
+              style={{
+                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)';
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               Apply Filters
             </button>
             <button
               onClick={handleReset}
               disabled={!hasActiveFilters}
-              className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-body"
+              style={{
+                background: 'rgba(231, 229, 228, 0.8)',
+                color: '#292524'
+              }}
+              onMouseEnter={(e) => {
+                if (hasActiveFilters) {
+                  e.currentTarget.style.background = 'rgba(214, 211, 209, 0.9)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(231, 229, 228, 0.8)';
+              }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

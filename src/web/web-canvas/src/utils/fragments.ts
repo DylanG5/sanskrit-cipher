@@ -44,3 +44,49 @@ export const fragments: ManuscriptFragment[] = fragmentFiles.map((file, index) =
 export const getFragmentById = (id: string): ManuscriptFragment | undefined => {
   return fragments.find(f => f.id === id);
 };
+
+/**
+ * Sort fragments by search relevance
+ * Priority: exact match → starts with query → contains query
+ */
+export function sortBySearchRelevance(
+  fragments: ManuscriptFragment[],
+  searchQuery: string
+): ManuscriptFragment[] {
+  const query = searchQuery.toLowerCase().trim();
+
+  return [...fragments].sort((a, b) => {
+    const aId = a.id.toLowerCase();
+    const bId = b.id.toLowerCase();
+
+    // Exact match priority
+    const aExact = aId === query;
+    const bExact = bId === query;
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+
+    // Starts with priority
+    const aStarts = aId.startsWith(query);
+    const bStarts = bId.startsWith(query);
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
+
+    // Alphabetical fallback
+    return aId.localeCompare(bId);
+  });
+}
+
+/**
+ * Calculate centered position on canvas
+ */
+export function calculateCenteredPosition(
+  canvasWidth: number,
+  canvasHeight: number,
+  fragmentWidth: number,
+  fragmentHeight: number
+): { x: number; y: number } {
+  return {
+    x: (canvasWidth - fragmentWidth) / 2,
+    y: (canvasHeight - fragmentHeight) / 2,
+  };
+}
