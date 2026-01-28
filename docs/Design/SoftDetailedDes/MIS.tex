@@ -2628,5 +2628,13 @@ graduate attribute of Problem Analysis and Design.
 
 \end{enumerate}
 
+\section*{Module Reflection}
+
+Implementing the User Authorization Module (M8) was largely a smooth process due to the clarity of the provided MIS structure, though there were specific areas where ambiguity slowed down development. On the positive side, the Semantics section clearly defined the necessary state variables, making it immediately obvious that we needed \texttt{activeSessions} and \texttt{tokenExpiryTimes} as dictionary structures to manage session tokens and expiration timestamps. Additionally, the Exported Access Programs table was highly effective; having a concise checklist of inputs, outputs, and exceptions allowed us to scaffold the function signatures for \texttt{login}, \texttt{logout}, and \texttt{validateToken} very quickly. The inclusion of Exported Constants like \texttt{TOKEN\_EXPIRY\_MIN} was also beneficial, as it removed the need for magic numbers in the code and clearly indicated which features, such as refresh tokens, needed to be configurable.
+
+However, we encountered challenges regarding data types and external integration. While the interface listed types like \texttt{Credentials} and \texttt{UserProfile}, the MIS did not define their internal structure, forcing us to make assumptions about the required fields (e.g., whether \texttt{Credentials} included just a password or also an API key). Furthermore, while the module specified a reliance on an External Authentication Provider and an \texttt{AUTH\_SERVER\_URL}, it lacked the specific API contract or protocol details required to implement the actual communication with that provider. There was also minor confusion regarding \texttt{SystemTime} and whether it was an environment variable to be mocked or simply the system clock.
+
+To improve the design documentation for future implementations, we recommend adding a dedicated ``Data Types'' subsection to explicitly define the fields of custom objects like \texttt{UserProfile} to prevent integration mismatch. It would also be helpful to include pseudocode or step-by-step semantic descriptions for complex operations like \texttt{login}, clarifying exactly when to update internal state versus calling external providers. Finally, adding a column for specific exception trigger conditions---defining precisely \textit{why} a \texttt{TokenInvalid} exception should be thrown---would greatly aid in writing accurate unit tests.
+
 
 \end{document}
