@@ -1,0 +1,25 @@
+# YOLOv8 Line Detection Requirements
+
+# Core dependencies
+ultralytics>=8.0.0         # YOLOv8 framework
+torch>=2.0.0               # PyTorch (deep learning framework)
+torchvision>=0.15.0        # PyTorch vision utilities
+
+# Data processing
+numpy>=1.24.0              # Numerical operations
+pandas>=2.0.0              # Data manipulation and CSV handling
+opencv-python>=4.8.0       # Image processing and visualization
+Pillow>=10.0.0             # Image loading and manipulation
+
+# Machine learning utilities
+scikit-learn>=1.3.0        # Data splitting and metrics
+matplotlib>=3.7.0          # Plotting training curves
+seaborn>=0.12.0            # Enhanced visualizations
+
+# Progress and utilities
+tqdm>=4.65.0               # Progress bars
+PyYAML>=6.0                # YAML configuration files
+
+# Optional but recommended
+# tensorboard>=2.13.0      # Training visualization (uncomment if needed)
+# notebook>=7.0.0          # Jupyter notebook support (uncomment if needed)
