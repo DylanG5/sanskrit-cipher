@@ -253,7 +253,7 @@ class PipelineOrchestrator:
             result = processor.process(fragment, str(self.data_dir))
 
             if result.success:
-                self.logger.debug(f"    ✓ {metadata.name} succeeded")
+                self.logger.debug(f"    OK {metadata.name} succeeded")
                 all_updates.update(result.updates)
 
                 if result.cache_files:

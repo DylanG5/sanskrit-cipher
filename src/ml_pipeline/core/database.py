@@ -70,6 +70,11 @@ class DatabaseManager:
         cursor.execute("PRAGMA table_info(fragments)")
         columns = [row[1] for row in cursor.fetchall()]
 
+        if 'has_circle' not in columns:
+            cursor.execute("ALTER TABLE fragments ADD COLUMN has_circle BOOLEAN")
+            self.conn.commit()
+
+
         if 'processing_status' in columns:
             self.logger.info("Migration already applied, skipping")
             return
@@ -156,7 +161,8 @@ class DatabaseManager:
                 segmentation_model_version=row_dict.get('segmentation_model_version'),
                 classification_model_version=row_dict.get('classification_model_version'),
                 last_processed_at=row_dict.get('last_processed_at'),
-                processing_error=row_dict.get('processing_error')
+                processing_error=row_dict.get('processing_error'),
+                has_circle=row_dict.get('has_circle')
             ))
 
         return fragments

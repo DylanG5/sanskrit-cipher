@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS fragments (
     edge_piece BOOLEAN DEFAULT 0,
     has_top_edge BOOLEAN DEFAULT 0,
     has_bottom_edge BOOLEAN DEFAULT 0,
+    has_circle BOOLEAN DEFAULT NULL,
     line_count INTEGER,
     script_type TEXT,
     segmentation_coords TEXT,              -- JSON: polygon coordinates
