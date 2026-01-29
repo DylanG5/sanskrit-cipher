@@ -164,30 +164,40 @@ multi-author commits.}
 
 \section{Issue Tracker}
 
-\wss{For each team member how many issues have they authored (including open and
-closed issues (O+C)) and how many have they been assigned (only counting closed
-issues (C only)) over the time period of interest.}
-
 \begin{table}[H]
 \centering
 \begin{tabular}{lll}
 \toprule
 \textbf{Student} & \textbf{Authored (O+C)} & \textbf{Assigned (C only)}\\
 \midrule
-Name 1 & Num & Num \\
-Name 2 & Num & Num \\
-Name 3 & Num & Num \\
-Name 4 & Num & Num \\
-Name 5 & Num & Num \\
+Omar El Aref & 21 & 14 \\
+Dylan Garner & 8 & 5 \\
+Muhammad Umar Khan & 22 & 9 \\
+Aswin Kuganesan & 5 & 6 \\
+Yousef Shahin & 4 & 7 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the counts can be provided here.}
+The variation in authored issues is primarily due to differences in issue creation practices, with some team members creating more granular issues for tracking meetings and smaller tasks. The assigned and completed issues show more balanced distribution across team members, reflecting consistent contribution to closing issues during the Rev 0 period.
 
 \section{CICD}
 
-\wss{Say how CICD is used in your project}
+Our project utilizes GitHub Actions for Continuous Integration and Continuous Deployment (CI/CD) in the following ways:
+
+\begin{enumerate}
+\item \textbf{Automated LaTeX Compilation}: A CI/CD workflow automatically compiles LaTeX documentation files whenever changes are pushed to the \texttt{docs/} directory. The workflow:
+\begin{itemize}
+\item Uses TeXLive 2024 with full scheme
+\item Detects changed .tex files and compiles only those files
+\item Automatically commits generated PDFs back to the repository
+\item Runs on both push and pull request events to the main branch
+\end{itemize}
+
+\item \textbf{Database Repopulation}: Automated workflows will repopulate sample databases after changes are made to the underlying models and logic that generates metadata for each manuscript fragment image. This ensures database schemas and sample data remain consistent with code changes.
+
+\item \textbf{Linting \& Automated Testing}: We will automate linting according to the appropriate style guides, as well as execute our automated test suites where applicable on a PR.
+\end{enumerate}
 
 \section{Team Charter Trigger Items}
 
