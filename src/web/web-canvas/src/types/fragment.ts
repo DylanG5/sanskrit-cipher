@@ -11,12 +11,15 @@ export interface ManuscriptFragment {
     lineCount?: number;
     script?: string;
     isEdgePiece?: boolean;
+    hasTopEdge?: boolean;
+    hasBottomEdge?: boolean;
     // Scale information from ruler detection
     scale?: {
       unit: 'cm' | 'mm';  // Physical unit
       pixelsPerUnit: number;  // Pixels per unit in original image
       detectionStatus: 'success' | 'error';  // Detection result
     };
+    segmentationStatus?: string; // For displaying segmentation processing status
   };
 }
 
@@ -34,6 +37,7 @@ export interface CanvasFragment {
   scaleY: number;
   isLocked: boolean;
   isSelected: boolean;
+  showSegmented: boolean; // Per-fragment toggle for showing segmented version
 }
 
 export interface CanvasState {
