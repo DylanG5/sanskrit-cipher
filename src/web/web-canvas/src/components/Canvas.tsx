@@ -9,6 +9,7 @@ interface CanvasProps {
   selectedFragmentIds: string[];
   onSelectionChange: (ids: string[]) => void;
   onEdgeMatch?: (fragmentId: string) => void;
+  onFragmentDoubleClick?: (fragmentId: string) => void;
   isGridVisible?: boolean;
   gridScale?: number; // pixels per cm
 }
@@ -18,6 +19,7 @@ interface FragmentImageProps {
   isSelected: boolean;
   onSelect: (e: any) => void;
   onChange: (newAttrs: Partial<CanvasFragment>) => void;
+  onDoubleClick?: () => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
   onTransformStart?: () => void;
@@ -29,6 +31,7 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
   isSelected,
   onSelect,
   onChange,
+  onDoubleClick,
   onDragStart,
   onDragEnd,
   onTransformStart,
@@ -67,6 +70,12 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
         draggable={!fragment.isLocked}
         onClick={(e) => onSelect(e.evt)}
         onTap={(e) => onSelect(e.evt)}
+        onDblClick={() => {
+          if (onDoubleClick) onDoubleClick();
+        }}
+        onDblTap={() => {
+          if (onDoubleClick) onDoubleClick();
+        }}
         onDragStart={() => {
           if (onDragStart) onDragStart();
         }}
@@ -115,6 +124,7 @@ const Canvas: React.FC<CanvasProps> = ({
   selectedFragmentIds,
   onSelectionChange,
   onEdgeMatch,
+  onFragmentDoubleClick,
   isGridVisible = false,
   gridScale = 25,
 }) => {
@@ -285,6 +295,11 @@ const Canvas: React.FC<CanvasProps> = ({
               isSelected={selectedFragmentIds.includes(fragment.id)}
               onSelect={(e) => handleSelect(fragment.id, e)}
               onChange={(newAttrs) => handleFragmentChange(fragment.id, newAttrs)}
+              onDoubleClick={() => {
+                if (onFragmentDoubleClick) {
+                  onFragmentDoubleClick(fragment.fragmentId);
+                }
+              }}
               onDragStart={() => setIsDragging(true)}
               onDragEnd={() => {
                 // Small delay to allow position to update before showing button
