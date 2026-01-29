@@ -90,11 +90,6 @@ class DatabaseManager:
             self.conn.commit()
             self.logger.info("Migration completed successfully")
 
-        except sqlite3.Error as e:
-            self.conn.rollback()
-            self.logger.error(f"Migration failed: {e}")
-            raise
-
     def get_fragments(
         self,
         limit: Optional[int] = None,
