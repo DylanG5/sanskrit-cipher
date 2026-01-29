@@ -319,6 +319,9 @@ debug_visualizations/
 *.h5
 *.pkl
 
+# Exception: Track models in src/models/ with Git LFS
+!src/models/**/*.pt
+
 # Test images in classification
 src/classification/*.jpg
 src/classification/*.png
