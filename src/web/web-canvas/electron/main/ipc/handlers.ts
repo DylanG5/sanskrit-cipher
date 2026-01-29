@@ -165,7 +165,17 @@ export function registerIpcHandlers(): void {
    * Update fragment metadata (notes, etc.)
    */
   ipcMain.handle('fragments:updateMetadata', async (_event, fragmentId: string, metadata: Record<string, unknown>) => {
-    const allowedFields = ['notes', 'edge_piece', 'has_top_edge', 'has_bottom_edge', 'line_count', 'script_type'];
+    const allowedFields = [
+      'notes',
+      'edge_piece',
+      'has_top_edge',
+      'has_bottom_edge',
+      'line_count',
+      'script_type',
+      'scale_unit',
+      'pixels_per_unit',
+      'scale_detection_status'
+    ];
     const updates: string[] = [];
     const params: unknown[] = [];
 

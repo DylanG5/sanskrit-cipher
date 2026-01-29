@@ -70,25 +70,57 @@ class DatabaseManager:
         cursor.execute("PRAGMA table_info(fragments)")
         columns = [row[1] for row in cursor.fetchall()]
 
-        if 'processing_status' in columns:
+        migration_needed = False
+
+        if 'processing_status' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for processing fields...")
+
+            try:
+                # Add processing columns
+                cursor.execute("ALTER TABLE fragments ADD COLUMN processing_status TEXT DEFAULT 'pending'")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN segmentation_model_version TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN classification_model_version TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN last_processed_at DATETIME")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN processing_error TEXT")
+
+                # Create index for processing_status
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_processing_status ON fragments(processing_status)")
+
+                self.conn.commit()
+                self.logger.info("Processing fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Processing fields migration failed: {e}")
+                raise
+
+        # Check if scale columns exist
+        cursor.execute("PRAGMA table_info(fragments)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'scale_unit' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for scale detection fields...")
+
+            try:
+                # Add scale detection columns
+                cursor.execute("ALTER TABLE fragments ADD COLUMN scale_unit TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN pixels_per_unit REAL")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN scale_detection_status TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN scale_model_version TEXT")
+
+                # Create index for scale_detection_status
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_scale_detection ON fragments(scale_detection_status)")
+
+                self.conn.commit()
+                self.logger.info("Scale detection fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Scale detection fields migration failed: {e}")
+                raise
+
+        if not migration_needed:
             self.logger.info("Migration already applied, skipping")
-            return
-
-        self.logger.info("Running database migration...")
-
-        try:
-            # Add new columns
-            cursor.execute("ALTER TABLE fragments ADD COLUMN processing_status TEXT DEFAULT 'pending'")
-            cursor.execute("ALTER TABLE fragments ADD COLUMN segmentation_model_version TEXT")
-            cursor.execute("ALTER TABLE fragments ADD COLUMN classification_model_version TEXT")
-            cursor.execute("ALTER TABLE fragments ADD COLUMN last_processed_at DATETIME")
-            cursor.execute("ALTER TABLE fragments ADD COLUMN processing_error TEXT")
-
-            # Create index for processing_status
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_processing_status ON fragments(processing_status)")
-
-            self.conn.commit()
-            self.logger.info("Migration completed successfully")
 
         except sqlite3.Error as e:
             self.conn.rollback()
@@ -156,7 +188,11 @@ class DatabaseManager:
                 segmentation_model_version=row_dict.get('segmentation_model_version'),
                 classification_model_version=row_dict.get('classification_model_version'),
                 last_processed_at=row_dict.get('last_processed_at'),
-                processing_error=row_dict.get('processing_error')
+                processing_error=row_dict.get('processing_error'),
+                scale_unit=row_dict.get('scale_unit'),
+                pixels_per_unit=row_dict.get('pixels_per_unit'),
+                scale_detection_status=row_dict.get('scale_detection_status'),
+                scale_model_version=row_dict.get('scale_model_version')
             ))
 
         return fragments
