@@ -101,7 +101,7 @@ class DatabaseManager:
 
 
         if 'has_circle' not in columns:
-          migration_needed = True
+            migration_needed = True
             self.logger.info("Running migration for circle detection fields...")
             try:
                 cursor.execute("ALTER TABLE fragments ADD COLUMN has_circle BOOLEAN")
