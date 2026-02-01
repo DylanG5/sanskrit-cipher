@@ -45,6 +45,7 @@ class FragmentRecord:
     pixels_per_unit: Optional[float] = None
     scale_detection_status: Optional[str] = None
     scale_model_version: Optional[str] = None
+    has_circle: Optional[bool] = None
 
 
 @dataclass

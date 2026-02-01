@@ -70,6 +70,7 @@ class DatabaseManager:
         cursor.execute("PRAGMA table_info(fragments)")
         columns = [row[1] for row in cursor.fetchall()]
 
+        
         migration_needed = False
 
         if 'processing_status' not in columns:
@@ -97,6 +98,20 @@ class DatabaseManager:
         # Check if scale columns exist
         cursor.execute("PRAGMA table_info(fragments)")
         columns = [row[1] for row in cursor.fetchall()]
+
+
+        if 'has_circle' not in columns:
+            migration_needed = True
+            self.logger.info("Running migration for circle detection fields...")
+            try:
+                cursor.execute("ALTER TABLE fragments ADD COLUMN has_circle BOOLEAN")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_has_circle ON fragments(has_circle)")
+                self.conn.commit()
+                self.logger.info("Circle detection migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Migration failed: {e}")
+                raise
 
         if 'scale_unit' not in columns:
             migration_needed = True
@@ -184,6 +199,7 @@ class DatabaseManager:
                 classification_model_version=row_dict.get('classification_model_version'),
                 last_processed_at=row_dict.get('last_processed_at'),
                 processing_error=row_dict.get('processing_error'),
+                has_circle=row_dict.get('has_circle'),
                 scale_unit=row_dict.get('scale_unit'),
                 pixels_per_unit=row_dict.get('pixels_per_unit'),
                 scale_detection_status=row_dict.get('scale_detection_status'),
