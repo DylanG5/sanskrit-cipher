@@ -44,6 +44,26 @@ processors:
       visualize_output_dir: "../scale_detection_feature/debug_visualizations"
       skip_processed: true  # Skip already-processed fragments
       ocr_enabled: true  # Use EasyOCR for unit detection
+<<<<<<< Updated upstream
+=======
+  
+  circledetection:
+    enabled: true
+    model_path: "../classification/circle_class/best.pt"
+    config:
+      confidence_threshold: 0.25
+      model_version: "1.0"
+
+  edgedetection:
+    enabled: true
+    config:
+      model_version: "1.0"
+      near_frac: 0.03
+      min_run_frac: 0.15
+      max_mean_line_err: 2.5
+
+
+>>>>>>> Stashed changes
 
 # Processing options
 processing:
