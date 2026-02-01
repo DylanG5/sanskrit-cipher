@@ -24,7 +24,7 @@ class CircleDetectionProcessor(BaseProcessor):
 
     def should_process(self, fragment: FragmentRecord) -> bool:
         # optional: only run if has_circle is None
-        return True
+        return fragment.has_circle is None
 
     def process(self, fragment: FragmentRecord, data_dir: str) -> ProcessingResult:
         img_path = os.path.join(data_dir, fragment.image_path)

@@ -71,8 +71,17 @@ class DatabaseManager:
         columns = [row[1] for row in cursor.fetchall()]
 
         if 'has_circle' not in columns:
-            cursor.execute("ALTER TABLE fragments ADD COLUMN has_circle BOOLEAN")
-            self.conn.commit()
+            self.logger.info("Running migration for circle detection fields...")
+            try:
+                cursor.execute("ALTER TABLE fragments ADD COLUMN has_circle BOOLEAN")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_has_circle ON fragments(has_circle)")
+                self.conn.commit()
+                self.logger.info("Circle detection migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Migration failed: {e}")
+                raise
+
 
 
         if 'processing_status' in columns:
