@@ -15,7 +15,13 @@ CREATE TABLE IF NOT EXISTS fragments (
     line_count INTEGER,
     script_type TEXT,
     segmentation_coords TEXT,              -- JSON: polygon coordinates
-    
+
+    -- Scale detection metadata (populated by ML models)
+    scale_unit TEXT,                       -- 'cm' or 'mm'
+    pixels_per_unit REAL,                  -- Pixels per physical unit
+    scale_detection_status TEXT,           -- 'success' or 'error: message'
+    scale_model_version TEXT,              -- Version of scale detection model used
+
     -- User-editable metadata
     notes TEXT,
     
@@ -28,6 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_fragment_id ON fragments(fragment_id);
 CREATE INDEX IF NOT EXISTS idx_line_count ON fragments(line_count);
 CREATE INDEX IF NOT EXISTS idx_script_type ON fragments(script_type);
 CREATE INDEX IF NOT EXISTS idx_edge_piece ON fragments(edge_piece);
+CREATE INDEX IF NOT EXISTS idx_scale_detection ON fragments(scale_detection_status);
 
 -- Projects table: stores saved canvas projects
 CREATE TABLE IF NOT EXISTS projects (

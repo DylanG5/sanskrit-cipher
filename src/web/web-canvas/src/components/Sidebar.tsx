@@ -17,6 +17,7 @@ interface SidebarProps {
   searchQuery?: string | null;
   onClearSearch?: () => void;
   onSidebarSearch?: (query: string) => void;
+  onFragmentUpdate?: () => void; // Callback to refresh fragments after metadata edit
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -33,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   searchQuery = null,
   onClearSearch,
   onSidebarSearch,
+  onFragmentUpdate,
 }) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -390,6 +392,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <FragmentMetadata
             fragment={selectedFragment}
             onClose={handleCloseMetadata}
+            onUpdate={onFragmentUpdate}
           />
         </>
       )}

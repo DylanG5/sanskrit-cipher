@@ -21,7 +21,7 @@ logging:
 processors:
   segmentation:
     enabled: true
-    model_path: "../segmentation/best.pt"
+    model_path: "../models/segmentation/best.pt"
     config:
       confidence_threshold: 0.25
       iou_threshold: 0.45
@@ -29,8 +29,8 @@ processors:
 
   classification:
     enabled: true
-    model_path: "../classification/output/best_model.pt"
-    meta_path: "../classification/output/meta.json"
+    model_path: "../models/classification/best_model.pt"
+    meta_path: "../models/classification/meta.json"
     config:
       batch_size: 16
       model_version: "1.0"

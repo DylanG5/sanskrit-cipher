@@ -28,7 +28,9 @@ export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragm
     metadata: {
       lineCount: record.line_count ?? undefined,
       script: record.script_type ?? undefined,
-      isEdgePiece: record.edge_piece === 1,
+      isEdgePiece: record.edge_piece === 1 ? true : record.edge_piece === 0 ? false : undefined,
+      hasTopEdge: record.has_top_edge === 1 ? true : undefined,
+      hasBottomEdge: record.has_bottom_edge === 1 ? true : undefined,
       // Map scale data if available
       scale: record.scale_unit && record.pixels_per_unit ? {
         unit: record.scale_unit as 'cm' | 'mm',
@@ -115,6 +117,22 @@ export async function updateFragmentNotes(
   const response = await api.fragments.updateMetadata(fragmentId, { notes });
 
   return response.success;
+}
+
+/**
+ * Update fragment metadata
+ */
+export async function updateFragmentMetadata(
+  fragmentId: string,
+  metadata: Record<string, unknown>
+): Promise<{ success: boolean; error?: string }> {
+  if (!isElectron()) {
+    return { success: false, error: 'Not in Electron environment' };
+  }
+
+  const api = getElectronAPI();
+  const response = await api.fragments.updateMetadata(fragmentId, metadata);
+  return response;
 }
 
 /**

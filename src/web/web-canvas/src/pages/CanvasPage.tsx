@@ -5,9 +5,10 @@ import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
 import FilterPanel from "../components/FilterPanel";
 import NotesPanel from "../components/NotesPanel";
+import FragmentMetadata from "../components/FragmentMetadata";
 import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
-import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus } from "../services/fragment-service";
+import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus, getFragmentById } from "../services/fragment-service";
 import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData } from "../services/electron-api";
 import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
 
@@ -28,6 +29,7 @@ function CanvasPage() {
 
   const [canvasFragments, setCanvasFragments] = useState<CanvasFragment[]>([]);
   const [selectedFragmentIds, setSelectedFragmentIds] = useState<string[]>([]);
+  const [selectedMetadataFragment, setSelectedMetadataFragment] = useState<ManuscriptFragment | null>(null);
   const [filters, setFilters] = useState<FragmentFilters>(DEFAULT_FILTERS);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -38,7 +40,6 @@ function CanvasPage() {
   const [notes, setNotes] = useState("");
   const [isGridVisible, setIsGridVisible] = useState(false);
   const [gridScale, setGridScale] = useState(25); // pixels per cm
-  const [showSegmented, setShowSegmented] = useState(false);
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -499,8 +500,11 @@ function CanvasPage() {
   // Auto-place fragment in center of canvas (for search results)
   const autoPlaceFragment = useCallback(async (fragment: ManuscriptFragment) => {
     const img = new Image();
-    // Use segmented image if toggle is on and available
-    const imagePath = (showSegmented && fragment.segmentedImagePath) ? fragment.segmentedImagePath : fragment.imagePath;
+    // Default to segmented if available, otherwise use original
+    const showSegmented = true; // Default preference
+    const imagePath = (showSegmented && fragment.segmentedImagePath)
+      ? fragment.segmentedImagePath
+      : fragment.imagePath;
     img.src = imagePath;
 
     img.onload = () => {
@@ -538,6 +542,7 @@ function CanvasPage() {
         scaleY: 1,
         isLocked: false,
         isSelected: true, // Select the auto-placed fragment
+        showSegmented: true, // Default to showing segmented version
       };
 
       setCanvasFragments([newCanvasFragment]);
@@ -549,7 +554,7 @@ function CanvasPage() {
       console.error('Failed to load fragment image:', fragment.id);
       setHasAutoPlaced(true); // Mark as attempted even on error
     };
-  }, [showSegmented]);
+  }, []);
 
   // Auto-place first matching fragment when search results load
   useEffect(() => {
@@ -601,13 +606,12 @@ function CanvasPage() {
     }
   }, [isSearchMode, fragments, hasAutoPlaced, initialSearchQuery, selectedFragmentId, autoPlaceFragment]);
 
-  // Get image path based on segmented toggle
-  const getImagePath = useCallback((fragment: ManuscriptFragment) => {
-    if (showSegmented && fragment.segmentedImagePath) {
-      return fragment.segmentedImagePath;
-    }
-    return fragment.imagePath;
-  }, [showSegmented]);
+  // Get image path - default to segmented if available, otherwise original
+  const getImagePath = useCallback((fragment: ManuscriptFragment, preferSegmented: boolean = true) => {
+    return (preferSegmented && fragment.segmentedImagePath)
+      ? fragment.segmentedImagePath
+      : fragment.imagePath;
+  }, []);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -621,7 +625,8 @@ function CanvasPage() {
 
     // Load the image to get its natural dimensions
     const img = new Image();
-    const imagePath = getImagePath(fragment);
+    const showSegmented = true; // Default to segmented version
+    const imagePath = getImagePath(fragment, showSegmented);
     img.src = imagePath;
     img.onload = () => {
       const originalWidth = img.naturalWidth;
@@ -648,6 +653,7 @@ function CanvasPage() {
         scaleY: 1,
         isLocked: false,
         isSelected: false,
+        showSegmented: true, // Default to showing segmented version
       };
 
       setCanvasFragments([...canvasFragments, newCanvasFragment]);
@@ -688,6 +694,64 @@ function CanvasPage() {
       selectedFragmentIds.includes(f.id) ? { ...f, isLocked: false } : f
     );
     setCanvasFragments(updatedFragments);
+  };
+
+  // Toggle segmentation for selected fragment
+  const handleToggleSelectedFragmentSegmentation = async () => {
+    if (selectedFragmentIds.length !== 1) return;
+
+    const selectedId = selectedFragmentIds[0];
+    const canvasFragment = canvasFragments.find(f => f.id === selectedId);
+    if (!canvasFragment) return;
+
+    // Find the manuscript fragment to get segmented/original paths
+    const manuscriptFragment = fragments.find(f => f.id === canvasFragment.fragmentId);
+    if (!manuscriptFragment) return;
+
+    const newShowSegmented = !canvasFragment.showSegmented;
+    const newImagePath = (newShowSegmented && manuscriptFragment.segmentedImagePath)
+      ? manuscriptFragment.segmentedImagePath
+      : manuscriptFragment.imagePath;
+
+    // Load the new image to get its actual dimensions
+    const img = new Image();
+    img.src = newImagePath;
+
+    img.onload = () => {
+      const newImageWidth = img.naturalWidth;
+      const newImageHeight = img.naturalHeight;
+
+      // Calculate what the new display size should be using the same scaling logic
+      const { width, height } = calculateDisplaySize(
+        manuscriptFragment,
+        newImageWidth,
+        newImageHeight
+      );
+
+      const updatedFragments = canvasFragments.map((f) =>
+        f.id === selectedId
+          ? {
+              ...f,
+              showSegmented: newShowSegmented,
+              imagePath: newImagePath,
+              width,
+              height,
+            }
+          : f
+      );
+      setCanvasFragments(updatedFragments);
+      setHasUnsavedChanges(true);
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load new image:', newImagePath);
+      // Fall back to just changing the path without resizing
+      const updatedFragments = canvasFragments.map((f) =>
+        f.id === selectedId ? { ...f, showSegmented: newShowSegmented, imagePath: newImagePath } : f
+      );
+      setCanvasFragments(updatedFragments);
+      setHasUnsavedChanges(true);
+    };
   };
 
   // Delete selected fragments
@@ -745,10 +809,6 @@ function CanvasPage() {
     setIsGridVisible(!isGridVisible);
   };
 
-  // Toggle segmented image view
-  const handleToggleSegmented = () => {
-    setShowSegmented(!showSegmented);
-  };
 
   // Handle edge match request (dummy function for now)
   const handleEdgeMatch = (fragmentId: string) => {
@@ -756,6 +816,36 @@ function CanvasPage() {
     // For now, this is just a placeholder
     console.log('Edge match requested for fragment:', fragmentId);
   };
+
+  // Handle double-click on canvas fragment to show metadata
+  const handleCanvasFragmentDoubleClick = async (fragmentId: string) => {
+    // First try to find in already loaded fragments
+    let manuscriptFragment = fragments.find(f => f.id === fragmentId);
+
+    // If not found in loaded fragments, fetch from database
+    if (!manuscriptFragment) {
+      manuscriptFragment = await getFragmentById(fragmentId);
+    }
+
+    if (manuscriptFragment) {
+      setSelectedMetadataFragment(manuscriptFragment);
+    }
+  };
+
+  // Close metadata panel
+  const handleCloseMetadata = () => {
+    setSelectedMetadataFragment(null);
+  };
+
+  // Get selected fragment info for segmentation toggle
+  const selectedFragment = selectedFragmentIds.length === 1
+    ? canvasFragments.find(f => f.id === selectedFragmentIds[0])
+    : undefined;
+
+  // Find the corresponding ManuscriptFragment to check if it has segmentation data
+  const selectedManuscriptFragment = selectedFragment
+    ? fragments.find(f => f.id === selectedFragment.fragmentId)
+    : undefined;
 
   return (
     <div className="flex flex-col h-screen">
@@ -778,8 +868,9 @@ function CanvasPage() {
           filters.scripts.length > 0 ||
           filters.isEdgePiece !== null
         }
-        showSegmented={showSegmented}
-        onToggleSegmented={handleToggleSegmented}
+        selectedFragmentHasSegmentation={selectedManuscriptFragment?.hasSegmentation}
+        selectedFragmentShowSegmented={selectedFragment?.showSegmented}
+        onToggleSelectedFragmentSegmentation={handleToggleSelectedFragmentSegmentation}
         projectName={currentProjectName}
         saveStatus={saveStatus}
       />
@@ -799,6 +890,7 @@ function CanvasPage() {
           searchQuery={initialSearchQuery}
           onClearSearch={handleClearSearch}
           onSidebarSearch={handleSidebarSearch}
+          onFragmentUpdate={loadFragments}
         />
 
         <div
@@ -812,6 +904,7 @@ function CanvasPage() {
             selectedFragmentIds={selectedFragmentIds}
             onSelectionChange={setSelectedFragmentIds}
             onEdgeMatch={handleEdgeMatch}
+            onFragmentDoubleClick={handleCanvasFragmentDoubleClick}
             isGridVisible={isGridVisible}
             gridScale={gridScale}
           />
@@ -838,6 +931,15 @@ function CanvasPage() {
           onNotesChange={setNotes}
         />
       </div>
+
+      {/* Fragment Metadata Modal */}
+      {selectedMetadataFragment && (
+        <FragmentMetadata
+          fragment={selectedMetadataFragment}
+          onClose={handleCloseMetadata}
+          onUpdate={loadFragments}
+        />
+      )}
     </div>
   );
 }

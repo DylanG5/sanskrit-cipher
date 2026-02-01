@@ -15,9 +15,10 @@ interface ToolbarProps {
   isFilterPanelOpen: boolean;
   onToggleFilters: () => void;
   hasActiveFilters: boolean;
-  // Segmentation toggle
-  showSegmented: boolean;
-  onToggleSegmented: () => void;
+  // Per-fragment segmentation toggle (only shows for single selection)
+  selectedFragmentHasSegmentation?: boolean;
+  selectedFragmentShowSegmented?: boolean;
+  onToggleSelectedFragmentSegmentation?: () => void;
   // Session management props
   projectName?: string;
   saveStatus?: 'saved' | 'saving' | 'unsaved';
@@ -37,8 +38,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isFilterPanelOpen,
   onToggleFilters,
   hasActiveFilters,
-  showSegmented,
-  onToggleSegmented,
+  selectedFragmentHasSegmentation,
+  selectedFragmentShowSegmented,
+  onToggleSelectedFragmentSegmentation,
   projectName,
   saveStatus = 'saved',
 }) => {
@@ -220,6 +222,49 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <span className="text-sm font-bold">Unlock</span>
             </button>
 
+            {/* Segmentation toggle - only show for single selection with segmentation data */}
+            {selectedCount === 1 && selectedFragmentHasSegmentation && onToggleSelectedFragmentSegmentation && (
+              <button
+                onClick={onToggleSelectedFragmentSegmentation}
+                className="px-4 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+                style={{
+                  background: selectedFragmentShowSegmented
+                    ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+                    : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedFragmentShowSegmented) {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)';
+                  } else {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = selectedFragmentShowSegmented
+                    ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+                    : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+                }}
+                title={selectedFragmentShowSegmented ? "Show original image" : "Show segmented image (transparent background)"}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="text-sm font-bold">
+                  {selectedFragmentShowSegmented ? 'Segmented' : 'Original'}
+                </span>
+              </button>
+            )}
+
             <button
               onClick={onDeleteSelected}
               className="px-4 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
@@ -322,43 +367,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
             />
           </svg>
           <span className="text-sm font-semibold">Grid</span>
-        </button>
-
-        <button
-          onClick={onToggleSegmented}
-          className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg font-body"
-          style={{
-            background: showSegmented ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 'rgba(68, 64, 60, 0.8)',
-            color: showSegmented ? '#ffffff' : '#d6d3d1'
-          }}
-          onMouseEnter={(e) => {
-            if (showSegmented) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)';
-            } else {
-              e.currentTarget.style.background = 'rgba(87, 83, 78, 0.9)';
-              e.currentTarget.style.color = '#fafaf9';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = showSegmented ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 'rgba(68, 64, 60, 0.8)';
-            e.currentTarget.style.color = showSegmented ? '#ffffff' : '#d6d3d1';
-          }}
-          title={showSegmented ? "Show original images" : "Show segmented images (transparent background)"}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <span className="text-sm font-semibold">Segmented</span>
         </button>
 
         <button
