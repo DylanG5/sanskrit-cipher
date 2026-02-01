@@ -1,10 +1,3 @@
-"""
-YOLOv8 Training Script for Sanskrit Line Detection
-
-This script trains a YOLOv8 model to detect lines in Sanskrit manuscript fragments.
-The model learns to identify individual text lines and provides bounding boxes for each line.
-"""
-
 import os
 from pathlib import Path
 from ultralytics import YOLO
@@ -14,15 +7,7 @@ from sklearn.model_selection import train_test_split
 import shutil
 
 def prepare_data_split(images_dir, labels_dir, val_split=0.2, test_split=0.1):
-    """
-    Split dataset into train, validation, and test sets.
-    
-    Args:
-        images_dir: Path to images directory
-        labels_dir: Path to labels directory
-        val_split: Validation set ratio (default: 0.2 or 20%)
-        test_split: Test set ratio (default: 0.1 or 10%)
-    """
+
     # Get all image files
     image_files = sorted([f for f in os.listdir(images_dir) if f.endswith(('.jpg', '.jpeg', '.png'))])
     
@@ -126,12 +111,12 @@ def train_yolo(
         imgsz=img_size,
         batch=batch_size,
         device=device,
-        project='runs/train',
+        project=str(Path(__file__).parent / 'runs' / 'train'),
         name='sanskrit_line_detection',
-        patience=30,  # Early stopping patience
+        patience=30, 
         save=True,
         save_period=10,  # Save checkpoint every 10 epochs
-        verbose=False,  # Reduce verbosity
+        verbose=False, 
         
         # Data augmentation - reduced for better learning
         hsv_h=0.01,  # HSV-Hue augmentation
@@ -204,10 +189,10 @@ def main():
     
     # Train model
     model, results = train_yolo(
-        model_size='s',    # Using small model for better accuracy
-        epochs=150,        # Train for 150 epochs
+        model_size='s',    
+        epochs=150,        
         img_size=640,      # Standard YOLO image size
-        batch_size=8,      # Reduced batch size for stability
+        batch_size=8,     
     )
     
     print("\n" + "=" * 60)

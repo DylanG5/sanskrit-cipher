@@ -15,15 +15,8 @@ from tqdm import tqdm
 import argparse
 
 class LineDetector:
-    """YOLO-based line detector for Sanskrit manuscripts"""
     
     def __init__(self, model_path='runs/train/sanskrit_line_detection/weights/best.pt'):
-        """
-        Initialize the line detector.
-        
-        Args:
-            model_path: Path to trained YOLO model weights
-        """
         self.model = YOLO(model_path)
         print(f"Model loaded from: {model_path}")
     

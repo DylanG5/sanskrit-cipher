@@ -1,7 +1,3 @@
-"""
-Quick dataset inspection script - visualize a few samples with labels
-"""
-
 import cv2
 import numpy as np
 from pathlib import Path
@@ -9,15 +5,7 @@ import random
 import os
 
 def visualize_sample_labels(images_dir='images', labels_dir='labels', num_samples=5, output_dir='sample_visualizations'):
-    """
-    Visualize random samples from the dataset with their label annotations.
-    
-    Args:
-        images_dir: Directory containing images
-        labels_dir: Directory containing YOLO labels
-        num_samples: Number of random samples to visualize
-        output_dir: Directory to save visualizations
-    """
+   
     images_dir = Path(images_dir)
     labels_dir = Path(labels_dir)
     output_dir = Path(output_dir)
