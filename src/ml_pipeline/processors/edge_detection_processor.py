@@ -16,9 +16,9 @@ class EdgeExtractor:
         self,
         contour: np.ndarray,
         mask: np.ndarray,
-        near_frac: float = 0.03,          # how close points must be to bbox side (fraction of bbox size)
-        min_run_frac: float = 0.15,       # minimum run size vs side length to count
-        max_mean_line_err: float = 2.5,   # pixels: lower => stricter straight border
+        near_frac: float = 0.05,          # how close points must be to bbox side (fraction of bbox size)
+        min_run_frac: float = 0.10,       # minimum run size vs side length to count
+        max_mean_line_err: float = 4.0,   # pixels: lower => stricter straight border
     ) -> Dict:
         """
         Robustly classify which sides are true borders (straight) vs tears (irregular).
@@ -208,7 +208,8 @@ class EdgeDetectionProcessor(BaseProcessor):
 
     def should_process(self, fragment: FragmentRecord) -> bool:
         # Only process if edges not set
-        return fragment.has_top_edge is None and fragment.has_bottom_edge is None
+        #return fragment.has_top_edge is None and fragment.has_bottom_edge is None
+        return True
 
     def process(self, fragment: FragmentRecord, data_dir: str) -> ProcessingResult:
         img_path = os.path.join(data_dir, fragment.image_path)
