@@ -46,7 +46,10 @@ class FragmentRecord:
     scale_detection_status: Optional[str] = None
     scale_model_version: Optional[str] = None
     has_circle: Optional[bool] = None
-
+    # Line detection fields
+    line_detection_data: Optional[str] = None  # JSON string
+    line_detection_model_version: Optional[str] = None
+    line_detection_confidence: Optional[float] = None
 
 @dataclass
 class ProcessingResult:

@@ -134,6 +134,30 @@ class DatabaseManager:
                 self.logger.error(f"Scale detection fields migration failed: {e}")
                 raise
 
+        # Check if line detection columns exist
+        cursor.execute("PRAGMA table_info(fragments)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'line_detection_data' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for line detection fields...")
+
+            try:
+                # Add line detection columns
+                cursor.execute("ALTER TABLE fragments ADD COLUMN line_detection_data TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN line_detection_model_version TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN line_detection_confidence REAL")
+
+                # Create index for line_detection_model_version
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_line_detection_version ON fragments(line_detection_model_version)")
+
+                self.conn.commit()
+                self.logger.info("Line detection fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Line detection fields migration failed: {e}")
+                raise
+
         if not migration_needed:
             self.logger.info("Migration already applied, skipping")
 
@@ -203,7 +227,10 @@ class DatabaseManager:
                 scale_unit=row_dict.get('scale_unit'),
                 pixels_per_unit=row_dict.get('pixels_per_unit'),
                 scale_detection_status=row_dict.get('scale_detection_status'),
-                scale_model_version=row_dict.get('scale_model_version')
+                scale_model_version=row_dict.get('scale_model_version'),
+                line_detection_data=row_dict.get('line_detection_data'),
+                line_detection_model_version=row_dict.get('line_detection_model_version'),
+                line_detection_confidence=row_dict.get('line_detection_confidence')
             ))
 
         return fragments

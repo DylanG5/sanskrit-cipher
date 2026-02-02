@@ -52,6 +52,15 @@ processors:
       confidence_threshold: 0.25
       model_version: "1.0"
 
+  linedetection:
+    enabled: true
+    model_path: "../models/line-detection/best.pt"
+    config:
+      confidence_threshold: 0.25
+      iou_threshold: 0.45
+      model_version: "1.0"
+      skip_processed: true  # Skip already-processed fragments
+
 
 # Processing options
 processing:
