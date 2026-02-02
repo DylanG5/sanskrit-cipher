@@ -47,7 +47,7 @@ processors:
   
   circledetection:
     enabled: true
-    model_path: "../classification/circle_class/best.pt"
+    model_path: "../models/circle-classification/best.pt"
     config:
       confidence_threshold: 0.25
       model_version: "1.0"
