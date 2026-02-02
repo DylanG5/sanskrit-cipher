@@ -49,6 +49,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setLocalFilters({ ...localFilters, isEdgePiece: value });
   };
 
+  const handleCircleChange = (value: boolean | null) => {
+    setLocalFilters({ ...localFilters, hasCircle: value });
+  };
+
   const handleApply = () => {
     onFiltersChange(localFilters);
   };
@@ -62,7 +66,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     localFilters.lineCountMin !== undefined ||
     localFilters.lineCountMax !== undefined ||
     localFilters.scripts.length > 0 ||
-    localFilters.isEdgePiece !== null;
+    localFilters.isEdgePiece !== null ||
+    localFilters.hasCircle !== null;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -194,6 +199,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                       )}
                       {filters.isEdgePiece === false && (
                         <div>• Non-edge pieces only</div>
+                      )}
+                      {filters.hasCircle === true && (
+                        <div>• Has circle only</div>
+                      )}
+                      {filters.hasCircle === false && (
+                        <div>• No circle only</div>
                       )}
                     </div>
                   </div>
@@ -339,6 +350,55 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     name="edgePiece"
                     checked={localFilters.isEdgePiece === false}
                     onChange={() => handleEdgePieceChange(false)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">No</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Circle Detection Filter */}
+            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+              localFilters.hasCircle !== null
+                ? 'border-cyan-400 ring-2 ring-cyan-100'
+                : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Has Circle</h3>
+                {localFilters.hasCircle !== null && (
+                  <span className="ml-auto text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="hasCircle"
+                    checked={localFilters.hasCircle === null}
+                    onChange={() => handleCircleChange(null)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="hasCircle"
+                    checked={localFilters.hasCircle === true}
+                    onChange={() => handleCircleChange(true)}
+                    className="w-4 h-4 text-cyan-600 border-slate-300 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Yes</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="hasCircle"
+                    checked={localFilters.hasCircle === false}
+                    onChange={() => handleCircleChange(false)}
                     className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
                   />
                   <span className="text-sm text-slate-700 font-medium">No</span>

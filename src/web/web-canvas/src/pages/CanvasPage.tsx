@@ -76,6 +76,7 @@ function CanvasPage() {
         lineCountMax?: number;
         scripts?: string[];
         isEdgePiece?: boolean | null;
+        hasCircle?: boolean | null;
         search?: string;
         limit?: number;
         offset?: number;
@@ -95,6 +96,9 @@ function CanvasPage() {
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
+      }
+      if (filters.hasCircle !== null) {
+        apiFilters.hasCircle = filters.hasCircle;
       }
       if (filters.search) {
         apiFilters.search = filters.search;
@@ -135,6 +139,7 @@ function CanvasPage() {
         lineCountMax?: number;
         scripts?: string[];
         isEdgePiece?: boolean | null;
+        hasCircle?: boolean | null;
         search?: string;
         limit?: number;
         offset?: number;
@@ -154,6 +159,9 @@ function CanvasPage() {
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
+      }
+      if (filters.hasCircle !== null) {
+        apiFilters.hasCircle = filters.hasCircle;
       }
 
       const moreFragments = await getAllFragments(apiFilters);

@@ -255,7 +255,9 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({ fragment: initialFr
               disabled={isSaving}
               className={`px-3 py-1 rounded-md text-sm font-semibold shadow-sm flex items-center gap-1.5 transition-colors disabled:opacity-50 ${
                 hasValue && isActive
-                  ? 'bg-white text-emerald-700 hover:bg-emerald-50'
+                  ? colorClass === 'cyan'
+                    ? 'bg-white text-cyan-700 hover:bg-cyan-50'
+                    : 'bg-white text-emerald-700 hover:bg-emerald-50'
                   : hasValue
                   ? 'bg-white text-slate-600 hover:bg-slate-50'
                   : 'bg-white text-slate-400 hover:bg-slate-50'
@@ -393,6 +395,18 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({ fragment: initialFr
             'has_bottom_edge',
             metadata?.hasBottomEdge,
             'emerald'
+          )}
+
+          {/* Circle Detection */}
+          {renderToggleField(
+            'Has Circle',
+            <svg className={`w-4 h-4 ${metadata?.hasCircle ? 'text-cyan-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" strokeWidth={2} />
+            </svg>,
+            'hasCircle',
+            'has_circle',
+            metadata?.hasCircle,
+            'cyan'
           )}
 
           {/* Scale Information */}
