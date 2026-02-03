@@ -13,6 +13,7 @@ export interface ManuscriptFragment {
     isEdgePiece?: boolean;
     hasTopEdge?: boolean;
     hasBottomEdge?: boolean;
+    hasCircle?: boolean;  // Circle classification from ML model
     // Scale information from ruler detection
     scale?: {
       unit: 'cm' | 'mm';  // Physical unit

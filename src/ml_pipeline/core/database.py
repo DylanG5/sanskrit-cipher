@@ -70,6 +70,7 @@ class DatabaseManager:
         cursor.execute("PRAGMA table_info(fragments)")
         columns = [row[1] for row in cursor.fetchall()]
 
+        
         migration_needed = False
 
         if 'processing_status' not in columns:
@@ -97,6 +98,20 @@ class DatabaseManager:
         # Check if scale columns exist
         cursor.execute("PRAGMA table_info(fragments)")
         columns = [row[1] for row in cursor.fetchall()]
+
+
+        if 'has_circle' not in columns:
+            migration_needed = True
+            self.logger.info("Running migration for circle detection fields...")
+            try:
+                cursor.execute("ALTER TABLE fragments ADD COLUMN has_circle BOOLEAN")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_has_circle ON fragments(has_circle)")
+                self.conn.commit()
+                self.logger.info("Circle detection migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Migration failed: {e}")
+                raise
 
         if 'scale_unit' not in columns:
             migration_needed = True
@@ -142,6 +157,51 @@ class DatabaseManager:
             except sqlite3.Error as e:
                 self.conn.rollback()
                 self.logger.error(f"Edge detection fields migration failed: {e}")
+        # Check if line detection columns exist
+        cursor.execute("PRAGMA table_info(fragments)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'line_detection_data' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for line detection fields...")
+
+            try:
+                # Add line detection columns
+                cursor.execute("ALTER TABLE fragments ADD COLUMN line_detection_data TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN line_detection_model_version TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN line_detection_confidence REAL")
+
+                # Create index for line_detection_model_version
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_line_detection_version ON fragments(line_detection_model_version)")
+
+                self.conn.commit()
+                self.logger.info("Line detection fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Line detection fields migration failed: {e}")
+                raise
+
+        # Check if script type classification columns exist
+        cursor.execute("PRAGMA table_info(fragments)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'script_type_classification_data' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for script type classification fields...")
+
+            try:
+                # Add script type classification columns
+                cursor.execute("ALTER TABLE fragments ADD COLUMN script_type_classification_data TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN script_type_classification_model_version TEXT")
+
+                # Create index for script_type_classification_model_version
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_script_type_classification_version ON fragments(script_type_classification_model_version)")
+
+                self.conn.commit()
+                self.logger.info("Script type classification fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Script type classification fields migration failed: {e}")
                 raise
 
         if not migration_needed:
@@ -204,6 +264,9 @@ class DatabaseManager:
                 has_right_edge=row_dict.get('has_right_edge'),
                 line_count=row_dict.get('line_count'),
                 script_type=row_dict.get('script_type'),
+                script_type_confidence=row_dict.get('script_type_confidence'),
+                script_type_classification_data=row_dict.get('script_type_classification_data'),
+                script_type_classification_model_version=row_dict.get('script_type_classification_model_version'),
                 segmentation_coords=row_dict.get('segmentation_coords'),
                 notes=row_dict.get('notes'),
                 processing_status=row_dict.get('processing_status'),
@@ -211,10 +274,14 @@ class DatabaseManager:
                 classification_model_version=row_dict.get('classification_model_version'),
                 last_processed_at=row_dict.get('last_processed_at'),
                 processing_error=row_dict.get('processing_error'),
+                has_circle=row_dict.get('has_circle'),
                 scale_unit=row_dict.get('scale_unit'),
                 pixels_per_unit=row_dict.get('pixels_per_unit'),
                 scale_detection_status=row_dict.get('scale_detection_status'),
-                scale_model_version=row_dict.get('scale_model_version')
+                scale_model_version=row_dict.get('scale_model_version'),
+                line_detection_data=row_dict.get('line_detection_data'),
+                line_detection_model_version=row_dict.get('line_detection_model_version'),
+                line_detection_confidence=row_dict.get('line_detection_confidence')
             ))
 
         return fragments

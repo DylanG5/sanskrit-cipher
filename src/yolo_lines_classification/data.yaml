@@ -1,0 +1,6 @@
+names:
+  0: line
+nc: 1
+path: D:\4th year\sanskrit-cipher\src\yolo_lines_classification
+train: images
+val: images

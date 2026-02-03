@@ -35,6 +35,9 @@ class FragmentRecord:
     has_right_edge: Optional[bool] = None
     line_count: Optional[int] = None
     script_type: Optional[str] = None
+    script_type_confidence: Optional[float] = None
+    script_type_classification_data: Optional[str] = None  # JSON string (class probabilities)
+    script_type_classification_model_version: Optional[str] = None
     segmentation_coords: Optional[str] = None  # JSON string
     notes: Optional[str] = None
     processing_status: Optional[str] = None
@@ -47,7 +50,11 @@ class FragmentRecord:
     pixels_per_unit: Optional[float] = None
     scale_detection_status: Optional[str] = None
     scale_model_version: Optional[str] = None
-
+    has_circle: Optional[bool] = None
+    # Line detection fields
+    line_detection_data: Optional[str] = None  # JSON string
+    line_detection_model_version: Optional[str] = None
+    line_detection_confidence: Optional[float] = None
 
 @dataclass
 class ProcessingResult:

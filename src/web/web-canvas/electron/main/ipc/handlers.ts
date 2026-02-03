@@ -15,6 +15,7 @@ interface FragmentFilters {
   lineCountMax?: number;
   scripts?: string[];
   isEdgePiece?: boolean | null;
+  hasCircle?: boolean | null;
   search?: string;
   limit?: number;
   offset?: number;
@@ -73,6 +74,11 @@ export function registerIpcHandlers(): void {
     if (filters?.isEdgePiece !== undefined && filters.isEdgePiece !== null) {
       query += ' AND edge_piece = ?';
       params.push(filters.isEdgePiece ? 1 : 0);
+    }
+
+    if (filters?.hasCircle !== undefined && filters.hasCircle !== null) {
+      query += ' AND has_circle = ?';
+      params.push(filters.hasCircle ? 1 : 0);
     }
 
     if (filters?.search) {
@@ -134,6 +140,11 @@ export function registerIpcHandlers(): void {
       params.push(filters.isEdgePiece ? 1 : 0);
     }
 
+    if (filters?.hasCircle !== undefined && filters.hasCircle !== null) {
+      query += ' AND has_circle = ?';
+      params.push(filters.hasCircle ? 1 : 0);
+    }
+
     if (filters?.search) {
       query += ' AND fragment_id LIKE ?';
       params.push(`%${filters.search}%`);
@@ -170,6 +181,7 @@ export function registerIpcHandlers(): void {
       'edge_piece',
       'has_top_edge',
       'has_bottom_edge',
+      'has_circle',
       'line_count',
       'script_type',
       'scale_unit',

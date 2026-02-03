@@ -10,6 +10,7 @@ export interface FragmentFilters {
   lineCountMax?: number;
   scripts?: string[];
   isEdgePiece?: boolean | null;
+  hasCircle?: boolean | null;
   search?: string;
   limit?: number;
   offset?: number;
@@ -33,6 +34,8 @@ export interface FragmentRecord {
   pixels_per_unit: number | null;
   scale_detection_status: string | null;
   scale_model_version: string | null;
+  // Circle detection field
+  has_circle: number | null;
 }
 
 export interface CanvasFragmentData {

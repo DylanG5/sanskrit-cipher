@@ -35,6 +35,16 @@ processors:
       batch_size: 16
       model_version: "1.0"
 
+  script_type_classification:
+    enabled: true
+    model_path: "../classification/output/best_model.pt"
+    meta_path: "../classification/output/meta.json"
+    config:
+      batch_size: 16
+      model_version: "1.0"
+      confidence_threshold: 0.0  # Set to 0 to accept all predictions
+      skip_processed: true  # Skip already-processed fragments
+
   scaledetection:
     enabled: true
     # No model_path needed (uses EasyOCR + computer vision)
@@ -47,7 +57,7 @@ processors:
   
   circledetection:
     enabled: true
-    model_path: "../classification/circle_class/best.pt"
+    model_path: "../models/circle-classification/best.pt"
     config:
       confidence_threshold: 0.25
       model_version: "1.0"
@@ -67,6 +77,15 @@ processors:
       hull_near_frac: 0.06
       hull_angle_h: 12.0
       hull_angle_v: 78.0
+  linedetection:
+    enabled: true
+    model_path: "../models/line-detection/best.pt"
+    config:
+      confidence_threshold: 0.25
+      iou_threshold: 0.45
+      model_version: "1.0"
+      skip_processed: true  # Skip already-processed fragments
+
 
 # Processing options
 processing:

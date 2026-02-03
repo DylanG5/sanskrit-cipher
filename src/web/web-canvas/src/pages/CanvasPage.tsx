@@ -11,6 +11,7 @@ import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
 import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus, getFragmentById } from "../services/fragment-service";
 import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData } from "../services/electron-api";
 import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
+import { SCRIPT_TYPES } from "../types/constants";
 
 // Default page size for pagination
 const PAGE_SIZE = 100;
@@ -76,6 +77,7 @@ function CanvasPage() {
         lineCountMax?: number;
         scripts?: string[];
         isEdgePiece?: boolean | null;
+        hasCircle?: boolean | null;
         search?: string;
         limit?: number;
         offset?: number;
@@ -95,6 +97,9 @@ function CanvasPage() {
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
+      }
+      if (filters.hasCircle !== null) {
+        apiFilters.hasCircle = filters.hasCircle;
       }
       if (filters.search) {
         apiFilters.search = filters.search;
@@ -135,6 +140,7 @@ function CanvasPage() {
         lineCountMax?: number;
         scripts?: string[];
         isEdgePiece?: boolean | null;
+        hasCircle?: boolean | null;
         search?: string;
         limit?: number;
         offset?: number;
@@ -154,6 +160,9 @@ function CanvasPage() {
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
+      }
+      if (filters.hasCircle !== null) {
+        apiFilters.hasCircle = filters.hasCircle;
       }
 
       const moreFragments = await getAllFragments(apiFilters);
@@ -412,8 +421,8 @@ function CanvasPage() {
     loadFragments();
   }, [loadFragments]);
 
-  // Available scripts - empty for now since ML hasn't populated them
-  const availableScripts = useMemo(() => [] as string[], []);
+  // Available scripts - use the defined script types
+  const availableScripts = useMemo(() => [...SCRIPT_TYPES], []);
 
   // Handle drag start from sidebar
   const handleDragStart = (
