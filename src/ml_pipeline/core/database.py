@@ -123,14 +123,19 @@ class DatabaseManager:
         cursor.execute("PRAGMA table_info(fragments)")
         columns = [row[1] for row in cursor.fetchall()]
 
+        edge_columns_to_add = []
         if 'has_left_edge' not in columns:
+            edge_columns_to_add.append(('has_left_edge', 'BOOLEAN DEFAULT NULL'))
+        if 'has_right_edge' not in columns:
+            edge_columns_to_add.append(('has_right_edge', 'BOOLEAN DEFAULT NULL'))
+
+        if edge_columns_to_add:
             migration_needed = True
             self.logger.info("Running database migration for edge detection fields...")
 
             try:
-                # Add left/right edge columns
-                cursor.execute("ALTER TABLE fragments ADD COLUMN has_left_edge BOOLEAN DEFAULT NULL")
-                cursor.execute("ALTER TABLE fragments ADD COLUMN has_right_edge BOOLEAN DEFAULT NULL")
+                for col_name, col_type in edge_columns_to_add:
+                    cursor.execute(f"ALTER TABLE fragments ADD COLUMN {col_name} {col_type}")
 
                 self.conn.commit()
                 self.logger.info("Edge detection fields migration completed successfully")
