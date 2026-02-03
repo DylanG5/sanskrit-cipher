@@ -2,6 +2,8 @@
  * Validation utilities for fragment metadata editing
  */
 
+import { SCRIPT_TYPES } from '../types/constants';
+
 export interface ValidationResult {
   valid: boolean;
   error?: string;
@@ -50,8 +52,9 @@ export function validateScriptType(value: string): ValidationResult {
   if (trimmed.length === 0) {
     return { valid: true }; // Allow clearing the field
   }
-  if (trimmed.length > 100) {
-    return { valid: false, error: 'Script type is too long' };
+  // Check if the script type is in the allowed list
+  if (!SCRIPT_TYPES.includes(trimmed as any)) {
+    return { valid: false, error: 'Please select a valid script type from the dropdown' };
   }
   return { valid: true };
 }
