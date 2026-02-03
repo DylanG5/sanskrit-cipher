@@ -33,6 +33,9 @@ class FragmentRecord:
     has_bottom_edge: Optional[bool] = None
     line_count: Optional[int] = None
     script_type: Optional[str] = None
+    script_type_confidence: Optional[float] = None
+    script_type_classification_data: Optional[str] = None  # JSON string (class probabilities)
+    script_type_classification_model_version: Optional[str] = None
     segmentation_coords: Optional[str] = None  # JSON string
     notes: Optional[str] = None
     processing_status: Optional[str] = None
