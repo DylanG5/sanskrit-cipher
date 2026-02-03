@@ -119,6 +119,26 @@ class DatabaseManager:
                 self.logger.error(f"Scale detection fields migration failed: {e}")
                 raise
 
+        # Check if edge detection columns exist
+        cursor.execute("PRAGMA table_info(fragments)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'has_left_edge' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for edge detection fields...")
+
+            try:
+                # Add left/right edge columns
+                cursor.execute("ALTER TABLE fragments ADD COLUMN has_left_edge BOOLEAN DEFAULT NULL")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN has_right_edge BOOLEAN DEFAULT NULL")
+
+                self.conn.commit()
+                self.logger.info("Edge detection fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Edge detection fields migration failed: {e}")
+                raise
+
         if not migration_needed:
             self.logger.info("Migration already applied, skipping")
 
@@ -175,6 +195,8 @@ class DatabaseManager:
                 edge_piece=row_dict.get('edge_piece'),
                 has_top_edge=row_dict.get('has_top_edge'),
                 has_bottom_edge=row_dict.get('has_bottom_edge'),
+                has_left_edge=row_dict.get('has_left_edge'),
+                has_right_edge=row_dict.get('has_right_edge'),
                 line_count=row_dict.get('line_count'),
                 script_type=row_dict.get('script_type'),
                 segmentation_coords=row_dict.get('segmentation_coords'),

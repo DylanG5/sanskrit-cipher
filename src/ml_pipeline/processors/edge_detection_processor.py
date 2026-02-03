@@ -452,44 +452,23 @@ class EdgeDetectionProcessor(BaseProcessor):
         
         print("EDGE SCORES:", fragment.fragment_id, edge_data["scores"])
         print("BORDERS:", edge_data["border_edges"])
-        
-        scores = edge_data["scores"]
 
-        def ok(side, min_cov=0.50, max_err=12.0):
-            cov = scores[side]["coverage"]
-            err = scores[side]["mean_line_err"]
-            return cov is not None and cov >= min_cov and err is not None and err <= max_err
+        # Set edge flags as booleans
+        has_top = "top_edge" in edge_data["border_edges"]
+        has_bottom = "bottom_edge" in edge_data["border_edges"]
+        has_left = "left_edge" in edge_data["border_edges"]
+        has_right = "right_edge" in edge_data["border_edges"]
 
-        top_ok = ok("top_edge")
-        bottom_ok = ok("bottom_edge")
-
-        # optional: keep left/right off for now
-        left_ok = False
-        right_ok = False
-
-        top = 1 if top_ok else 0
-        bottom = 1 if bottom_ok else 0
-        left = 1 if left_ok else 0
-        right = 1 if right_ok else 0
-
-        edge_piece = 1 if (top or bottom) else 0
-
-
-
-        # Set edge flags
-        top = 1 if "top_edge" in edge_data["border_edges"] else 0
-        bottom = 1 if "bottom_edge" in edge_data["border_edges"] else 0
-        left = 1 if "left_edge" in edge_data["border_edges"] else 0
-        right = 1 if "right_edge" in edge_data["border_edges"] else 0
-
-        edge_piece = 1 if (top or bottom or left or right) else 0
+        is_edge_piece = has_top or has_bottom or has_left or has_right
 
         return ProcessingResult(
             success=True,
             updates={
-                "has_top_edge": top,
-                "has_bottom_edge": bottom,
-                "edge_piece": edge_piece,
+                "has_top_edge": has_top,
+                "has_bottom_edge": has_bottom,
+                "has_left_edge": has_left,
+                "has_right_edge": has_right,
+                "edge_piece": is_edge_piece,
                 "processing_status": "completed",
                 "last_processed_at": "CURRENT_TIMESTAMP",
                 "processing_error": None,
