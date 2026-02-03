@@ -35,6 +35,16 @@ processors:
       batch_size: 16
       model_version: "1.0"
 
+  script_type_classification:
+    enabled: true
+    model_path: "../classification/output/best_model.pt"
+    meta_path: "../classification/output/meta.json"
+    config:
+      batch_size: 16
+      model_version: "1.0"
+      confidence_threshold: 0.0  # Set to 0 to accept all predictions
+      skip_processed: true  # Skip already-processed fragments
+
   scaledetection:
     enabled: true
     # No model_path needed (uses EasyOCR + computer vision)

@@ -158,6 +158,29 @@ class DatabaseManager:
                 self.logger.error(f"Line detection fields migration failed: {e}")
                 raise
 
+        # Check if script type classification columns exist
+        cursor.execute("PRAGMA table_info(fragments)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'script_type_classification_data' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for script type classification fields...")
+
+            try:
+                # Add script type classification columns
+                cursor.execute("ALTER TABLE fragments ADD COLUMN script_type_classification_data TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN script_type_classification_model_version TEXT")
+
+                # Create index for script_type_classification_model_version
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_script_type_classification_version ON fragments(script_type_classification_model_version)")
+
+                self.conn.commit()
+                self.logger.info("Script type classification fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Script type classification fields migration failed: {e}")
+                raise
+
         if not migration_needed:
             self.logger.info("Migration already applied, skipping")
 
@@ -216,6 +239,9 @@ class DatabaseManager:
                 has_bottom_edge=row_dict.get('has_bottom_edge'),
                 line_count=row_dict.get('line_count'),
                 script_type=row_dict.get('script_type'),
+                script_type_confidence=row_dict.get('script_type_confidence'),
+                script_type_classification_data=row_dict.get('script_type_classification_data'),
+                script_type_classification_model_version=row_dict.get('script_type_classification_model_version'),
                 segmentation_coords=row_dict.get('segmentation_coords'),
                 notes=row_dict.get('notes'),
                 processing_status=row_dict.get('processing_status'),
