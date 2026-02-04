@@ -15,6 +15,10 @@ interface FragmentFilters {
   lineCountMax?: number;
   scripts?: string[];
   isEdgePiece?: boolean | null;
+  hasTopEdge?: boolean | null;
+  hasBottomEdge?: boolean | null;
+  hasLeftEdge?: boolean | null;
+  hasRightEdge?: boolean | null;
   hasCircle?: boolean | null;
   search?: string;
   limit?: number;
@@ -75,6 +79,26 @@ export function registerIpcHandlers(): void {
     if (filters?.isEdgePiece !== undefined && filters.isEdgePiece !== null) {
       query += ' AND edge_piece = ?';
       params.push(filters.isEdgePiece ? 1 : 0);
+    }
+
+    if (filters?.hasTopEdge !== undefined && filters.hasTopEdge !== null) {
+      query += ' AND has_top_edge = ?';
+      params.push(filters.hasTopEdge ? 1 : 0);
+    }
+
+    if (filters?.hasBottomEdge !== undefined && filters.hasBottomEdge !== null) {
+      query += ' AND has_bottom_edge = ?';
+      params.push(filters.hasBottomEdge ? 1 : 0);
+    }
+
+    if (filters?.hasLeftEdge !== undefined && filters.hasLeftEdge !== null) {
+      query += ' AND has_left_edge = ?';
+      params.push(filters.hasLeftEdge ? 1 : 0);
+    }
+
+    if (filters?.hasRightEdge !== undefined && filters.hasRightEdge !== null) {
+      query += ' AND has_right_edge = ?';
+      params.push(filters.hasRightEdge ? 1 : 0);
     }
 
     if (filters?.hasCircle !== undefined && filters.hasCircle !== null) {
@@ -141,6 +165,26 @@ export function registerIpcHandlers(): void {
       params.push(filters.isEdgePiece ? 1 : 0);
     }
 
+    if (filters?.hasTopEdge !== undefined && filters.hasTopEdge !== null) {
+      query += ' AND has_top_edge = ?';
+      params.push(filters.hasTopEdge ? 1 : 0);
+    }
+
+    if (filters?.hasBottomEdge !== undefined && filters.hasBottomEdge !== null) {
+      query += ' AND has_bottom_edge = ?';
+      params.push(filters.hasBottomEdge ? 1 : 0);
+    }
+
+    if (filters?.hasLeftEdge !== undefined && filters.hasLeftEdge !== null) {
+      query += ' AND has_left_edge = ?';
+      params.push(filters.hasLeftEdge ? 1 : 0);
+    }
+
+    if (filters?.hasRightEdge !== undefined && filters.hasRightEdge !== null) {
+      query += ' AND has_right_edge = ?';
+      params.push(filters.hasRightEdge ? 1 : 0);
+    }
+
     if (filters?.hasCircle !== undefined && filters.hasCircle !== null) {
       query += ' AND has_circle = ?';
       params.push(filters.hasCircle ? 1 : 0);
@@ -182,6 +226,8 @@ export function registerIpcHandlers(): void {
       'edge_piece',
       'has_top_edge',
       'has_bottom_edge',
+      'has_left_edge',
+      'has_right_edge',
       'has_circle',
       'line_count',
       'script_type',
