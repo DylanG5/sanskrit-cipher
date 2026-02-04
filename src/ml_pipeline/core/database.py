@@ -193,6 +193,7 @@ class DatabaseManager:
                 # Add script type classification columns
                 cursor.execute("ALTER TABLE fragments ADD COLUMN script_type_classification_data TEXT")
                 cursor.execute("ALTER TABLE fragments ADD COLUMN script_type_classification_model_version TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN script_type_confidence REAL")
 
                 # Create index for script_type_classification_model_version
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_script_type_classification_version ON fragments(script_type_classification_model_version)")
