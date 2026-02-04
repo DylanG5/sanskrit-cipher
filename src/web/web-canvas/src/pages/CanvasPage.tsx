@@ -4,7 +4,6 @@ import Sidebar from "../components/Sidebar";
 import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
 import FilterPanel from "../components/FilterPanel";
-import NotesPanel from "../components/NotesPanel";
 import FragmentMetadata from "../components/FragmentMetadata";
 import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
@@ -34,11 +33,8 @@ function CanvasPage() {
   const [filters, setFilters] = useState<FragmentFilters>(DEFAULT_FILTERS);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [filterPanelWidth, setFilterPanelWidth] = useState(300);
-  const [notesPanelWidth, setNotesPanelWidth] = useState(400);
-  const [notes, setNotes] = useState("");
   const [isGridVisible, setIsGridVisible] = useState(false);
   const [gridScale, setGridScale] = useState(25); // pixels per cm
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
@@ -181,7 +177,6 @@ function CanvasPage() {
 
   // Refs to track current values for auto-save without re-creating callback
   const canvasFragmentsRef = useRef(canvasFragments);
-  const notesRef = useRef(notes);
   const currentProjectIdRef = useRef(currentProjectId);
 
   // Keep refs in sync
@@ -190,15 +185,11 @@ function CanvasPage() {
   }, [canvasFragments]);
 
   useEffect(() => {
-    notesRef.current = notes;
-  }, [notes]);
-
-  useEffect(() => {
     currentProjectIdRef.current = currentProjectId;
   }, [currentProjectId]);
 
   // Auto-save function
-  const saveProject = useCallback(async (projectId: number, fragmentsToSave: CanvasFragment[], notesToSave: string) => {
+  const saveProject = useCallback(async (projectId: number, fragmentsToSave: CanvasFragment[]) => {
     const api = getElectronAPISafe();
     if (!api) return;
 
@@ -220,7 +211,7 @@ function CanvasPage() {
         })),
       };
 
-      const response = await api.projects.save(projectId, canvasState, notesToSave);
+      const response = await api.projects.save(projectId, canvasState, '');
       if (response.success) {
         setSaveStatus('saved');
         setHasUnsavedChanges(false);
@@ -275,7 +266,7 @@ function CanvasPage() {
       }
 
       if (projectId) {
-        saveProject(projectId, canvasFragmentsRef.current, notesRef.current);
+        saveProject(projectId, canvasFragmentsRef.current);
       }
     }, 2000);
   }, [saveProject]);
@@ -315,7 +306,6 @@ function CanvasPage() {
 
     setCurrentProjectId(loadedProject.project.id);
     setCurrentProjectName(loadedProject.project.project_name);
-    setNotes(loadedProject.notes || '');
 
     // Restore canvas fragments - need to load image paths
     const api = getElectronAPISafe();
@@ -395,13 +385,13 @@ function CanvasPage() {
     }
   }, [location.state?.projectId, location.state?.loadedProject, restoreProject]);
 
-  // Trigger auto-save when canvas fragments or notes change
+  // Trigger auto-save when canvas fragments change
   useEffect(() => {
     // Only auto-save if there's actually content to save
-    if (canvasFragments.length > 0 || notes) {
+    if (canvasFragments.length > 0) {
       triggerAutoSave();
     }
-  }, [canvasFragments, notes, triggerAutoSave]);
+  }, [canvasFragments, triggerAutoSave]);
 
   // Cleanup auto-save timeout on unmount
   useEffect(() => {
@@ -810,10 +800,6 @@ function CanvasPage() {
     }
   };
 
-  // Reset view
-  const handleResetView = () => {
-    setSelectedFragmentIds([]);
-  };
 
   // Save canvas progress to database
   const handleSave = async () => {
@@ -829,12 +815,7 @@ function CanvasPage() {
       return;
     }
 
-    await saveProject(projectId, canvasFragments, notes);
-  };
-
-  // Toggle notes panel
-  const handleToggleNotes = () => {
-    setIsNotesPanelOpen(!isNotesPanelOpen);
+    await saveProject(projectId, canvasFragments);
   };
 
   // Toggle grid visibility
@@ -896,9 +877,7 @@ function CanvasPage() {
         onUnlockSelected={handleUnlockSelected}
         onDeleteSelected={handleDeleteSelected}
         onClearCanvas={handleClearCanvas}
-        onResetView={handleResetView}
         onSave={handleSave}
-        onToggleNotes={handleToggleNotes}
         isGridVisible={isGridVisible}
         onToggleGrid={handleToggleGrid}
         isFilterPanelOpen={isFilterPanelOpen}
@@ -965,14 +944,6 @@ function CanvasPage() {
           onWidthChange={setFilterPanelWidth}
         />
 
-        <NotesPanel
-          isOpen={isNotesPanelOpen}
-          onToggle={handleToggleNotes}
-          width={notesPanelWidth}
-          onWidthChange={setNotesPanelWidth}
-          notes={notes}
-          onNotesChange={setNotes}
-        />
       </div>
 
       {/* Fragment Metadata Modal */}

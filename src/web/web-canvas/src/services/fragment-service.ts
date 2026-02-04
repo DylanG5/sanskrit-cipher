@@ -105,22 +105,6 @@ export async function getFragmentById(
   return mapToManuscriptFragment(response.data);
 }
 
-/**
- * Update fragment notes
- */
-export async function updateFragmentNotes(
-  fragmentId: string,
-  notes: string
-): Promise<boolean> {
-  if (!isElectron()) {
-    return false;
-  }
-
-  const api = getElectronAPI();
-  const response = await api.fragments.updateMetadata(fragmentId, { notes });
-
-  return response.success;
-}
 
 /**
  * Update fragment metadata

@@ -7,9 +7,7 @@ interface ToolbarProps {
   onUnlockSelected: () => void;
   onDeleteSelected: () => void;
   onClearCanvas: () => void;
-  onResetView: () => void;
   onSave: () => void;
-  onToggleNotes: () => void;
   isGridVisible: boolean;
   onToggleGrid: () => void;
   isFilterPanelOpen: boolean;
@@ -30,9 +28,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onUnlockSelected,
   onDeleteSelected,
   onClearCanvas,
-  onResetView,
   onSave,
-  onToggleNotes,
   isGridVisible,
   onToggleGrid,
   isFilterPanelOpen,
@@ -300,39 +296,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         )}
 
         <button
-          onClick={onResetView}
-          className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg font-body"
-          style={{
-            background: 'rgba(68, 64, 60, 0.8)',
-            color: '#d6d3d1'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(87, 83, 78, 0.9)';
-            e.currentTarget.style.color = '#fafaf9';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(68, 64, 60, 0.8)';
-            e.currentTarget.style.color = '#d6d3d1';
-          }}
-          title="Reset view"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          <span className="text-sm font-semibold">Reset View</span>
-        </button>
-
-        <button
           onClick={onToggleGrid}
           className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg font-body"
           style={{
@@ -477,35 +440,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <span className="text-sm font-semibold">Save</span>
         </button>
 
-        <button
-          onClick={onToggleNotes}
-          className="px-3.5 py-2 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
-          style={{
-            background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 100%)';
-          }}
-          title="Toggle notes panel"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
-          <span className="text-sm font-semibold">Notes</span>
-        </button>
       </div>
     </div>
   );

@@ -98,7 +98,7 @@ declare global {
       projects: {
         list: () => Promise<ApiResponse<Project[]>>;
         create: (name: string, description?: string) => Promise<ApiResponse<null> & { projectId?: number }>;
-        save: (projectId: number, canvasState: CanvasStateData, notes: string) => Promise<ApiResponse<null>>;
+        save: (projectId: number, canvasState: CanvasStateData) => Promise<ApiResponse<null>>;
         load: (projectId: number) => Promise<ApiResponse<{ project: Project; canvasState: CanvasStateData; notes: string }>>;
         delete: (projectId: number) => Promise<ApiResponse<null> & { deleted?: boolean }>;
         rename: (projectId: number, newName: string) => Promise<ApiResponse<null>>;

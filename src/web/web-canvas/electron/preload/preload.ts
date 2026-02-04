@@ -86,8 +86,8 @@ const electronAPI = {
       ipcRenderer.invoke('projects:list'),
     create: (name: string, description?: string): Promise<ApiResponse<null> & { projectId?: number }> =>
       ipcRenderer.invoke('projects:create', name, description),
-    save: (projectId: number, canvasState: CanvasState, notes: string): Promise<ApiResponse<null>> =>
-      ipcRenderer.invoke('projects:save', projectId, canvasState, notes),
+    save: (projectId: number, canvasState: CanvasState): Promise<ApiResponse<null>> =>
+      ipcRenderer.invoke('projects:save', projectId, canvasState),
     load: (projectId: number): Promise<ApiResponse<{ project: Project; canvasState: CanvasState; notes: string }>> =>
       ipcRenderer.invoke('projects:load', projectId),
     delete: (projectId: number): Promise<ApiResponse<null> & { deleted?: boolean }> =>
