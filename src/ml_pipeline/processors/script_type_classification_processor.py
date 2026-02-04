@@ -3,6 +3,7 @@
 import os
 import json
 import sys
+import yaml
 from pathlib import Path
 from typing import List, Optional
 
@@ -10,14 +11,15 @@ import torch
 from PIL import Image
 import torchvision.transforms as T
 
-# Add classification directory to path to import the model
-classification_dir = Path(__file__).parent.parent.parent / 'classification'
-sys.path.insert(0, str(classification_dir))
+# Add yolo_script_type_classification directory to path to import the model
+yolo_script_type_dir = Path(__file__).parent.parent.parent / 'yolo_script_type_classification'
+sys.path.insert(0, str(yolo_script_type_dir))
 
 try:
-    from classify_script_types import ScriptTypeCNN
+    from model import load_model, EfficientScriptTypeClassifier
 except ImportError:
-    ScriptTypeCNN = None
+    load_model = None
+    EfficientScriptTypeClassifier = None
 
 from ml_pipeline.core.processor import (
     BaseProcessor,
@@ -37,10 +39,10 @@ class ScriptTypeClassificationProcessor(BaseProcessor):
     """
 
     def _setup(self) -> None:
-        """Load script type CNN model"""
-        if ScriptTypeCNN is None:
+        """Load script type efficient model (MobileNetV2-based)"""
+        if load_model is None or EfficientScriptTypeClassifier is None:
             raise ImportError(
-                "Could not import ScriptTypeCNN from classify_script_types.py. "
+                "Could not import EfficientScriptTypeClassifier from model.py. "
                 "Make sure the classification module is available."
             )
 
@@ -53,25 +55,33 @@ class ScriptTypeClassificationProcessor(BaseProcessor):
         if not os.path.exists(meta_path):
             raise FileNotFoundError(f"Model metadata not found: {meta_path}")
 
-        # Load metadata
+        # Load metadata (YAML format for efficient model)
         with open(meta_path, 'r') as f:
-            self.meta = json.load(f)
+            if meta_path.endswith('.yaml'):
+                self.meta = yaml.safe_load(f)
+            else:
+                self.meta = json.load(f)
 
+        # Extract class names and configuration
         self.class_names = self.meta.get('class_names', [])
         self.img_size = self.meta.get('img_size', 224)
         self.num_classes = len(self.class_names)
-        self.version = self.config.get('config', {}).get('model_version', '1.0')
+        
+        self.logger.info(f"Loaded metadata: {len(self.class_names)} classes")
+        self.logger.info(f"Class names: {self.class_names}")
+        
+        self.version = self.config.get('config', {}).get('model_version', '2.0')
         self.confidence_threshold = self.config.get('config', {}).get('confidence_threshold', 0.0)
 
         # Setup device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Load model
-        self.model = ScriptTypeCNN(num_classes=self.num_classes, dropout=0.2)
-        self.model.load_state_dict(
-            torch.load(model_path, map_location=self.device)
+        # Load efficient model using model.py's load_model utility
+        self.model = load_model(
+            model_path=model_path,
+            num_classes=self.num_classes,
+            device=str(self.device)
         )
-        self.model.to(self.device)
         self.model.eval()
 
         # Define transforms (match training transforms without augmentation)
@@ -82,7 +92,7 @@ class ScriptTypeClassificationProcessor(BaseProcessor):
         ])
 
         self.logger.info(
-            f"Script type classification model loaded (num_classes={self.num_classes}, "
+            f"Script type classification model loaded (MobileNetV2, num_classes={self.num_classes}, "
             f"img_size={self.img_size}, device={self.device}, "
             f"confidence_threshold={self.confidence_threshold})"
         )
@@ -92,7 +102,7 @@ class ScriptTypeClassificationProcessor(BaseProcessor):
         return ProcessorMetadata(
             name="script_type_classification",
             version=self.version,
-            description="CNN script type classifier for Sanskrit manuscripts",
+            description="Efficient MobileNetV2-based script type classifier for Sanskrit manuscripts",
             model_path=self.config.get('model_path'),
             requires_gpu=True,
             batch_size=self.config.get('config', {}).get('batch_size', 16)

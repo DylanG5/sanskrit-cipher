@@ -31,6 +31,8 @@ class FragmentRecord:
     edge_piece: Optional[bool] = None
     has_top_edge: Optional[bool] = None
     has_bottom_edge: Optional[bool] = None
+    has_left_edge: Optional[bool] = None
+    has_right_edge: Optional[bool] = None
     line_count: Optional[int] = None
     script_type: Optional[str] = None
     script_type_confidence: Optional[float] = None
