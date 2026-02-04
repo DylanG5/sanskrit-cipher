@@ -3,6 +3,10 @@ export interface FragmentFilters {
   lineCountMax?: number;
   scripts: string[]; // Empty array = all scripts
   isEdgePiece?: boolean | null; // null = don't care
+  hasTopEdge?: boolean | null; // null = don't care
+  hasBottomEdge?: boolean | null; // null = don't care
+  hasLeftEdge?: boolean | null; // null = don't care
+  hasRightEdge?: boolean | null; // null = don't care
   hasCircle?: boolean | null; // null = don't care
   search?: string; // Fragment ID search query
 }
@@ -12,6 +16,10 @@ export const DEFAULT_FILTERS: FragmentFilters = {
   lineCountMax: undefined,
   scripts: [],
   isEdgePiece: null,
+  hasTopEdge: null,
+  hasBottomEdge: null,
+  hasLeftEdge: null,
+  hasRightEdge: null,
   hasCircle: null,
   search: undefined,
 };
