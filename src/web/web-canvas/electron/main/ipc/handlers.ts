@@ -218,11 +218,10 @@ export function registerIpcHandlers(): void {
   });
 
   /**
-   * Update fragment metadata (notes, etc.)
+   * Update fragment metadata
    */
   ipcMain.handle('fragments:updateMetadata', async (_event, fragmentId: string, metadata: Record<string, unknown>) => {
     const allowedFields = [
-      'notes',
       'edge_piece',
       'has_top_edge',
       'has_bottom_edge',
@@ -355,9 +354,9 @@ export function registerIpcHandlers(): void {
   });
 
   /**
-   * Save project canvas state and notes
+   * Save project canvas state
    */
-  ipcMain.handle('projects:save', async (_event, projectId: number, canvasState: CanvasState, notes: string) => {
+  ipcMain.handle('projects:save', async (_event, projectId: number, canvasState: CanvasState) => {
     try {
       // Start transaction
       const saveTransaction = db.transaction(() => {
@@ -391,12 +390,6 @@ export function registerIpcHandlers(): void {
           );
         }
 
-        // Upsert project notes
-        db.prepare(`
-          INSERT INTO project_notes (project_id, content, updated_at)
-          VALUES (?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(project_id) DO UPDATE SET content = ?, updated_at = CURRENT_TIMESTAMP
-        `).run(projectId, notes, notes);
       });
 
       saveTransaction();
@@ -431,17 +424,12 @@ export function registerIpcHandlers(): void {
         ORDER BY z_index ASC
       `).all(projectId);
 
-      // Get notes
-      const notesRow = db.prepare(
-        'SELECT content FROM project_notes WHERE project_id = ?'
-      ).get(projectId) as { content: string } | undefined;
-
       return {
         success: true,
         data: {
           project,
           canvasState: { fragments },
-          notes: notesRow?.content || '',
+          notes: '',
         },
       };
     } catch (error) {

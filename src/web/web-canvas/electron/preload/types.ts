@@ -14,7 +14,7 @@ export interface ElectronAPI {
   projects: {
     create: (name: string, description?: string) => Promise<number>;
     getAll: () => Promise<any[]>;
-    save: (projectId: number, canvasState: any, notes: string) => Promise<void>;
+    save: (projectId: number, canvasState: any) => Promise<void>;
     load: (projectId: number) => Promise<{ canvasState: any; notes: string }>;
     delete: (projectId: number) => Promise<void>;
   };
