@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getElectronAPISafe, Project } from '../services/electron-api';
-import { mapToManuscriptFragment } from '../services/fragment-service';
+import { mapToManuscriptFragment, getFragmentCount } from '../services/fragment-service';
 import { ManuscriptFragment } from '../types/fragment';
 
 const HomePage: React.FC = () => {
@@ -11,6 +11,7 @@ const HomePage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredProject, setHoveredProject] = useState<number | null>(null);
+  const [fragmentCount, setFragmentCount] = useState<number>(0);
 
   // Rename state
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
@@ -24,10 +25,20 @@ const HomePage: React.FC = () => {
   const [isLoadingAutocomplete, setIsLoadingAutocomplete] = useState(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load projects on mount
+  // Load projects and fragment count on mount
   useEffect(() => {
     loadProjects();
+    loadFragmentCount();
   }, []);
+
+  const loadFragmentCount = async () => {
+    try {
+      const count = await getFragmentCount();
+      setFragmentCount(count);
+    } catch (error) {
+      console.error('Failed to load fragment count:', error);
+    }
+  };
 
   // Debounced autocomplete search
   useEffect(() => {
@@ -675,7 +686,7 @@ const HomePage: React.FC = () => {
             borderColor: 'rgba(214, 211, 209, 0.4)'
           }}>
             <div className="text-3xl font-bold font-body" style={{ color: '#d97706' }}>
-              ∞
+              {fragmentCount.toLocaleString()}
             </div>
             <div className="text-xs font-semibold mt-1.5 font-body" style={{ color: '#57534e' }}>
               Fragments Available
