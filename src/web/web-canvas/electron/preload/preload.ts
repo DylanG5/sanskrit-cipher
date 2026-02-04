@@ -61,8 +61,32 @@ export interface ApiResponse<T> {
   deleted?: boolean;
 }
 
+// Additional types for file upload
+export interface FileSelectionResult {
+  success: boolean;
+  canceled?: boolean;
+  filePaths?: string[];
+  error?: string;
+}
+
+export interface UploadResult {
+  success: boolean;
+  fragmentId?: string;
+  filename?: string;
+  error?: string;
+}
+
+export interface UploadResponse {
+  success: boolean;
+  results: UploadResult[];
+}
+
 // Expose a safe API to the renderer process
 const electronAPI = {
+  files: {
+    selectImages: (): Promise<FileSelectionResult> =>
+      ipcRenderer.invoke('files:selectImages'),
+  },
   fragments: {
     getAll: (filters?: FragmentFilters): Promise<ApiResponse<FragmentRecord[]>> =>
       ipcRenderer.invoke('fragments:getAll', filters),
@@ -72,6 +96,8 @@ const electronAPI = {
       ipcRenderer.invoke('fragments:getById', id),
     updateMetadata: (id: string, metadata: Record<string, unknown>): Promise<ApiResponse<null>> =>
       ipcRenderer.invoke('fragments:updateMetadata', id, metadata),
+    uploadFiles: (filePaths: string[]): Promise<UploadResponse> =>
+      ipcRenderer.invoke('fragments:uploadFiles', filePaths),
   },
   images: {
     getPath: (relativePath: string): Promise<string> =>

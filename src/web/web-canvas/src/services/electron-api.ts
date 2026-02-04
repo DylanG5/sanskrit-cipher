@@ -80,15 +80,38 @@ export interface ApiResponse<T> {
   deleted?: boolean;
 }
 
+export interface FileSelectionResult {
+  success: boolean;
+  canceled?: boolean;
+  filePaths?: string[];
+  error?: string;
+}
+
+export interface UploadResult {
+  success: boolean;
+  fragmentId?: string;
+  filename?: string;
+  error?: string;
+}
+
+export interface UploadResponse {
+  success: boolean;
+  results: UploadResult[];
+}
+
 // Declare the global electronAPI type
 declare global {
   interface Window {
     electronAPI?: {
+      files: {
+        selectImages: () => Promise<FileSelectionResult>;
+      };
       fragments: {
         getAll: (filters?: FragmentFilters) => Promise<ApiResponse<FragmentRecord[]>>;
         getCount: (filters?: FragmentFilters) => Promise<ApiResponse<null> & { count?: number }>;
         getById: (id: string) => Promise<ApiResponse<FragmentRecord | null>>;
         updateMetadata: (id: string, metadata: Record<string, unknown>) => Promise<ApiResponse<null>>;
+        uploadFiles: (filePaths: string[]) => Promise<UploadResponse>;
       };
       images: {
         getPath: (relativePath: string) => Promise<string>;
