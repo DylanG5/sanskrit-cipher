@@ -6,6 +6,7 @@ export interface ManuscriptFragment {
   // Segmentation info
   segmentedImagePath?: string;  // Path to segmented image if available
   hasSegmentation?: boolean;     // Quick flag for UI
+  segmentationCoords?: string;   // JSON string with polygon contour coordinates
   // Metadata fields (optional, populated by ML models)
   metadata?: {
     lineCount?: number;
@@ -31,6 +32,7 @@ export interface CanvasFragment {
   fragmentId: string;
   name: string;
   imagePath: string;
+  segmentationCoords?: string; // JSON string with polygon contour coordinates
   x: number;
   y: number;
   width: number;

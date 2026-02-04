@@ -26,6 +26,8 @@ export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragm
     // Use electron-image protocol for loading images from data folder
     imagePath: `electron-image://${record.image_path}`,
     thumbnailPath: `electron-image://${record.image_path}`,
+    // Include segmentation coordinates for on-demand rendering
+    segmentationCoords: record.segmentation_coords ?? undefined,
     metadata: {
       lineCount: record.line_count ?? undefined,
       script: getScriptTypeDisplay(record.script_type),
@@ -136,6 +138,9 @@ export async function getAvailableScripts(): Promise<string[]> {
 
 /**
  * Enrich fragments with segmentation availability info
+ *
+ * Now checks for segmentationCoords in the database rather than cached files.
+ * The hasSegmentation flag is set based on whether valid segmentation coordinates exist.
  */
 export async function enrichWithSegmentationStatus(
   fragments: ManuscriptFragment[]
@@ -144,24 +149,9 @@ export async function enrichWithSegmentationStatus(
     return fragments;
   }
 
-  const api = getElectronAPI();
-  const fragmentIds = fragments.map(f => f.id);
-
-  try {
-    const response = await api.images.batchHasSegmented(fragmentIds);
-    if (!response.success || !response.data) {
-      return fragments;
-    }
-
-    return fragments.map(fragment => ({
-      ...fragment,
-      hasSegmentation: response.data?.[fragment.id] ?? false,
-      segmentedImagePath: response.data?.[fragment.id]
-        ? `electron-image://segmented/${fragment.id}_segmented.png`
-        : undefined,
-    }));
-  } catch (error) {
-    console.error('Failed to check segmentation status:', error);
-    return fragments;
-  }
+  // Check if each fragment has valid segmentation coordinates
+  return fragments.map(fragment => ({
+    ...fragment,
+    hasSegmentation: !!(fragment.segmentationCoords && fragment.segmentationCoords.length > 0),
+  }));
 }

@@ -14,6 +14,11 @@ module.exports = {
       './electron/resources'
     ],
 
+    // Exclude the cache directory - segmented images generated on-demand
+    ignore: [
+      /^\/electron\/resources\/cache\//
+    ],
+
     // App metadata
     appBundleId: 'com.sanskritcipher.app',
     appCategoryType: 'public.app-category.education',

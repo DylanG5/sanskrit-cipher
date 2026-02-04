@@ -332,23 +332,15 @@ function CanvasPage() {
           // Determine showSegmented value - default to true if not specified
           const showSegmented = frag.showSegmented !== undefined ? frag.showSegmented : true;
 
-          // Check if segmented image exists
-          const segmentedResponse = await api.images.hasSegmented(record.fragment_id);
-          const hasSegmented = segmentedResponse.success && segmentedResponse.exists;
-
-          // Use the appropriate image path based on showSegmented preference
-          let imagePath: string;
-          if (showSegmented && hasSegmented) {
-            imagePath = `electron-image://segmented/${record.fragment_id}_segmented.png`;
-          } else {
-            imagePath = `electron-image://${record.image_path}`;
-          }
+          // Always use original image path - segmentation is handled on-demand by the hook
+          const imagePath = `electron-image://${record.image_path}`;
 
           restoredFragments.push({
             id: `canvas-fragment-${Date.now()}-${Math.random()}`,
             fragmentId: frag.fragmentId,
             name: record.fragment_id,
             imagePath: imagePath,
+            segmentationCoords: record.segmentation_coords ?? undefined,
             x: frag.x,
             y: frag.y,
             width: frag.width || 200,
@@ -523,11 +515,8 @@ function CanvasPage() {
   // Auto-place fragment in center of canvas (for search results)
   const autoPlaceFragment = useCallback(async (fragment: ManuscriptFragment) => {
     const img = new Image();
-    // Default to segmented if available, otherwise use original
-    const showSegmented = true; // Default preference
-    const imagePath = (showSegmented && fragment.segmentedImagePath)
-      ? fragment.segmentedImagePath
-      : fragment.imagePath;
+    // Always use original image path - segmentation handled on-demand
+    const imagePath = fragment.imagePath;
     img.src = imagePath;
 
     img.onload = () => {
@@ -556,6 +545,7 @@ function CanvasPage() {
         fragmentId: fragment.id,
         name: fragment.name,
         imagePath: imagePath,
+        segmentationCoords: fragment.segmentationCoords,
         x,
         y,
         width,
@@ -632,13 +622,6 @@ function CanvasPage() {
     }
   }, [isSearchMode, fragments, hasAutoPlaced, initialSearchQuery, selectedFragmentId, autoPlaceFragment]);
 
-  // Get image path - default to segmented if available, otherwise original
-  const getImagePath = useCallback((fragment: ManuscriptFragment, preferSegmented: boolean = true) => {
-    return (preferSegmented && fragment.segmentedImagePath)
-      ? fragment.segmentedImagePath
-      : fragment.imagePath;
-  }, []);
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
@@ -651,8 +634,8 @@ function CanvasPage() {
 
     // Load the image to get its natural dimensions
     const img = new Image();
-    const showSegmented = true; // Default to segmented version
-    const imagePath = getImagePath(fragment, showSegmented);
+    // Always use original image path - segmentation handled on-demand
+    const imagePath = fragment.imagePath;
     img.src = imagePath;
     img.onload = () => {
       const originalWidth = img.naturalWidth;
@@ -670,6 +653,7 @@ function CanvasPage() {
         fragmentId: fragment.id,
         name: fragment.name,
         imagePath: imagePath,
+        segmentationCoords: fragment.segmentationCoords,
         x: position.x - width / 2,
         y: position.y - height / 2,
         width: width,
@@ -733,54 +717,24 @@ function CanvasPage() {
     const canvasFragment = canvasFragments.find(f => f.id === selectedId);
     if (!canvasFragment) return;
 
-    // Find the manuscript fragment to get segmented/original paths
+    // Find the manuscript fragment to check if segmentation is available
     const manuscriptFragment = fragments.find(f => f.id === canvasFragment.fragmentId);
     if (!manuscriptFragment) return;
 
     const newShowSegmented = !canvasFragment.showSegmented;
-    const newImagePath = (newShowSegmented && manuscriptFragment.segmentedImagePath)
-      ? manuscriptFragment.segmentedImagePath
-      : manuscriptFragment.imagePath;
 
-    // Load the new image to get its actual dimensions
-    const img = new Image();
-    img.src = newImagePath;
-
-    img.onload = () => {
-      const newImageWidth = img.naturalWidth;
-      const newImageHeight = img.naturalHeight;
-
-      // Calculate what the new display size should be using the same scaling logic
-      const { width, height } = calculateDisplaySize(
-        manuscriptFragment,
-        newImageWidth,
-        newImageHeight
-      );
-
-      const updatedFragments = canvasFragments.map((f) =>
-        f.id === selectedId
-          ? {
-              ...f,
-              showSegmented: newShowSegmented,
-              imagePath: newImagePath,
-              width,
-              height,
-            }
-          : f
-      );
-      setCanvasFragments(updatedFragments);
-      setHasUnsavedChanges(true);
-    };
-
-    img.onerror = () => {
-      console.error('Failed to load new image:', newImagePath);
-      // Fall back to just changing the path without resizing
-      const updatedFragments = canvasFragments.map((f) =>
-        f.id === selectedId ? { ...f, showSegmented: newShowSegmented, imagePath: newImagePath } : f
-      );
-      setCanvasFragments(updatedFragments);
-      setHasUnsavedChanges(true);
-    };
+    // Simply toggle the flag - the useFragmentImage hook will handle loading
+    // the appropriate version (segmented or original) based on this flag
+    const updatedFragments = canvasFragments.map((f) =>
+      f.id === selectedId
+        ? {
+            ...f,
+            showSegmented: newShowSegmented,
+          }
+        : f
+    );
+    setCanvasFragments(updatedFragments);
+    setHasUnsavedChanges(true);
   };
 
   // Delete selected fragments

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Stage, Layer, Image as KonvaImage, Transformer, Line } from 'react-konva';
 import { CanvasFragment } from '../types/fragment';
+import { useFragmentImage } from '../hooks/useFragmentImage';
 import Konva from 'konva';
 
 interface CanvasProps {
@@ -38,20 +39,21 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
   onTransformEnd,
 }) => {
   const imageRef = useRef<Konva.Image>(null);
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
 
+  // Use custom hook for loading images with on-demand segmentation
+  const { image, isLoading, error } = useFragmentImage({
+    fragmentId: fragment.fragmentId,
+    imagePath: fragment.imagePath,
+    segmentationCoords: fragment.segmentationCoords,
+    showSegmented: fragment.showSegmented,
+  });
+
+  // Log errors
   useEffect(() => {
-    console.log('Loading image:', fragment.imagePath);
-    const img = new window.Image();
-    img.src = fragment.imagePath;
-    img.onload = () => {
-      console.log('Image loaded successfully:', fragment.imagePath);
-      setImage(img);
-    };
-    img.onerror = (e) => {
-      console.error('Error loading image:', fragment.imagePath, e);
-    };
-  }, [fragment.imagePath]);
+    if (error) {
+      console.error('Error loading fragment image:', error);
+    }
+  }, [error]);
 
   return (
     <>
