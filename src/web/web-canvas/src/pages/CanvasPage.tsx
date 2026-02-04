@@ -5,12 +5,13 @@ import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
 import FilterPanel from "../components/FilterPanel";
 import FragmentMetadata from "../components/FragmentMetadata";
+import UploadDialog from "../components/UploadDialog";
 import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
 import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus, getFragmentById } from "../services/fragment-service";
 import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData } from "../services/electron-api";
 import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
-import { SCRIPT_TYPES } from "../types/constants";
+import { SCRIPT_TYPES, getScriptTypeDB } from "../types/constants";
 
 // Default page size for pagination
 const PAGE_SIZE = 100;
@@ -55,6 +56,9 @@ function CanvasPage() {
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRestoringRef = useRef(false);
 
+  // Upload dialog state
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
   // Load fragments from database (initial load)
   const loadFragments = useCallback(async () => {
     if (!isElectron()) {
@@ -89,7 +93,8 @@ function CanvasPage() {
         apiFilters.lineCountMax = filters.lineCountMax;
       }
       if (filters.scripts.length > 0) {
-        apiFilters.scripts = filters.scripts;
+        // Convert display values to database values
+        apiFilters.scripts = filters.scripts.map(s => getScriptTypeDB(s) || s);
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
@@ -152,7 +157,8 @@ function CanvasPage() {
         apiFilters.lineCountMax = filters.lineCountMax;
       }
       if (filters.scripts.length > 0) {
-        apiFilters.scripts = filters.scripts;
+        // Convert display values to database values
+        apiFilters.scripts = filters.scripts.map(s => getScriptTypeDB(s) || s);
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
@@ -823,6 +829,15 @@ function CanvasPage() {
     setIsGridVisible(!isGridVisible);
   };
 
+  // Handle upload dialog
+  const handleUploadClick = () => {
+    setIsUploadDialogOpen(true);
+  };
+
+  const handleUploadComplete = () => {
+    // Refresh fragment list to show newly uploaded fragments
+    loadFragments();
+  };
 
   // Handle edge match request (dummy function for now)
   const handleEdgeMatch = (fragmentId: string) => {
@@ -878,6 +893,7 @@ function CanvasPage() {
         onDeleteSelected={handleDeleteSelected}
         onClearCanvas={handleClearCanvas}
         onSave={handleSave}
+        onUploadClick={handleUploadClick}
         isGridVisible={isGridVisible}
         onToggleGrid={handleToggleGrid}
         isFilterPanelOpen={isFilterPanelOpen}
@@ -956,6 +972,13 @@ function CanvasPage() {
           gridScale={gridScale}
         />
       )}
+
+      {/* Upload Dialog */}
+      <UploadDialog
+        isOpen={isUploadDialogOpen}
+        onClose={() => setIsUploadDialogOpen(false)}
+        onUploadComplete={handleUploadComplete}
+      />
     </div>
   );
 }

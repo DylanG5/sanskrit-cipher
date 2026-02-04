@@ -4,7 +4,7 @@
  * These handlers bridge the React frontend with the SQLite database.
  */
 
-import { ipcMain, app } from 'electron';
+import { ipcMain, app, dialog } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { getDatabase } from '../database/connection';
@@ -467,7 +467,128 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  // ============================================
+  // File Upload Handlers
+  // ============================================
+
+  /**
+   * Open file selection dialog
+   */
+  ipcMain.handle('files:selectImages', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: 'Select Fragment Images',
+        properties: ['openFile', 'multiSelections'],
+        filters: [
+          { name: 'Images', extensions: ['jpg', 'jpeg', 'png'] }
+        ]
+      });
+
+      if (result.canceled) {
+        return { success: false, canceled: true };
+      }
+
+      return {
+        success: true,
+        filePaths: result.filePaths
+      };
+    } catch (error) {
+      console.error('Error opening file dialog:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  /**
+   * Upload files to the uploads directory and add to database
+   */
+  ipcMain.handle('fragments:uploadFiles', async (_event, filePaths: string[]) => {
+    const isDev = !app.isPackaged;
+    const dataDir = isDev
+      ? path.join(process.cwd(), 'data')
+      : path.join(process.resourcesPath, 'data');
+    const uploadDir = path.join(dataDir, 'uploads');
+
+    // Ensure uploads directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const results = [];
+
+    for (const filePath of filePaths) {
+      try {
+        // 1. Generate unique filename
+        const filename = path.basename(filePath);
+        const uniqueFilename = generateUniqueFilename(uploadDir, filename);
+
+        // 2. Copy file to uploads directory
+        const destPath = path.join(uploadDir, uniqueFilename);
+        fs.copyFileSync(filePath, destPath);
+
+        // 3. Insert into database
+        const fragmentId = uniqueFilename.replace(/\.(jpg|jpeg|png)$/i, '');
+        const imagePath = `uploads/${uniqueFilename}`;
+
+        const insert = db.prepare(`
+          INSERT INTO fragments (fragment_id, image_path)
+          VALUES (?, ?)
+        `);
+
+        insert.run(fragmentId, imagePath);
+
+        results.push({
+          success: true,
+          fragmentId,
+          filename: uniqueFilename
+        });
+
+      } catch (error) {
+        results.push({
+          success: false,
+          filename: path.basename(filePath),
+          error: String(error)
+        });
+      }
+    }
+
+    return { success: true, results };
+  });
+
   console.log('IPC handlers registered');
+}
+
+/**
+ * Generate a unique filename to avoid collisions
+ */
+function generateUniqueFilename(dir: string, filename: string): string {
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+
+  // Check if file exists
+  let targetPath = path.join(dir, filename);
+  if (!fs.existsSync(targetPath)) {
+    return filename;
+  }
+
+  // Generate timestamp suffix (YYYYMMDDHHmmss)
+  const now = new Date();
+  const timestamp = now.toISOString()
+    .replace(/[-:T]/g, '')
+    .replace(/\.\d{3}Z$/, '')
+    .slice(0, 14);
+
+  let counter = 0;
+  let newFilename = `${base}_${timestamp}${ext}`;
+  targetPath = path.join(dir, newFilename);
+
+  // Handle edge case: multiple uploads in same second
+  while (fs.existsSync(targetPath)) {
+    counter++;
+    newFilename = `${base}_${timestamp}_${counter}${ext}`;
+    targetPath = path.join(dir, newFilename);
+  }
+
+  return newFilename;
 }
 
 export default { registerIpcHandlers };

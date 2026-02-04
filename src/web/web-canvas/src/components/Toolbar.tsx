@@ -8,6 +8,7 @@ interface ToolbarProps {
   onDeleteSelected: () => void;
   onClearCanvas: () => void;
   onSave: () => void;
+  onUploadClick: () => void;
   isGridVisible: boolean;
   onToggleGrid: () => void;
   isFilterPanelOpen: boolean;
@@ -29,6 +30,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onDeleteSelected,
   onClearCanvas,
   onSave,
+  onUploadClick,
   isGridVisible,
   onToggleGrid,
   isFilterPanelOpen,
@@ -438,6 +440,36 @@ const Toolbar: React.FC<ToolbarProps> = ({
             />
           </svg>
           <span className="text-sm font-semibold">Save</span>
+        </button>
+
+        <button
+          onClick={onUploadClick}
+          className="px-3.5 py-2 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+          style={{
+            background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)';
+          }}
+          title="Upload new fragment images"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
+          </svg>
+          <span className="text-sm font-semibold">Upload</span>
         </button>
 
       </div>
