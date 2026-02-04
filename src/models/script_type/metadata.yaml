@@ -1,0 +1,8 @@
+class_names:
+- Early South Turkestan Brahmi
+- North Turkestan Brahmi
+- North Turkestan Brahmi, type a
+- South Turkestan Brahmi
+- Turkestan Gupta Type
+img_size: 224
+num_classes: 5
