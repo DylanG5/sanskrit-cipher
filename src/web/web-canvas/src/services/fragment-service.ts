@@ -29,8 +29,10 @@ export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragm
       lineCount: record.line_count ?? undefined,
       script: record.script_type ?? undefined,
       isEdgePiece: record.edge_piece === 1 ? true : record.edge_piece === 0 ? false : undefined,
-      hasTopEdge: record.has_top_edge === 1 ? true : undefined,
-      hasBottomEdge: record.has_bottom_edge === 1 ? true : undefined,
+      hasTopEdge: record.has_top_edge === 1 ? true : record.has_top_edge === 0 ? false : undefined,
+      hasBottomEdge: record.has_bottom_edge === 1 ? true : record.has_bottom_edge === 0 ? false : undefined,
+      hasLeftEdge: record.has_left_edge === 1 ? true : record.has_left_edge === 0 ? false : undefined,
+      hasRightEdge: record.has_right_edge === 1 ? true : record.has_right_edge === 0 ? false : undefined,
       hasCircle: record.has_circle === 1 ? true : record.has_circle === 0 ? false : undefined,
       // Map scale data if available
       scale: record.scale_unit && record.pixels_per_unit ? {
