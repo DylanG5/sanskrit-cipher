@@ -28,7 +28,7 @@ processors:
       model_version: "1.0"
 
   classification:
-    enabled: true
+    enabled: false  # Disabled - replaced by linedetection processor
     model_path: "../models/classification/best_model.pt"
     meta_path: "../models/classification/meta.json"
     config:

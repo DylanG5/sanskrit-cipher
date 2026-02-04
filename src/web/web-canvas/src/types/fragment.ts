@@ -39,6 +39,9 @@ export interface CanvasFragment {
   isLocked: boolean;
   isSelected: boolean;
   showSegmented: boolean; // Per-fragment toggle for showing segmented version
+  originalWidth?: number; // Original image width in pixels
+  originalHeight?: number; // Original image height in pixels
+  hasBeenResized?: boolean; // Flag to indicate manual resize
 }
 
 export interface CanvasState {

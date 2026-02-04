@@ -216,6 +216,7 @@ function CanvasPage() {
           scaleY: f.scaleY,
           isLocked: f.isLocked,
           zIndex: 0,
+          showSegmented: f.showSegmented,
         })),
       };
 
@@ -331,8 +332,21 @@ function CanvasPage() {
         const fragmentResponse = await api.fragments.getById(frag.fragmentId);
         if (fragmentResponse.success && fragmentResponse.data) {
           const record = fragmentResponse.data;
-          // Use electron-image protocol, same as fragment-service.ts
-          const imagePath = `electron-image://${record.image_path}`;
+
+          // Determine showSegmented value - default to true if not specified
+          const showSegmented = frag.showSegmented !== undefined ? frag.showSegmented : true;
+
+          // Check if segmented image exists
+          const segmentedResponse = await api.images.hasSegmented(record.fragment_id);
+          const hasSegmented = segmentedResponse.success && segmentedResponse.exists;
+
+          // Use the appropriate image path based on showSegmented preference
+          let imagePath: string;
+          if (showSegmented && hasSegmented) {
+            imagePath = `electron-image://segmented/${record.fragment_id}_segmented.png`;
+          } else {
+            imagePath = `electron-image://${record.image_path}`;
+          }
 
           restoredFragments.push({
             id: `canvas-fragment-${Date.now()}-${Math.random()}`,
@@ -348,6 +362,10 @@ function CanvasPage() {
             scaleY: frag.scaleY,
             isLocked: frag.isLocked,
             isSelected: false,
+            showSegmented: showSegmented,
+            originalWidth: undefined, // Will be loaded when image loads
+            originalHeight: undefined,
+            hasBeenResized: false, // Reset on restore
           });
         }
       } catch (error) {
@@ -552,6 +570,9 @@ function CanvasPage() {
         isLocked: false,
         isSelected: true, // Select the auto-placed fragment
         showSegmented: true, // Default to showing segmented version
+        originalWidth: originalWidth,
+        originalHeight: originalHeight,
+        hasBeenResized: false,
       };
 
       setCanvasFragments([newCanvasFragment]);
@@ -663,6 +684,9 @@ function CanvasPage() {
         isLocked: false,
         isSelected: false,
         showSegmented: true, // Default to showing segmented version
+        originalWidth: originalWidth,
+        originalHeight: originalHeight,
+        hasBeenResized: false,
       };
 
       setCanvasFragments([...canvasFragments, newCanvasFragment]);
@@ -826,8 +850,14 @@ function CanvasPage() {
     console.log('Edge match requested for fragment:', fragmentId);
   };
 
+  // State to track the canvas fragment for metadata display
+  const [selectedCanvasFragmentForMetadata, setSelectedCanvasFragmentForMetadata] = useState<CanvasFragment | null>(null);
+
   // Handle double-click on canvas fragment to show metadata
   const handleCanvasFragmentDoubleClick = async (fragmentId: string) => {
+    // Find the canvas fragment
+    const canvasFragment = canvasFragments.find(cf => cf.fragmentId === fragmentId);
+
     // First try to find in already loaded fragments
     let manuscriptFragment = fragments.find(f => f.id === fragmentId);
 
@@ -838,12 +868,14 @@ function CanvasPage() {
 
     if (manuscriptFragment) {
       setSelectedMetadataFragment(manuscriptFragment);
+      setSelectedCanvasFragmentForMetadata(canvasFragment || null);
     }
   };
 
   // Close metadata panel
   const handleCloseMetadata = () => {
     setSelectedMetadataFragment(null);
+    setSelectedCanvasFragmentForMetadata(null);
   };
 
   // Get selected fragment info for segmentation toggle
@@ -900,6 +932,8 @@ function CanvasPage() {
           onClearSearch={handleClearSearch}
           onSidebarSearch={handleSidebarSearch}
           onFragmentUpdate={loadFragments}
+          canvasFragments={canvasFragments}
+          gridScale={gridScale}
         />
 
         <div
@@ -947,6 +981,8 @@ function CanvasPage() {
           fragment={selectedMetadataFragment}
           onClose={handleCloseMetadata}
           onUpdate={loadFragments}
+          canvasFragment={selectedCanvasFragmentForMetadata}
+          gridScale={gridScale}
         />
       )}
     </div>

@@ -99,6 +99,7 @@ def find_scale_text_region(image: np.ndarray, bottom_fraction: float = 0.15) -> 
 def detect_ruler_ticks_fixed_region(image: np.ndarray, text_x_end: int = 0) -> List[int]:
     """
     Simple approach: look at the very bottom of the image for ticks.
+    Now adaptive to image size.
 
     Args:
         image: Input image
@@ -112,23 +113,32 @@ def detect_ruler_ticks_fixed_region(image: np.ndarray, text_x_end: int = 0) -> L
 
     h, w = image.shape[:2]
 
-    # Fixed region: bottom 60 pixels (typical ruler bar height)
-    ruler_region = image[max(0, h-60):, :]
+    # Adaptive region height based on image size
+    # For typical ~2000px images: 60px
+    # For large ~4000px images: 120px
+    ruler_height = max(60, min(150, int(h * 0.04)))
+    ruler_region = image[max(0, h-ruler_height):, :]
 
     if len(ruler_region.shape) == 3:
         gray = cv2.cvtColor(ruler_region, cv2.COLOR_BGR2GRAY)
     else:
         gray = ruler_region
 
-    # Get intensity profile from middle of ruler
+    # Get intensity profile from middle of ruler - sample more rows for better signal
     mid_row = len(gray) // 2
-    intensity_profile = np.mean(gray[max(0, mid_row-3):min(len(gray), mid_row+4), :], axis=0)
+    sample_rows = max(5, int(len(gray) * 0.3))  # Sample 30% of ruler height
+    row_start = max(0, mid_row - sample_rows//2)
+    row_end = min(len(gray), mid_row + sample_rows//2)
+    intensity_profile = np.mean(gray[row_start:row_end, :], axis=0)
 
     smoothed = gaussian_filter1d(intensity_profile, sigma=1.5)
 
-    # Simple peak detection
+    # Adaptive peak detection parameters based on image width
+    min_distance = max(8, int(w * 0.005))  # ~0.5% of image width
+    min_prominence = max(2, np.std(smoothed) * 0.15)
+
     height = np.mean(smoothed) + 0.4 * np.std(smoothed)
-    peaks, _ = find_peaks(smoothed, height=height, distance=10, prominence=3)
+    peaks, _ = find_peaks(smoothed, height=height, distance=min_distance, prominence=min_prominence)
 
     # Filter out peaks that are in the text region (left of text_x_end)
     filtered_peaks = [p for p in peaks if p > text_x_end]
@@ -139,6 +149,7 @@ def detect_ruler_ticks_fixed_region(image: np.ndarray, text_x_end: int = 0) -> L
 def detect_ruler_ticks_adaptive(image: np.ndarray, text_x_end: int = 0, search_height_fraction: float = 0.15) -> List[int]:
     """
     Detect vertical tick marks in the bottom ruler area adaptively.
+    Now with improved sensitivity for large images with small relative ticks.
 
     Args:
         image: Input image
@@ -150,8 +161,10 @@ def detect_ruler_ticks_adaptive(image: np.ndarray, text_x_end: int = 0, search_h
     """
     h, w = image.shape[:2]
 
-    # Focus on bottom portion where ruler typically is
-    bottom_region = image[int(h * (1 - search_height_fraction)):, :]
+    # Adaptive search region based on image size
+    # Larger images get relatively larger search region
+    adaptive_fraction = min(0.20, max(0.10, search_height_fraction * (h / 2000)))
+    bottom_region = image[int(h * (1 - adaptive_fraction)):, :]
 
     # Convert to grayscale if needed
     if len(bottom_region.shape) == 3:
@@ -170,44 +183,62 @@ def detect_ruler_ticks_adaptive(image: np.ndarray, text_x_end: int = 0, search_h
         # No clear black bar found, use entire bottom region
         ruler_region = gray
     else:
-        # Use the dark region
-        start_row = max(0, dark_rows[0] - 2)
-        end_row = min(len(gray), dark_rows[-1] + 3)
+        # Use the dark region with more padding for taller ticks
+        padding = max(5, int(len(gray) * 0.05))
+        start_row = max(0, dark_rows[0] - padding)
+        end_row = min(len(gray), dark_rows[-1] + padding)
         ruler_region = gray[start_row:end_row, :]
 
     # Get intensity profile across the middle of the ruler bar
+    # Sample more rows for better signal, especially on high-res images
     mid_row = len(ruler_region) // 2
-    row_start = max(0, mid_row - 3)
-    row_end = min(len(ruler_region), mid_row + 4)
+    sample_rows = max(7, int(len(ruler_region) * 0.4))  # 40% of ruler height
+    row_start = max(0, mid_row - sample_rows//2)
+    row_end = min(len(ruler_region), mid_row + sample_rows//2)
     intensity_profile = np.mean(ruler_region[row_start:row_end, :], axis=0)
 
     # Find peaks in intensity (white tick marks on black background)
     from scipy.ndimage import gaussian_filter1d
     from scipy.signal import find_peaks
 
-    smoothed = gaussian_filter1d(intensity_profile, sigma=1.5)
+    # Adaptive smoothing based on image width
+    sigma = max(1.0, min(3.0, w / 1500))
+    smoothed = gaussian_filter1d(intensity_profile, sigma=sigma)
 
     # Calculate adaptive thresholds
     mean_intensity = np.mean(smoothed)
     std_intensity = np.std(smoothed)
+
+    # Adaptive distance parameter based on image width
+    # Expect ticks to be at least 0.3% of image width apart
+    min_distance_base = max(5, int(w * 0.003))
+
+    # Adaptive prominence based on signal strength
+    base_prominence = max(1, std_intensity * 0.1)
 
     # Try multiple parameter sets to be more robust
     all_peaks = []
 
     # Parameter set 1: Standard detection
     height1 = mean_intensity + 0.4 * std_intensity
-    peaks1, _ = find_peaks(smoothed, height=height1, distance=10, prominence=3)
+    peaks1, _ = find_peaks(smoothed, height=height1, distance=min_distance_base, prominence=base_prominence * 1.5)
     all_peaks.append(peaks1)
 
     # Parameter set 2: More sensitive
     height2 = mean_intensity + 0.25 * std_intensity
-    peaks2, _ = find_peaks(smoothed, height=height2, distance=8, prominence=2)
+    peaks2, _ = find_peaks(smoothed, height=height2, distance=min_distance_base * 0.8, prominence=base_prominence)
     all_peaks.append(peaks2)
 
     # Parameter set 3: Very sensitive for faint ticks
-    height3 = np.percentile(smoothed, 70)
-    peaks3, _ = find_peaks(smoothed, height=height3, distance=6, prominence=1)
+    height3 = np.percentile(smoothed, 65)  # Lower percentile for better sensitivity
+    peaks3, _ = find_peaks(smoothed, height=height3, distance=min_distance_base * 0.6, prominence=base_prominence * 0.7)
     all_peaks.append(peaks3)
+
+    # Parameter set 4: Ultra-sensitive for challenging cases (large images, small ticks)
+    if h > 2500:  # Only for large images
+        height4 = mean_intensity + 0.15 * std_intensity
+        peaks4, _ = find_peaks(smoothed, height=height4, distance=min_distance_base * 0.5, prominence=base_prominence * 0.5)
+        all_peaks.append(peaks4)
 
     # Select the best result: prefer one with 3+ peaks
     best_peaks = []
@@ -239,27 +270,36 @@ def detect_ruler_ticks_simple(image: np.ndarray, text_x_end: int = 0) -> List[in
     Returns:
         List of x-coordinates of detected ticks
     """
+    h, w = image.shape[:2]
+
     # Try both methods
     fixed_ticks = detect_ruler_ticks_fixed_region(image, text_x_end)
     adaptive_ticks = detect_ruler_ticks_adaptive(image, text_x_end)
 
     # Prefer result with more ticks, but not too many (avoid noise)
-    # Typical rulers have 3-15 ticks with spacing > 20 pixels
+    # Typical rulers have 3-15 ticks with spacing > 0.5% of image width
     def score_result(ticks):
         n = len(ticks)
         if n < 2:
             return 0
 
-        # Check minimum spacing - ticks should be at least 20 pixels apart
+        # Adaptive minimum spacing based on image width
+        # Small images (~1500px): 15px minimum
+        # Large images (~4000px): 40px minimum
+        min_expected_spacing = max(12, int(w * 0.008))
+
+        # Check minimum spacing - ticks should be reasonably spaced
         spacings = [ticks[i+1] - ticks[i] for i in range(len(ticks)-1)]
         min_spacing = min(spacings) if spacings else 0
 
-        if min_spacing < 20:
+        if min_spacing < min_expected_spacing:
             # Penalize results with very close ticks (likely noise/artifacts)
             return max(0, n - 5)
 
         if 3 <= n <= 15:
             return n + 10  # Bonus for reasonable range with good spacing
+        elif 2 <= n < 3:
+            return n + 5  # Some bonus for 2 ticks (better than nothing)
         return n
 
     fixed_score = score_result(fixed_ticks)

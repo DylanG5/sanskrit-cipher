@@ -100,12 +100,21 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
           node.scaleX(1);
           node.scaleY(1);
 
+          const newWidth = Math.max(5, node.width() * scaleX);
+          const newHeight = Math.max(5, node.height() * scaleY);
+
+          // Check if dimensions actually changed (resize vs just transform/rotate)
+          const widthChanged = Math.abs(newWidth - fragment.width) > 1;
+          const heightChanged = Math.abs(newHeight - fragment.height) > 1;
+          const wasResized = widthChanged || heightChanged;
+
           onChange({
             x: node.x(),
             y: node.y(),
-            width: Math.max(5, node.width() * scaleX),
-            height: Math.max(5, node.height() * scaleY),
+            width: newWidth,
+            height: newHeight,
             rotation: node.rotation(),
+            hasBeenResized: wasResized ? true : fragment.hasBeenResized,
           });
           if (onTransformEnd) onTransformEnd();
         }}
