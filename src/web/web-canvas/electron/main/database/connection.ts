@@ -7,6 +7,28 @@ import SCHEMA_SQL from './schema';
 let db: Database.Database | null = null;
 
 /**
+ * Run database migrations to update schema for existing databases.
+ * This ensures backward compatibility when adding new columns.
+ */
+function runMigrations(database: Database.Database): void {
+  // Check if show_segmented column exists in project_fragments table
+  const tableInfo = database.prepare("PRAGMA table_info(project_fragments)").all() as Array<{ name: string }>;
+  const hasShowSegmentedColumn = tableInfo.some(col => col.name === 'show_segmented');
+
+  if (!hasShowSegmentedColumn) {
+    console.log('Running migration: Adding show_segmented column to project_fragments');
+    try {
+      // Add show_segmented column with default value of 1 (true)
+      // This preserves existing behavior where segmented images were shown by default
+      database.exec('ALTER TABLE project_fragments ADD COLUMN show_segmented BOOLEAN DEFAULT 1');
+      console.log('Migration completed: show_segmented column added');
+    } catch (error) {
+      console.error('Migration failed:', error);
+    }
+  }
+}
+
+/**
  * Get the path to the database file.
  * - In development: uses a local db in electron/resources/database/
  * - In production: copies bundled db to userData on first launch
@@ -51,15 +73,18 @@ export function initDatabase(): Database.Database {
 
   // Open database connection
   db = new Database(dbPath);
-  
+
   // Enable foreign keys
   db.pragma('foreign_keys = ON');
-  
+
   // Run schema (creates tables if they don't exist)
   db.exec(SCHEMA_SQL);
-  
+
+  // Run migrations for existing databases
+  runMigrations(db);
+
   console.log(`Database initialized at: ${dbPath}`);
-  
+
   return db;
 }
 

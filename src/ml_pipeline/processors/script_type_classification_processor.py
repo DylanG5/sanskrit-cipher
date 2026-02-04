@@ -108,7 +108,7 @@ class ScriptTypeClassificationProcessor(BaseProcessor):
         # Process if no script type OR different model version
         return (
             fragment.script_type is None or
-            fragment.classification_model_version != self.version
+            fragment.script_type_classification_model_version != self.version
         )
 
     def process(self, fragment: FragmentRecord, data_dir: str) -> ProcessingResult:
@@ -145,17 +145,26 @@ class ScriptTypeClassificationProcessor(BaseProcessor):
             # Check if confidence meets threshold
             below_threshold = confidence < self.confidence_threshold
 
+            # Prepare detailed classification data for database storage
+            classification_data = {
+                'predicted_class': pred_class_name,
+                'confidence': confidence,
+                'class_probabilities': class_probabilities,
+                'model_version': self.version
+            }
+
             # Prepare database updates
             updates = {
                 'script_type': pred_class_name,
-                'classification_model_version': self.version,
+                'script_type_classification_model_version': self.version,
                 'script_type_confidence': confidence,
+                'script_type_classification_data': json.dumps(classification_data),
                 'processing_status': 'completed' if not below_threshold else 'completed_low_confidence',
                 'last_processed_at': 'CURRENT_TIMESTAMP',
                 'processing_error': None  # Clear any previous errors
             }
 
-            # Optionally store detailed class probabilities as JSON
+            # Metadata for logging/debugging
             metadata = {
                 'script_type': pred_class_name,
                 'confidence': confidence,

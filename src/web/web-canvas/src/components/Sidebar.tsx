@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { ManuscriptFragment } from '../types/fragment';
+import { ManuscriptFragment, CanvasFragment } from '../types/fragment';
 import FragmentMetadata from './FragmentMetadata';
 import VirtualizedFragmentList from './VirtualizedFragmentList';
 
@@ -18,6 +18,8 @@ interface SidebarProps {
   onClearSearch?: () => void;
   onSidebarSearch?: (query: string) => void;
   onFragmentUpdate?: () => void; // Callback to refresh fragments after metadata edit
+  canvasFragments?: CanvasFragment[]; // Canvas fragments for scale calculation
+  gridScale?: number; // Grid scale for scale calculation
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -35,6 +37,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClearSearch,
   onSidebarSearch,
   onFragmentUpdate,
+  canvasFragments = [],
+  gridScale = 25,
 }) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -393,6 +397,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             fragment={selectedFragment}
             onClose={handleCloseMetadata}
             onUpdate={onFragmentUpdate}
+            canvasFragment={canvasFragments.find(cf => cf.fragmentId === selectedFragment.id)}
+            gridScale={gridScale}
           />
         </>
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ManuscriptFragment } from '../types/fragment';
+import { ManuscriptFragment, CanvasFragment } from '../types/fragment';
 import { updateFragmentMetadata, getFragmentById } from '../services/fragment-service';
 import {
   validateLineCount,
@@ -13,9 +13,17 @@ interface FragmentMetadataProps {
   fragment: ManuscriptFragment;
   onClose: () => void;
   onUpdate?: () => void; // Callback to refresh fragment data after edit
+  canvasFragment?: CanvasFragment | null; // Canvas fragment data for resize-based scale calculation
+  gridScale?: number; // Grid scale in pixels per cm
 }
 
-const FragmentMetadata: React.FC<FragmentMetadataProps> = ({ fragment: initialFragment, onClose, onUpdate }) => {
+const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
+  fragment: initialFragment,
+  onClose,
+  onUpdate,
+  canvasFragment,
+  gridScale = 25
+}) => {
   const [fragment, setFragment] = useState(initialFragment);
   const { metadata } = fragment;
 
@@ -300,6 +308,78 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({ fragment: initialFr
     );
   };
 
+  // Calculate scale from canvas resize
+  const calculateScaleFromResize = () => {
+    if (!canvasFragment || !canvasFragment.originalWidth || !canvasFragment.originalHeight) {
+      return null;
+    }
+
+    // Current display size (after resize)
+    const displayWidth = canvasFragment.width;
+    const displayHeight = canvasFragment.height;
+
+    // Original image size
+    const originalWidth = canvasFragment.originalWidth;
+    const originalHeight = canvasFragment.originalHeight;
+
+    // Calculate physical size in cm based on grid scale (pixels per cm)
+    const widthInCm = displayWidth / gridScale;
+    const heightInCm = displayHeight / gridScale;
+
+    // Calculate pixels per cm for the original image
+    // If the user resized to align with grid, we can calculate:
+    // pixelsPerCm = (original pixels) / (physical cm)
+    const pixelsPerCmWidth = originalWidth / widthInCm;
+    const pixelsPerCmHeight = originalHeight / heightInCm;
+
+    // Use average or width-based (assuming uniform scaling)
+    const pixelsPerCm = (pixelsPerCmWidth + pixelsPerCmHeight) / 2;
+
+    return {
+      pixelsPerUnit: pixelsPerCm,
+      unit: 'cm' as const,
+      widthInCm,
+      heightInCm,
+    };
+  };
+
+  // Handle setting scale from resize
+  const handleSetScaleFromResize = async () => {
+    const calculatedScale = calculateScaleFromResize();
+    if (!calculatedScale) return;
+
+    setSavingField('scaleFromResize');
+
+    try {
+      const result = await updateFragmentMetadata(fragment.id, {
+        pixels_per_unit: calculatedScale.pixelsPerUnit,
+        scale_unit: calculatedScale.unit,
+        scale_detection_status: 'success'
+      });
+
+      if (result.success) {
+        // Refetch the fragment to get updated data
+        const updatedFragment = await getFragmentById(fragment.id);
+        if (updatedFragment) {
+          setFragment(updatedFragment);
+        }
+
+        setSaveSuccess('scaleFromResize');
+        setTimeout(() => setSaveSuccess(null), 2000);
+
+        if (onUpdate) {
+          onUpdate();
+        }
+      } else {
+        setFieldErrors({ ...fieldErrors, scaleFromResize: result.error || 'Failed to save' });
+      }
+    } catch (error) {
+      setFieldErrors({ ...fieldErrors, scaleFromResize: 'Failed to save scale' });
+    } finally {
+      setSavingField(null);
+    }
+  };
+
   const renderDropdownField = (
     label: string,
     icon: React.ReactNode,
@@ -579,10 +659,53 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({ fragment: initialFr
                 'number',
                 'amber'
               )}
+              {/* Set Scale from Resize Button */}
+              {canvasFragment?.hasBeenResized && canvasFragment.originalWidth && (
+                <div className="mt-2">
+                  <button
+                    onClick={handleSetScaleFromResize}
+                    disabled={savingField === 'scaleFromResize'}
+                    className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-md text-sm font-medium shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {savingField === 'scaleFromResize' ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        </svg>
+                        Setting Scale...
+                      </>
+                    ) : saveSuccess === 'scaleFromResize' ? (
+                      <>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                        </svg>
+                        Scale Set!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                        Set Scale from Resize
+                      </>
+                    )}
+                  </button>
+                  {(() => {
+                    const calc = calculateScaleFromResize();
+                    return calc ? (
+                      <p className="text-xs text-slate-500 mt-1 text-center">
+                        Will set to {calc.pixelsPerUnit.toFixed(1)} px/cm
+                        <span className="text-slate-400"> ({calc.widthInCm.toFixed(1)} × {calc.heightInCm.toFixed(1)} cm)</span>
+                      </p>
+                    ) : null;
+                  })()}
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
@@ -591,6 +714,49 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({ fragment: initialFr
                 </div>
                 <span className="text-slate-400 text-sm">No ruler detected</span>
               </div>
+              {/* Set Scale from Resize Button - also show when no scale exists */}
+              {canvasFragment?.hasBeenResized && canvasFragment.originalWidth && (
+                <div className="mt-2">
+                  <button
+                    onClick={handleSetScaleFromResize}
+                    disabled={savingField === 'scaleFromResize'}
+                    className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-md text-sm font-medium shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {savingField === 'scaleFromResize' ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        </svg>
+                        Setting Scale...
+                      </>
+                    ) : saveSuccess === 'scaleFromResize' ? (
+                      <>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                        </svg>
+                        Scale Set!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                        Set Scale from Resize
+                      </>
+                    )}
+                  </button>
+                  {(() => {
+                    const calc = calculateScaleFromResize();
+                    return calc ? (
+                      <p className="text-xs text-slate-500 mt-1 text-center">
+                        Will set to {calc.pixelsPerUnit.toFixed(1)} px/cm
+                        <span className="text-slate-400"> ({calc.widthInCm.toFixed(1)} × {calc.heightInCm.toFixed(1)} cm)</span>
+                      </p>
+                    ) : null;
+                  })()}
+                </div>
+              )}
             </div>
           )}
 

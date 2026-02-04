@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS project_fragments (
     scale_y REAL DEFAULT 1,
     is_locked BOOLEAN DEFAULT 0,
     z_index INTEGER DEFAULT 0,
-    
+    show_segmented BOOLEAN DEFAULT 1,
+
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
     FOREIGN KEY (fragment_id) REFERENCES fragments(fragment_id)
 );

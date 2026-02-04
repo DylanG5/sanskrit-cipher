@@ -32,6 +32,7 @@ interface CanvasFragment {
   scaleY: number;
   isLocked: boolean;
   zIndex?: number;
+  showSegmented?: boolean;
 }
 
 interface CanvasState {
@@ -323,8 +324,8 @@ export function registerIpcHandlers(): void {
         // Insert canvas fragments
         const insertFragment = db.prepare(`
           INSERT INTO project_fragments (
-            project_id, fragment_id, x, y, width, height, rotation, scale_x, scale_y, is_locked, z_index
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            project_id, fragment_id, x, y, width, height, rotation, scale_x, scale_y, is_locked, z_index, show_segmented
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         for (const frag of canvasState.fragments) {
@@ -339,7 +340,8 @@ export function registerIpcHandlers(): void {
             frag.scaleX || 1,
             frag.scaleY || 1,
             frag.isLocked ? 1 : 0,
-            frag.zIndex || 0
+            frag.zIndex || 0,
+            frag.showSegmented !== undefined ? (frag.showSegmented ? 1 : 0) : 1
           );
         }
 
@@ -376,7 +378,8 @@ export function registerIpcHandlers(): void {
           fragment_id as fragmentId,
           x, y, width, height, rotation,
           scale_x as scaleX, scale_y as scaleY,
-          is_locked as isLocked, z_index as zIndex
+          is_locked as isLocked, z_index as zIndex,
+          show_segmented as showSegmented
         FROM project_fragments
         WHERE project_id = ?
         ORDER BY z_index ASC

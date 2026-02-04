@@ -49,6 +49,7 @@ export interface CanvasFragmentData {
   scaleY: number;
   isLocked: boolean;
   zIndex?: number;
+  showSegmented?: boolean;
 }
 
 export interface CanvasStateData {

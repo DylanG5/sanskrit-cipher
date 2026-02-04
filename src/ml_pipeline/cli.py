@@ -7,6 +7,8 @@ Usage:
     python -m ml_pipeline.cli run --processors segmentation # Run only segmentation
     python -m ml_pipeline.cli run --resume                  # Resume from last failure
     python -m ml_pipeline.cli run --dry-run                 # Test run (no DB updates)
+    python -m ml_pipeline.cli run --force --limit 1000      # Force reprocess 1000 fragments
+    python -m ml_pipeline.cli run --collection BLL --limit 1000  # Process 1000 BLL fragments
     python -m ml_pipeline.cli list                          # List available processors
     python -m ml_pipeline.cli status                        # Show processing status
     python -m ml_pipeline.cli migrate                       # Run database migration
@@ -35,13 +37,16 @@ def cmd_run(args):
 
     processor_names = args.processors.split(',') if args.processors else None
     fragment_ids = args.fragment_ids.split(',') if args.fragment_ids else None
+    collection = args.collection if hasattr(args, 'collection') else None
 
     orchestrator.run(
         processor_names=processor_names,
         resume=args.resume,
         dry_run=args.dry_run,
         limit=args.limit,
-        fragment_ids=fragment_ids
+        fragment_ids=fragment_ids,
+        force=args.force,
+        collection=collection
     )
 
 
@@ -183,6 +188,15 @@ Examples:
   # Resume from last processed fragment
   python -m ml_pipeline.cli run --resume
 
+  # Force reprocess 1000 fragments
+  python -m ml_pipeline.cli run --force --limit 1000
+
+  # Process only BLL collection fragments
+  python -m ml_pipeline.cli run --collection BLL --limit 1000
+
+  # Process BLX fragments with force reprocessing
+  python -m ml_pipeline.cli run --collection BLX --force
+
   # List available processors
   python -m ml_pipeline.cli list
 
@@ -225,6 +239,15 @@ Examples:
         '--limit', '-l',
         type=int,
         help='Limit number of fragments to process'
+    )
+    run_parser.add_argument(
+        '--force', '-f',
+        action='store_true',
+        help='Force reprocessing of fragments even if already processed with same model version'
+    )
+    run_parser.add_argument(
+        '--collection',
+        help='Filter fragments by collection (e.g., BLL, BLX, BLL811). Matches image_path prefix.'
     )
 
     # List command

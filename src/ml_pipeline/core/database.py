@@ -189,7 +189,8 @@ class DatabaseManager:
         limit: Optional[int] = None,
         offset: int = 0,
         fragment_ids: Optional[List[str]] = None,
-        processing_status: Optional[str] = None
+        processing_status: Optional[str] = None,
+        collection: Optional[str] = None
     ) -> List[FragmentRecord]:
         """
         Query fragments from database.
@@ -199,6 +200,7 @@ class DatabaseManager:
             offset: Number of fragments to skip
             fragment_ids: Optional list of specific fragment IDs to fetch
             processing_status: Optional filter by processing status
+            collection: Optional filter by collection (matches image_path prefix)
 
         Returns:
             List of FragmentRecord objects
@@ -216,6 +218,10 @@ class DatabaseManager:
         if processing_status:
             query += " AND processing_status = ?"
             params.append(processing_status)
+
+        if collection:
+            query += " AND image_path LIKE ?"
+            params.append(f"{collection}%")
 
         query += " ORDER BY id"
 

@@ -66,7 +66,9 @@ class PipelineOrchestrator:
         resume: bool = False,
         dry_run: bool = False,
         limit: Optional[int] = None,
-        fragment_ids: Optional[List[str]] = None
+        fragment_ids: Optional[List[str]] = None,
+        force: bool = False,
+        collection: Optional[str] = None
     ) -> None:
         """
         Run the pipeline.
@@ -77,17 +79,19 @@ class PipelineOrchestrator:
             dry_run: Don't commit database changes
             limit: Limit number of fragments to process
             fragment_ids: Process specific fragment IDs only
+            force: Force reprocessing even if already processed with same model version
+            collection: Filter fragments by collection (matches image_path prefix)
         """
         try:
             # Initialize processors
-            self._initialize_processors(processor_names)
+            self._initialize_processors(processor_names, force)
 
             if not self.processors:
                 self.logger.error("No processors enabled")
                 return
 
             # Get fragments to process
-            fragments = self._get_fragments(resume, limit, fragment_ids)
+            fragments = self._get_fragments(resume, limit, fragment_ids, collection)
 
             if not fragments:
                 self.logger.info("No fragments to process")
@@ -98,6 +102,9 @@ class PipelineOrchestrator:
 
             if dry_run:
                 self.logger.info("DRY RUN MODE - No database changes will be saved")
+
+            if force:
+                self.logger.info("FORCE MODE - Reprocessing fragments regardless of model version")
 
             # Process each fragment
             processed = 0
@@ -132,12 +139,13 @@ class PipelineOrchestrator:
             self._cleanup_processors()
             self.db.disconnect()
 
-    def _initialize_processors(self, processor_names: Optional[List[str]]) -> None:
+    def _initialize_processors(self, processor_names: Optional[List[str]], force: bool = False) -> None:
         """
         Initialize processors based on configuration.
 
         Args:
             processor_names: Specific processors to run, or None for all enabled
+            force: Override skip_processed settings to force reprocessing
         """
         processors_config = self.config.get('processors', {})
 
@@ -162,6 +170,10 @@ class PipelineOrchestrator:
                 if not processor_config:
                     self.logger.warning(f"No configuration found for processor: {name}")
                     continue
+
+                # Override skip_processed if force mode is enabled
+                if force and 'config' in processor_config:
+                    processor_config['config']['skip_processed'] = False
 
                 # Resolve model paths relative to config file
                 base_dir = self.config_path.parent
@@ -194,7 +206,8 @@ class PipelineOrchestrator:
         self,
         resume: bool,
         limit: Optional[int],
-        fragment_ids: Optional[List[str]]
+        fragment_ids: Optional[List[str]],
+        collection: Optional[str] = None
     ) -> List:
         """
         Get fragments to process from database.
@@ -203,6 +216,7 @@ class PipelineOrchestrator:
             resume: Resume from last processed fragment
             limit: Maximum number of fragments
             fragment_ids: Specific fragment IDs to process
+            collection: Filter by collection name (matches image_path prefix)
 
         Returns:
             List of FragmentRecord objects
@@ -218,7 +232,8 @@ class PipelineOrchestrator:
         return self.db.get_fragments(
             limit=limit,
             offset=offset,
-            fragment_ids=fragment_ids
+            fragment_ids=fragment_ids,
+            collection=collection
         )
 
     def _process_fragment(self, fragment, dry_run: bool) -> bool:
