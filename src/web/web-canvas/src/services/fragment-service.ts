@@ -11,6 +11,7 @@ import {
   FragmentRecord,
   FragmentFilters as ApiFilters,
 } from './electron-api';
+import { getScriptTypeDisplay } from '../types/constants';
 
 // Re-export for convenience
 export type { ApiFilters as FragmentApiFilters };
@@ -27,7 +28,7 @@ export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragm
     thumbnailPath: `electron-image://${record.image_path}`,
     metadata: {
       lineCount: record.line_count ?? undefined,
-      script: record.script_type ?? undefined,
+      script: getScriptTypeDisplay(record.script_type),
       isEdgePiece: record.edge_piece === 1 ? true : record.edge_piece === 0 ? false : undefined,
       hasTopEdge: record.has_top_edge === 1 ? true : record.has_top_edge === 0 ? false : undefined,
       hasBottomEdge: record.has_bottom_edge === 1 ? true : record.has_bottom_edge === 0 ? false : undefined,

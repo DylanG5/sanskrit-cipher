@@ -7,7 +7,7 @@ import {
   validateScriptType,
   validateScaleUnit,
 } from '../utils/metadataValidation';
-import { SCRIPT_TYPES } from '../types/constants';
+import { SCRIPT_TYPES, getScriptTypeDB } from '../types/constants';
 
 interface FragmentMetadataProps {
   fragment: ManuscriptFragment;
@@ -73,8 +73,14 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
     setSavingField(field);
     setFieldErrors({ ...fieldErrors, [field]: '' });
 
+    // Convert display value to database value for script type
+    let dbValue = value;
+    if (field === 'script') {
+      dbValue = getScriptTypeDB(value) || value;
+    }
+
     try {
-      const result = await updateFragmentMetadata(fragment.id, { [dbField]: value });
+      const result = await updateFragmentMetadata(fragment.id, { [dbField]: dbValue });
 
       if (result.success) {
         // Refetch the fragment to get updated data
