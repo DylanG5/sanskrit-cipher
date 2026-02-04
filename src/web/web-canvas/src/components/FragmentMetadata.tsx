@@ -621,6 +621,30 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
             'emerald'
           )}
 
+          {/* Left Edge */}
+          {renderToggleField(
+            'Left Edge',
+            <svg className={`w-4 h-4 ${metadata?.hasLeftEdge ? 'text-emerald-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>,
+            'hasLeftEdge',
+            'has_left_edge',
+            metadata?.hasLeftEdge,
+            'emerald'
+          )}
+
+          {/* Right Edge */}
+          {renderToggleField(
+            'Right Edge',
+            <svg className={`w-4 h-4 ${metadata?.hasRightEdge ? 'text-emerald-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>,
+            'hasRightEdge',
+            'has_right_edge',
+            metadata?.hasRightEdge,
+            'emerald'
+          )}
+
           {/* Circle Detection */}
           {renderToggleField(
             'Has Circle',

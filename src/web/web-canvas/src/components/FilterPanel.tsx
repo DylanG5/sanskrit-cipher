@@ -49,6 +49,22 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setLocalFilters({ ...localFilters, isEdgePiece: value });
   };
 
+  const handleTopEdgeChange = (value: boolean | null) => {
+    setLocalFilters({ ...localFilters, hasTopEdge: value });
+  };
+
+  const handleBottomEdgeChange = (value: boolean | null) => {
+    setLocalFilters({ ...localFilters, hasBottomEdge: value });
+  };
+
+  const handleLeftEdgeChange = (value: boolean | null) => {
+    setLocalFilters({ ...localFilters, hasLeftEdge: value });
+  };
+
+  const handleRightEdgeChange = (value: boolean | null) => {
+    setLocalFilters({ ...localFilters, hasRightEdge: value });
+  };
+
   const handleCircleChange = (value: boolean | null) => {
     setLocalFilters({ ...localFilters, hasCircle: value });
   };
@@ -67,6 +83,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     localFilters.lineCountMax !== undefined ||
     localFilters.scripts.length > 0 ||
     localFilters.isEdgePiece !== null ||
+    localFilters.hasTopEdge !== null ||
+    localFilters.hasBottomEdge !== null ||
+    localFilters.hasLeftEdge !== null ||
+    localFilters.hasRightEdge !== null ||
     localFilters.hasCircle !== null;
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -350,6 +370,202 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     name="edgePiece"
                     checked={localFilters.isEdgePiece === false}
                     onChange={() => handleEdgePieceChange(false)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">No</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Top Edge Filter */}
+            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+              localFilters.hasTopEdge !== null
+                ? 'border-emerald-400 ring-2 ring-emerald-100'
+                : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Top Edge</h3>
+                {localFilters.hasTopEdge !== null && (
+                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="topEdge"
+                    checked={localFilters.hasTopEdge === null}
+                    onChange={() => handleTopEdgeChange(null)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="topEdge"
+                    checked={localFilters.hasTopEdge === true}
+                    onChange={() => handleTopEdgeChange(true)}
+                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Yes</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="topEdge"
+                    checked={localFilters.hasTopEdge === false}
+                    onChange={() => handleTopEdgeChange(false)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">No</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Bottom Edge Filter */}
+            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+              localFilters.hasBottomEdge !== null
+                ? 'border-emerald-400 ring-2 ring-emerald-100'
+                : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Bottom Edge</h3>
+                {localFilters.hasBottomEdge !== null && (
+                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="bottomEdge"
+                    checked={localFilters.hasBottomEdge === null}
+                    onChange={() => handleBottomEdgeChange(null)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="bottomEdge"
+                    checked={localFilters.hasBottomEdge === true}
+                    onChange={() => handleBottomEdgeChange(true)}
+                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Yes</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="bottomEdge"
+                    checked={localFilters.hasBottomEdge === false}
+                    onChange={() => handleBottomEdgeChange(false)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">No</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Left Edge Filter */}
+            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+              localFilters.hasLeftEdge !== null
+                ? 'border-emerald-400 ring-2 ring-emerald-100'
+                : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Left Edge</h3>
+                {localFilters.hasLeftEdge !== null && (
+                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="leftEdge"
+                    checked={localFilters.hasLeftEdge === null}
+                    onChange={() => handleLeftEdgeChange(null)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="leftEdge"
+                    checked={localFilters.hasLeftEdge === true}
+                    onChange={() => handleLeftEdgeChange(true)}
+                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Yes</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="leftEdge"
+                    checked={localFilters.hasLeftEdge === false}
+                    onChange={() => handleLeftEdgeChange(false)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">No</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Right Edge Filter */}
+            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+              localFilters.hasRightEdge !== null
+                ? 'border-emerald-400 ring-2 ring-emerald-100'
+                : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Right Edge</h3>
+                {localFilters.hasRightEdge !== null && (
+                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="rightEdge"
+                    checked={localFilters.hasRightEdge === null}
+                    onChange={() => handleRightEdgeChange(null)}
+                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="rightEdge"
+                    checked={localFilters.hasRightEdge === true}
+                    onChange={() => handleRightEdgeChange(true)}
+                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-700 font-medium">Yes</span>
+                </label>
+                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="rightEdge"
+                    checked={localFilters.hasRightEdge === false}
+                    onChange={() => handleRightEdgeChange(false)}
                     className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
                   />
                   <span className="text-sm text-slate-700 font-medium">No</span>
