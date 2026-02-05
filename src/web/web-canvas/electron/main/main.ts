@@ -3,9 +3,19 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { initDatabase, closeDatabase } from './database/connection';
 import { registerIpcHandlers } from './ipc/handlers';
+import squirrelStartup from 'electron-squirrel-startup';
+
+// Add Resources/node_modules to module search paths for packaged app
+if (app.isPackaged) {
+  const resourcesPath = process.resourcesPath;
+  const nodeModulesPath = path.join(resourcesPath, 'node_modules');
+  if (fs.existsSync(nodeModulesPath)) {
+    (module as any).paths.push(nodeModulesPath);
+  }
+}
 
 // Handle Squirrel events (Windows installer)
-if (require('electron-squirrel-startup')) {
+if (squirrelStartup) {
   app.quit();
 }
 
@@ -29,15 +39,31 @@ const createWindow = () => {
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-    );
+    // In packaged app, load from unpacked directory if it exists
+    let htmlPath = path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`);
+
+    // Check if running from ASAR and unpacked version exists
+    if (htmlPath.includes('.asar')) {
+      const unpackedPath = htmlPath.replace('app.asar', 'app.asar.unpacked');
+      if (fs.existsSync(unpackedPath)) {
+        htmlPath = unpackedPath;
+        console.log('Using unpacked renderer files from:', htmlPath);
+      }
+    }
+
+    // Use loadURL with file:// protocol to properly load from unpacked directory
+    const fileUrl = `file://${htmlPath}`;
+    console.log('Loading URL:', fileUrl);
+    mainWindow.loadURL(fileUrl);
   }
 
-  // Open DevTools in development
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.webContents.openDevTools();
-  }
+  // Open DevTools to debug rendering issues
+  mainWindow.webContents.openDevTools();
+
+  // Log the actual loaded URL
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Finished loading:', mainWindow.webContents.getURL());
+  });
 };
 
 // Register custom protocol for loading images

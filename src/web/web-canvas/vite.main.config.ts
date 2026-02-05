@@ -43,7 +43,7 @@ export default defineConfig((env) => {
         formats: ['cjs'],
       },
       rollupOptions: {
-        external: [...builtins, 'better-sqlite3', 'electron-squirrel-startup'],
+        external: [...builtins, 'better-sqlite3'],
       },
     },
     define,
