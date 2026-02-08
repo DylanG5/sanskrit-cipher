@@ -17,6 +17,7 @@ export interface ManuscriptFragment {
     hasLeftEdge?: boolean;
     hasRightEdge?: boolean;
     hasCircle?: boolean;  // Circle classification from ML model
+    custom?: Record<string, string | null | undefined>; // User-defined metadata fields
     // Scale information from ruler detection
     scale?: {
       unit: 'cm' | 'mm';  // Physical unit

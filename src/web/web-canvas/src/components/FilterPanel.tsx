@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { FragmentFilters, DEFAULT_FILTERS } from '../types/filters';
+import { CustomFilterDefinition } from '../types/customFilters';
 
 interface FilterPanelProps {
   filters: FragmentFilters;
@@ -11,6 +12,13 @@ interface FilterPanelProps {
   onToggle: () => void;
   width: number;
   onWidthChange: (width: number) => void;
+  customFilters: CustomFilterDefinition[];
+  onCreateCustomFilter: (payload: {
+    label: string;
+    type: 'dropdown' | 'text';
+    options?: string[];
+  }) => Promise<CustomFilterDefinition | null>;
+  onDeleteCustomFilter: (id: number) => Promise<boolean>;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -23,10 +31,36 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onToggle,
   width,
   onWidthChange,
+  customFilters,
+  onCreateCustomFilter,
+  onDeleteCustomFilter,
 }) => {
   const [localFilters, setLocalFilters] = useState<FragmentFilters>(filters);
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [newFilterLabel, setNewFilterLabel] = useState('');
+  const [newFilterType, setNewFilterType] = useState<'dropdown' | 'text'>('dropdown');
+  const [newFilterOptions, setNewFilterOptions] = useState('');
+  const [newFilterError, setNewFilterError] = useState<string | null>(null);
+  const [isCreatingCustom, setIsCreatingCustom] = useState(false);
+
+  React.useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
+  React.useEffect(() => {
+    if (customFilters.length === 0) {
+      return;
+    }
+    setLocalFilters((prev) => ({
+      ...prev,
+      custom: customFilters.reduce<Record<string, string | null | undefined>>((acc, filter) => {
+        acc[filter.filterKey] = prev.custom?.[filter.filterKey];
+        return acc;
+      }, {}),
+    }));
+  }, [customFilters]);
 
   const handleLineCountMinChange = (value: string) => {
     const num = value === '' ? undefined : parseInt(value);
@@ -69,6 +103,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setLocalFilters({ ...localFilters, hasCircle: value });
   };
 
+  const handleCustomValueChange = (key: string, value: string) => {
+    const nextValue = value.trim() === '' ? undefined : value;
+    setLocalFilters({
+      ...localFilters,
+      custom: {
+        ...(localFilters.custom || {}),
+        [key]: nextValue,
+      },
+    });
+  };
+
   const handleApply = () => {
     onFiltersChange(localFilters);
   };
@@ -77,6 +122,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setLocalFilters(DEFAULT_FILTERS);
     onFiltersChange(DEFAULT_FILTERS);
   };
+
+  const hasCustomFilters = Object.values(localFilters.custom || {}).some(
+    (value) => value !== undefined && value !== null && value !== ''
+  );
 
   const hasActiveFilters =
     localFilters.lineCountMin !== undefined ||
@@ -87,7 +136,58 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     localFilters.hasBottomEdge !== null ||
     localFilters.hasLeftEdge !== null ||
     localFilters.hasRightEdge !== null ||
-    localFilters.hasCircle !== null;
+    localFilters.hasCircle !== null ||
+    hasCustomFilters;
+
+  const parseOptions = (input: string): string[] =>
+    input
+      .split(/[\n,]/g)
+      .map((option) => option.trim())
+      .filter((option) => option.length > 0);
+
+  const handleCreateCustom = async () => {
+    setNewFilterError(null);
+    const label = newFilterLabel.trim();
+    if (!label) {
+      setNewFilterError('Enter a filter name.');
+      return;
+    }
+
+    let options: string[] | undefined;
+    if (newFilterType === 'dropdown') {
+      options = parseOptions(newFilterOptions);
+      if (!options.length) {
+        setNewFilterError('Add at least one option.');
+        return;
+      }
+    }
+
+    setIsCreatingCustom(true);
+    const created = await onCreateCustomFilter({
+      label,
+      type: newFilterType,
+      options,
+    });
+    setIsCreatingCustom(false);
+
+    if (!created) {
+      setNewFilterError('Failed to create filter.');
+      return;
+    }
+
+    setNewFilterLabel('');
+    setNewFilterOptions('');
+    setNewFilterType('dropdown');
+    setIsAddingCustom(false);
+  };
+
+  const handleDeleteCustomFilter = async (filter: CustomFilterDefinition) => {
+    const confirmed = window.confirm(`Delete custom filter "${filter.label}"?`);
+    if (!confirmed) {
+      return;
+    }
+    await onDeleteCustomFilter(filter.id);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -220,12 +320,47 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                       {filters.isEdgePiece === false && (
                         <div>• Non-edge pieces only</div>
                       )}
+                      {filters.hasTopEdge === true && (
+                        <div>• Top edge only</div>
+                      )}
+                      {filters.hasTopEdge === false && (
+                        <div>• No top edge only</div>
+                      )}
+                      {filters.hasBottomEdge === true && (
+                        <div>• Bottom edge only</div>
+                      )}
+                      {filters.hasBottomEdge === false && (
+                        <div>• No bottom edge only</div>
+                      )}
+                      {filters.hasLeftEdge === true && (
+                        <div>• Left edge only</div>
+                      )}
+                      {filters.hasLeftEdge === false && (
+                        <div>• No left edge only</div>
+                      )}
+                      {filters.hasRightEdge === true && (
+                        <div>• Right edge only</div>
+                      )}
+                      {filters.hasRightEdge === false && (
+                        <div>• No right edge only</div>
+                      )}
                       {filters.hasCircle === true && (
                         <div>• Has circle only</div>
                       )}
                       {filters.hasCircle === false && (
                         <div>• No circle only</div>
                       )}
+                      {customFilters.map((filter) => {
+                        const value = filters.custom?.[filter.filterKey];
+                        if (!value) {
+                          return null;
+                        }
+                        return (
+                          <div key={filter.filterKey}>
+                            • {filter.label}: {value}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -619,6 +754,160 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   />
                   <span className="text-sm text-slate-700 font-medium">No</span>
                 </label>
+              </div>
+            </div>
+
+            {/* Custom Filters */}
+            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+              hasCustomFilters ? 'border-amber-400 ring-2 ring-amber-100' : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Custom Filters</h3>
+                {hasCustomFilters && (
+                  <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                )}
+              </div>
+
+              {customFilters.length === 0 && !isAddingCustom && (
+                <p className="text-sm text-slate-500 italic">No custom filters yet.</p>
+              )}
+
+              {customFilters.length > 0 && (
+                <div className="space-y-3">
+                  {customFilters.map((filter) => {
+                    const value = localFilters.custom?.[filter.filterKey] ?? '';
+                    const isActive = value !== undefined && value !== null && value !== '';
+
+                    return (
+                      <div key={filter.filterKey} className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-700">{filter.label}</span>
+                            {isActive && (
+                              <span className="text-[10px] uppercase tracking-wide text-amber-600">Active</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleDeleteCustomFilter(filter)}
+                            className="text-[10px] font-semibold text-red-600 hover:text-red-700 uppercase tracking-wide"
+                            title="Delete filter"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        {filter.type === 'dropdown' ? (
+                          <select
+                            value={value}
+                            onChange={(e) => handleCustomValueChange(filter.filterKey, e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white"
+                          >
+                            <option value="">Any</option>
+                            {(filter.options || []).map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={value}
+                            onChange={(e) => handleCustomValueChange(filter.filterKey, e.target.value)}
+                            placeholder="Exact match"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-4 border-t border-slate-200 pt-3">
+                {!isAddingCustom ? (
+                  <button
+                    onClick={() => setIsAddingCustom(true)}
+                    className="w-full px-3 py-2 rounded-md text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
+                  >
+                    Add Custom Filter
+                  </button>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1">Filter name</label>
+                      <input
+                        type="text"
+                        value={newFilterLabel}
+                        onChange={(e) => setNewFilterLabel(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                        placeholder="e.g. Material"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs text-slate-600">Input type</label>
+                      <div className="flex items-center gap-3 text-sm">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="customFilterType"
+                            checked={newFilterType === 'dropdown'}
+                            onChange={() => setNewFilterType('dropdown')}
+                            className="w-4 h-4 text-amber-600 border-slate-300 focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                          />
+                          Dropdown
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="customFilterType"
+                            checked={newFilterType === 'text'}
+                            onChange={() => setNewFilterType('text')}
+                            className="w-4 h-4 text-amber-600 border-slate-300 focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                          />
+                          Text match
+                        </label>
+                      </div>
+                    </div>
+                    {newFilterType === 'dropdown' && (
+                      <div>
+                        <label className="block text-xs text-slate-600 mb-1">Options (comma or new line)</label>
+                        <textarea
+                          value={newFilterOptions}
+                          onChange={(e) => setNewFilterOptions(e.target.value)}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                          placeholder="paper, parchment, palm"
+                        />
+                      </div>
+                    )}
+                    {newFilterError && (
+                      <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                        {newFilterError}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleCreateCustom}
+                        disabled={isCreatingCustom}
+                        className="flex-1 px-3 py-2 rounded-md text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 transition-colors disabled:opacity-50"
+                      >
+                        {isCreatingCustom ? 'Creating...' : 'Create Filter'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAddingCustom(false);
+                          setNewFilterError(null);
+                        }}
+                        className="px-3 py-2 rounded-md text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

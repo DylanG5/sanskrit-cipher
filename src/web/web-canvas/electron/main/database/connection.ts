@@ -26,6 +26,70 @@ function runMigrations(database: Database.Database): void {
       console.error('Migration failed:', error);
     }
   }
+
+  // Ensure required fragment columns exist for newer features
+  const fragmentInfo = database.prepare("PRAGMA table_info(fragments)").all() as Array<{ name: string }>;
+  const fragmentColumns = new Set(fragmentInfo.map(col => col.name));
+
+  const ensureFragmentColumn = (name: string, type: string) => {
+    if (fragmentColumns.has(name)) {
+      return;
+    }
+    try {
+      database.exec(`ALTER TABLE fragments ADD COLUMN ${name} ${type}`);
+      fragmentColumns.add(name);
+    } catch (error) {
+      console.error(`Migration failed: adding fragments.${name}`, error);
+    }
+  };
+
+  ensureFragmentColumn('has_left_edge', 'BOOLEAN DEFAULT NULL');
+  ensureFragmentColumn('has_right_edge', 'BOOLEAN DEFAULT NULL');
+  ensureFragmentColumn('has_circle', 'BOOLEAN DEFAULT NULL');
+  ensureFragmentColumn('scale_unit', 'TEXT');
+  ensureFragmentColumn('pixels_per_unit', 'REAL');
+  ensureFragmentColumn('scale_detection_status', 'TEXT');
+  ensureFragmentColumn('scale_model_version', 'TEXT');
+
+  // Create common indexes if columns exist
+  const ensureIndex = (indexName: string, table: string, column: string) => {
+    if (!fragmentColumns.has(column) && table === 'fragments') {
+      return;
+    }
+    try {
+      database.exec(`CREATE INDEX IF NOT EXISTS ${indexName} ON ${table}(${column})`);
+    } catch (error) {
+      console.error(`Migration failed: creating index ${indexName}`, error);
+    }
+  };
+
+  ensureIndex('idx_fragment_id', 'fragments', 'fragment_id');
+  ensureIndex('idx_line_count', 'fragments', 'line_count');
+  ensureIndex('idx_script_type', 'fragments', 'script_type');
+  ensureIndex('idx_edge_piece', 'fragments', 'edge_piece');
+  ensureIndex('idx_scale_detection', 'fragments', 'scale_detection_status');
+  ensureIndex('idx_has_circle', 'fragments', 'has_circle');
+  ensureIndex('idx_project_fragments_project', 'project_fragments', 'project_id');
+  ensureIndex('idx_custom_filters_key', 'custom_filters', 'filter_key');
+
+  // Ensure custom filter columns exist on fragments table
+  const customFilterRows = database.prepare("SELECT filter_key FROM custom_filters").all() as Array<{ filter_key: string }>;
+
+  for (const row of customFilterRows) {
+    const key = row.filter_key;
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+      continue;
+    }
+    if (!fragmentColumns.has(key)) {
+      try {
+        database.exec(`ALTER TABLE fragments ADD COLUMN ${key} TEXT`);
+        database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_${key} ON fragments(${key})`);
+        fragmentColumns.add(key);
+      } catch (error) {
+        console.error(`Migration failed: adding custom filter column ${key}`, error);
+      }
+    }
+  }
 }
 
 /**

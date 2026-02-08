@@ -12,6 +12,7 @@ import {
   FragmentFilters as ApiFilters,
 } from './electron-api';
 import { getScriptTypeDisplay } from '../types/constants';
+import { CustomFilterDefinition } from '../types/customFilters';
 
 // Re-export for convenience
 export type { ApiFilters as FragmentApiFilters };
@@ -19,7 +20,22 @@ export type { ApiFilters as FragmentApiFilters };
 /**
  * Convert database fragment record to UI ManuscriptFragment type
  */
-export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragment {
+export function mapToManuscriptFragment(
+  record: FragmentRecord,
+  customFilters: CustomFilterDefinition[] = []
+): ManuscriptFragment {
+  const custom: Record<string, string | null | undefined> = {};
+  for (const filter of customFilters) {
+    const rawValue = record[filter.filterKey];
+    if (rawValue === undefined) {
+      custom[filter.filterKey] = undefined;
+    } else if (rawValue === null) {
+      custom[filter.filterKey] = null;
+    } else {
+      custom[filter.filterKey] = String(rawValue);
+    }
+  }
+
   return {
     id: record.fragment_id,
     name: record.fragment_id,
@@ -43,6 +59,7 @@ export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragm
         pixelsPerUnit: record.pixels_per_unit,
         detectionStatus: record.scale_detection_status === 'success' ? 'success' : 'error',
       } : undefined,
+      custom: customFilters.length > 0 ? custom : undefined,
     },
   };
 }
@@ -51,7 +68,8 @@ export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragm
  * Get all fragments from the database with optional filtering
  */
 export async function getAllFragments(
-  filters?: ApiFilters
+  filters?: ApiFilters,
+  customFilters: CustomFilterDefinition[] = []
 ): Promise<ManuscriptFragment[]> {
   if (!isElectron()) {
     console.warn('Not running in Electron, returning empty fragments');
@@ -66,7 +84,7 @@ export async function getAllFragments(
     return [];
   }
 
-  return response.data.map(mapToManuscriptFragment);
+  return response.data.map((record) => mapToManuscriptFragment(record, customFilters));
 }
 
 /**
@@ -92,7 +110,8 @@ export async function getFragmentCount(filters?: ApiFilters): Promise<number> {
  * Get a single fragment by ID
  */
 export async function getFragmentById(
-  fragmentId: string
+  fragmentId: string,
+  customFilters: CustomFilterDefinition[] = []
 ): Promise<ManuscriptFragment | null> {
   if (!isElectron()) {
     return null;
@@ -105,7 +124,7 @@ export async function getFragmentById(
     return null;
   }
 
-  return mapToManuscriptFragment(response.data);
+  return mapToManuscriptFragment(response.data, customFilters);
 }
 
 

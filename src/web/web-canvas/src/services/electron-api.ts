@@ -4,6 +4,8 @@
  * Provides typed access to the Electron IPC API from React components.
  */
 
+import { CustomFilterDefinition } from '../types/customFilters';
+
 // Types matching the preload script
 export interface FragmentFilters {
   lineCountMin?: number;
@@ -16,6 +18,7 @@ export interface FragmentFilters {
   hasRightEdge?: boolean | null;
   hasCircle?: boolean | null;
   search?: string;
+  custom?: Record<string, string | null | undefined>;
   limit?: number;
   offset?: number;
 }
@@ -42,6 +45,7 @@ export interface FragmentRecord {
   scale_model_version: string | null;
   // Circle detection field
   has_circle: number | null;
+  [key: string]: unknown;
 }
 
 export interface CanvasFragmentData {
@@ -125,6 +129,15 @@ declare global {
         load: (projectId: number) => Promise<ApiResponse<{ project: Project; canvasState: CanvasStateData; notes: string }>>;
         delete: (projectId: number) => Promise<ApiResponse<null> & { deleted?: boolean }>;
         rename: (projectId: number, newName: string) => Promise<ApiResponse<null>>;
+      };
+      customFilters: {
+        list: () => Promise<ApiResponse<CustomFilterDefinition[]>>;
+        create: (payload: {
+          label: string;
+          type: 'dropdown' | 'text';
+          options?: string[];
+        }) => Promise<ApiResponse<CustomFilterDefinition>>;
+        delete: (id: number) => Promise<ApiResponse<null>>;
       };
     };
   }
