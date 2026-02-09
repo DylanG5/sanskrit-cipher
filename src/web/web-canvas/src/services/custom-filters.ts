@@ -44,3 +44,21 @@ export async function deleteCustomFilter(id: number): Promise<boolean> {
   const response = await api.customFilters.delete(id);
   return response.success === true;
 }
+
+export async function updateCustomFilterOptions(
+  id: number,
+  options: string[]
+): Promise<CustomFilterDefinition | null> {
+  if (!isElectron()) {
+    return null;
+  }
+
+  const api = getElectronAPI();
+  const response = await api.customFilters.updateOptions(id, options);
+
+  if (!response.success || !response.data) {
+    return null;
+  }
+
+  return response.data;
+}

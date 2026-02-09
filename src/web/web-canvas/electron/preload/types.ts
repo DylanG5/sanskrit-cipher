@@ -24,6 +24,7 @@ export interface ElectronAPI {
     list: () => Promise<any[]>;
     create: (payload: { label: string; type: 'dropdown' | 'text'; options?: string[] }) => Promise<any>;
     delete: (id: number) => Promise<any>;
+    updateOptions: (id: number, options: string[]) => Promise<any>;
   };
   projects: {
     create: (name: string, description?: string) => Promise<number>;

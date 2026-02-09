@@ -153,6 +153,8 @@ const electronAPI = {
       ipcRenderer.invoke('customFilters:create', payload),
     delete: (id: number): Promise<ApiResponse<null>> =>
       ipcRenderer.invoke('customFilters:delete', id),
+    updateOptions: (id: number, options: string[]): Promise<ApiResponse<CustomFilterDefinition>> =>
+      ipcRenderer.invoke('customFilters:updateOptions', id, options),
   },
 };
 

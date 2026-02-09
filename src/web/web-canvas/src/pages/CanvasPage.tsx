@@ -13,7 +13,7 @@ import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData } f
 import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
 import { SCRIPT_TYPES, getScriptTypeDB } from "../types/constants";
 import { CustomFilterDefinition } from "../types/customFilters";
-import { getCustomFilters, createCustomFilter, deleteCustomFilter } from "../services/custom-filters";
+import { getCustomFilters, createCustomFilter, deleteCustomFilter, updateCustomFilterOptions } from "../services/custom-filters";
 
 // Default page size for pagination
 const PAGE_SIZE = 100;
@@ -903,6 +903,14 @@ function CanvasPage() {
     return success;
   }, [customFilters]);
 
+  const handleUpdateCustomFilterOptions = useCallback(async (id: number, options: string[]) => {
+    const updated = await updateCustomFilterOptions(id, options);
+    if (updated) {
+      setCustomFilters((prev) => prev.map((filter) => (filter.id === id ? updated : filter)));
+    }
+    return updated;
+  }, []);
+
   // Handle edge match request (dummy function for now)
   const handleEdgeMatch = (fragmentId: string) => {
     // TODO: Implement edge matching logic to filter sidebar fragments
@@ -1032,6 +1040,7 @@ function CanvasPage() {
           customFilters={customFilters}
           onCreateCustomFilter={handleCreateCustomFilter}
           onDeleteCustomFilter={handleDeleteCustomFilter}
+          onUpdateCustomFilterOptions={handleUpdateCustomFilterOptions}
         />
 
       </div>

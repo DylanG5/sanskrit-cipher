@@ -19,6 +19,7 @@ interface FilterPanelProps {
     options?: string[];
   }) => Promise<CustomFilterDefinition | null>;
   onDeleteCustomFilter: (id: number) => Promise<boolean>;
+  onUpdateCustomFilterOptions: (id: number, options: string[]) => Promise<CustomFilterDefinition | null>;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -34,6 +35,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   customFilters,
   onCreateCustomFilter,
   onDeleteCustomFilter,
+  onUpdateCustomFilterOptions,
 }) => {
   const [localFilters, setLocalFilters] = useState<FragmentFilters>(filters);
   const [isResizing, setIsResizing] = useState(false);
@@ -44,6 +46,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const [newFilterOptions, setNewFilterOptions] = useState('');
   const [newFilterError, setNewFilterError] = useState<string | null>(null);
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
+  const [editingOptionsId, setEditingOptionsId] = useState<number | null>(null);
+  const [optionsDraft, setOptionsDraft] = useState('');
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [isSavingOptions, setIsSavingOptions] = useState(false);
 
   React.useEffect(() => {
     setLocalFilters(filters);
@@ -187,6 +193,36 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       return;
     }
     await onDeleteCustomFilter(filter.id);
+  };
+
+  const handleStartEditOptions = (filter: CustomFilterDefinition) => {
+    setEditingOptionsId(filter.id);
+    setOptionsDraft((filter.options || []).join(', '));
+    setOptionsError(null);
+  };
+
+  const handleCancelEditOptions = () => {
+    setEditingOptionsId(null);
+    setOptionsDraft('');
+    setOptionsError(null);
+  };
+
+  const handleSaveOptions = async (filter: CustomFilterDefinition) => {
+    const options = parseOptions(optionsDraft);
+    if (!options.length) {
+      setOptionsError('Add at least one option.');
+      return;
+    }
+    setIsSavingOptions(true);
+    const updated = await onUpdateCustomFilterOptions(filter.id, options);
+    setIsSavingOptions(false);
+    if (!updated) {
+      setOptionsError('Failed to update options.');
+      return;
+    }
+    setEditingOptionsId(null);
+    setOptionsDraft('');
+    setOptionsError(null);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -790,14 +826,56 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                               <span className="text-[10px] uppercase tracking-wide text-amber-600">Active</span>
                             )}
                           </div>
-                          <button
-                            onClick={() => handleDeleteCustomFilter(filter)}
-                            className="text-[10px] font-semibold text-red-600 hover:text-red-700 uppercase tracking-wide"
-                            title="Delete filter"
-                          >
-                            Delete
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {filter.type === 'dropdown' && (
+                              <button
+                                onClick={() => handleStartEditOptions(filter)}
+                                className="text-[10px] font-semibold text-amber-700 hover:text-amber-800 uppercase tracking-wide"
+                                title="Edit options"
+                              >
+                                Edit Options
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteCustomFilter(filter)}
+                              className="text-[10px] font-semibold text-red-600 hover:text-red-700 uppercase tracking-wide"
+                              title="Delete filter"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
+                        {editingOptionsId === filter.id && filter.type === 'dropdown' && (
+                          <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50/60 p-2">
+                            <label className="block text-xs text-slate-600">Options (comma or new line)</label>
+                            <textarea
+                              value={optionsDraft}
+                              onChange={(e) => setOptionsDraft(e.target.value)}
+                              rows={3}
+                              className="w-full px-2 py-1.5 border border-amber-200 rounded-md text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white"
+                            />
+                            {optionsError && (
+                              <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                                {optionsError}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleSaveOptions(filter)}
+                                disabled={isSavingOptions}
+                                className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 transition-colors disabled:opacity-50"
+                              >
+                                {isSavingOptions ? 'Saving...' : 'Save'}
+                              </button>
+                              <button
+                                onClick={handleCancelEditOptions}
+                                className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         {filter.type === 'dropdown' ? (
                           <select
                             value={value}

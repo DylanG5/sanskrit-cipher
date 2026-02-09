@@ -138,6 +138,7 @@ declare global {
           options?: string[];
         }) => Promise<ApiResponse<CustomFilterDefinition>>;
         delete: (id: number) => Promise<ApiResponse<null>>;
+        updateOptions: (id: number, options: string[]) => Promise<ApiResponse<CustomFilterDefinition>>;
       };
     };
   }

@@ -480,6 +480,60 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle('customFilters:updateOptions', async (_event, id: number, optionsInput: string[]) => {
+    if (typeof id !== 'number') {
+      return { success: false, error: 'Invalid filter id' };
+    }
+
+    try {
+      const row = db.prepare(
+        'SELECT id, filter_key, label, type FROM custom_filters WHERE id = ?'
+      ).get(id) as { id: number; filter_key: string; label: string; type: 'dropdown' | 'text' } | undefined;
+
+      if (!row) {
+        return { success: false, error: 'Filter not found' };
+      }
+      if (row.type !== 'dropdown') {
+        return { success: false, error: 'Only dropdown filters have options' };
+      }
+      if (!VALID_IDENTIFIER.test(row.filter_key)) {
+        return { success: false, error: 'Invalid filter key' };
+      }
+
+      const options = parseOptions(optionsInput);
+      if (!options.length) {
+        return { success: false, error: 'At least one option is required' };
+      }
+
+      const filterKey = row.filter_key;
+
+      const transaction = db.transaction(() => {
+        db.prepare('UPDATE custom_filters SET options = ? WHERE id = ?')
+          .run(JSON.stringify(options), id);
+
+        const placeholders = options.map(() => '?').join(',');
+        db.prepare(
+          `UPDATE fragments SET ${filterKey} = NULL WHERE ${filterKey} IS NOT NULL AND ${filterKey} NOT IN (${placeholders})`
+        ).run(...options);
+      });
+
+      transaction();
+
+      const data: CustomFilterDefinition = {
+        id: row.id,
+        filterKey,
+        label: row.label,
+        type: row.type,
+        options,
+      };
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating custom filter options:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
   // ============================================
   // Image Path Handler
   // ============================================
