@@ -21,6 +21,7 @@ interface FragmentFilters {
   hasRightEdge?: boolean | null;
   hasCircle?: boolean | null;
   search?: string;
+  custom?: Record<string, string | null | undefined>;
   limit?: number;
   offset?: number;
 }
@@ -41,6 +42,57 @@ interface CanvasFragment {
 
 interface CanvasState {
   fragments: CanvasFragment[];
+}
+
+interface CustomFilterDefinition {
+  id: number;
+  filterKey: string;
+  label: string;
+  type: 'dropdown' | 'text';
+  options?: string[];
+}
+
+const VALID_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function normalizeFilterKey(label: string): string {
+  const base = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  if (!base) {
+    return 'custom';
+  }
+  return /^[A-Za-z_]/.test(base) ? base : `f_${base}`;
+}
+
+function parseOptions(input: unknown): string[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+  const seen = new Set<string>();
+  const options: string[] = [];
+  for (const item of input) {
+    const value = String(item).trim();
+    if (!value || seen.has(value)) {
+      continue;
+    }
+    seen.add(value);
+    options.push(value);
+  }
+  return options;
+}
+
+function parseOptionsJson(value: unknown): string[] {
+  if (!value) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(String(value));
+    return parseOptions(parsed);
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -112,6 +164,21 @@ export function registerIpcHandlers(): void {
       console.log('Search query:', filters.search);
       console.log('SQL LIKE pattern:', `%${filters.search}%`);
       console.log('Full SQL query:', query);
+    }
+
+    if (filters?.custom) {
+      const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
+      const allowedKeys = new Set(customKeys.map((row) => row.filter_key));
+      for (const [key, value] of Object.entries(filters.custom)) {
+        if (!allowedKeys.has(key) || !VALID_IDENTIFIER.test(key)) {
+          continue;
+        }
+        if (value === undefined || value === null || value === '') {
+          continue;
+        }
+        query += ` AND ${key} = ?`;
+        params.push(value);
+      }
     }
 
     // Add ordering
@@ -195,6 +262,21 @@ export function registerIpcHandlers(): void {
       params.push(`%${filters.search}%`);
     }
 
+    if (filters?.custom) {
+      const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
+      const allowedKeys = new Set(customKeys.map((row) => row.filter_key));
+      for (const [key, value] of Object.entries(filters.custom)) {
+        if (!allowedKeys.has(key) || !VALID_IDENTIFIER.test(key)) {
+          continue;
+        }
+        if (value === undefined || value === null || value === '') {
+          continue;
+        }
+        query += ` AND ${key} = ?`;
+        params.push(value);
+      }
+    }
+
     try {
       const row = db.prepare(query).get(...params) as { count: number };
       return { success: true, count: row.count };
@@ -221,7 +303,7 @@ export function registerIpcHandlers(): void {
    * Update fragment metadata
    */
   ipcMain.handle('fragments:updateMetadata', async (_event, fragmentId: string, metadata: Record<string, unknown>) => {
-    const allowedFields = [
+    const staticFields = [
       'edge_piece',
       'has_top_edge',
       'has_bottom_edge',
@@ -234,11 +316,16 @@ export function registerIpcHandlers(): void {
       'pixels_per_unit',
       'scale_detection_status'
     ];
+    const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
+    const allowedFields = new Set<string>([
+      ...staticFields,
+      ...customKeys.map((row) => row.filter_key),
+    ]);
     const updates: string[] = [];
     const params: unknown[] = [];
 
     for (const [key, value] of Object.entries(metadata)) {
-      if (allowedFields.includes(key)) {
+      if (allowedFields.has(key)) {
         updates.push(`${key} = ?`);
         params.push(value);
       }
@@ -258,6 +345,191 @@ export function registerIpcHandlers(): void {
       return { success: true, changes: result.changes };
     } catch (error) {
       console.error('Error updating fragment:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  // ============================================
+  // Custom Filter Handlers
+  // ============================================
+
+  ipcMain.handle('customFilters:list', async () => {
+    try {
+      const rows = db.prepare(
+        'SELECT id, filter_key, label, type, options FROM custom_filters ORDER BY id ASC'
+      ).all() as Array<{ id: number; filter_key: string; label: string; type: 'dropdown' | 'text'; options: string | null }>;
+
+      const data: CustomFilterDefinition[] = rows.map((row) => ({
+        id: row.id,
+        filterKey: row.filter_key,
+        label: row.label,
+        type: row.type,
+        options: row.type === 'dropdown' ? parseOptionsJson(row.options) : undefined,
+      }));
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error listing custom filters:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('customFilters:create', async (_event, payload: {
+    label?: string;
+    type?: 'dropdown' | 'text';
+    options?: string[];
+  }) => {
+    const label = typeof payload?.label === 'string' ? payload.label.trim() : '';
+    const type = payload?.type;
+
+    if (!label) {
+      return { success: false, error: 'Filter name is required' };
+    }
+    if (type !== 'dropdown' && type !== 'text') {
+      return { success: false, error: 'Invalid filter type' };
+    }
+
+    let options: string[] | undefined;
+    if (type === 'dropdown') {
+      options = parseOptions(payload?.options);
+      if (!options.length) {
+        return { success: false, error: 'Dropdown filters require at least one option' };
+      }
+    }
+
+    const fragmentColumns = db.prepare("PRAGMA table_info(fragments)").all() as Array<{ name: string }>;
+    const fragmentColumnSet = new Set(fragmentColumns.map((col) => col.name));
+    const existingCustom = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
+    const existingCustomSet = new Set(existingCustom.map((row) => row.filter_key));
+
+    const baseKey = normalizeFilterKey(label);
+    let filterKey = baseKey;
+    let suffix = 2;
+    while (fragmentColumnSet.has(filterKey) || existingCustomSet.has(filterKey)) {
+      filterKey = `${baseKey}_${suffix}`;
+      suffix += 1;
+    }
+
+    if (!VALID_IDENTIFIER.test(filterKey)) {
+      return { success: false, error: 'Generated filter key is invalid' };
+    }
+
+    try {
+      const insert = db.prepare(
+        'INSERT INTO custom_filters (filter_key, label, type, options) VALUES (?, ?, ?, ?)'
+      );
+
+      const transaction = db.transaction(() => {
+        db.exec(`ALTER TABLE fragments ADD COLUMN ${filterKey} TEXT`);
+        db.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_${filterKey} ON fragments(${filterKey})`);
+        const result = insert.run(
+          filterKey,
+          label,
+          type,
+          options ? JSON.stringify(options) : null
+        );
+        return result.lastInsertRowid;
+      });
+
+      const id = transaction() as number;
+      const data: CustomFilterDefinition = {
+        id: Number(id),
+        filterKey,
+        label,
+        type,
+        options: type === 'dropdown' ? options : undefined,
+      };
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error creating custom filter:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('customFilters:delete', async (_event, id: number) => {
+    if (typeof id !== 'number') {
+      return { success: false, error: 'Invalid filter id' };
+    }
+
+    try {
+      const row = db.prepare(
+        'SELECT filter_key FROM custom_filters WHERE id = ?'
+      ).get(id) as { filter_key?: string } | undefined;
+
+      if (!row?.filter_key) {
+        return { success: false, error: 'Filter not found' };
+      }
+
+      const filterKey = row.filter_key;
+      if (!VALID_IDENTIFIER.test(filterKey)) {
+        return { success: false, error: 'Invalid filter key' };
+      }
+
+      const transaction = db.transaction(() => {
+        db.prepare('DELETE FROM custom_filters WHERE id = ?').run(id);
+        db.exec(`UPDATE fragments SET ${filterKey} = NULL`);
+        db.exec(`DROP INDEX IF EXISTS idx_fragments_${filterKey}`);
+      });
+
+      transaction();
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting custom filter:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('customFilters:updateOptions', async (_event, id: number, optionsInput: string[]) => {
+    if (typeof id !== 'number') {
+      return { success: false, error: 'Invalid filter id' };
+    }
+
+    try {
+      const row = db.prepare(
+        'SELECT id, filter_key, label, type FROM custom_filters WHERE id = ?'
+      ).get(id) as { id: number; filter_key: string; label: string; type: 'dropdown' | 'text' } | undefined;
+
+      if (!row) {
+        return { success: false, error: 'Filter not found' };
+      }
+      if (row.type !== 'dropdown') {
+        return { success: false, error: 'Only dropdown filters have options' };
+      }
+      if (!VALID_IDENTIFIER.test(row.filter_key)) {
+        return { success: false, error: 'Invalid filter key' };
+      }
+
+      const options = parseOptions(optionsInput);
+      if (!options.length) {
+        return { success: false, error: 'At least one option is required' };
+      }
+
+      const filterKey = row.filter_key;
+
+      const transaction = db.transaction(() => {
+        db.prepare('UPDATE custom_filters SET options = ? WHERE id = ?')
+          .run(JSON.stringify(options), id);
+
+        const placeholders = options.map(() => '?').join(',');
+        db.prepare(
+          `UPDATE fragments SET ${filterKey} = NULL WHERE ${filterKey} IS NOT NULL AND ${filterKey} NOT IN (${placeholders})`
+        ).run(...options);
+      });
+
+      transaction();
+
+      const data: CustomFilterDefinition = {
+        id: row.id,
+        filterKey,
+        label: row.label,
+        type: row.type,
+        options,
+      };
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating custom filter options:', error);
       return { success: false, error: String(error) };
     }
   });

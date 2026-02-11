@@ -12,6 +12,8 @@ import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus, getFra
 import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData } from "../services/electron-api";
 import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
 import { SCRIPT_TYPES, getScriptTypeDB } from "../types/constants";
+import { CustomFilterDefinition } from "../types/customFilters";
+import { getCustomFilters, createCustomFilter, deleteCustomFilter, updateCustomFilterOptions } from "../services/custom-filters";
 
 // Default page size for pagination
 const PAGE_SIZE = 100;
@@ -32,6 +34,7 @@ function CanvasPage() {
   const [selectedFragmentIds, setSelectedFragmentIds] = useState<string[]>([]);
   const [selectedMetadataFragment, setSelectedMetadataFragment] = useState<ManuscriptFragment | null>(null);
   const [filters, setFilters] = useState<FragmentFilters>(DEFAULT_FILTERS);
+  const [customFilters, setCustomFilters] = useState<CustomFilterDefinition[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -77,8 +80,13 @@ function CanvasPage() {
         lineCountMax?: number;
         scripts?: string[];
         isEdgePiece?: boolean | null;
+        hasTopEdge?: boolean | null;
+        hasBottomEdge?: boolean | null;
+        hasLeftEdge?: boolean | null;
+        hasRightEdge?: boolean | null;
         hasCircle?: boolean | null;
         search?: string;
+        custom?: Record<string, string | null | undefined>;
         limit?: number;
         offset?: number;
       } = {
@@ -99,6 +107,18 @@ function CanvasPage() {
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
       }
+      if (filters.hasTopEdge !== null) {
+        apiFilters.hasTopEdge = filters.hasTopEdge;
+      }
+      if (filters.hasBottomEdge !== null) {
+        apiFilters.hasBottomEdge = filters.hasBottomEdge;
+      }
+      if (filters.hasLeftEdge !== null) {
+        apiFilters.hasLeftEdge = filters.hasLeftEdge;
+      }
+      if (filters.hasRightEdge !== null) {
+        apiFilters.hasRightEdge = filters.hasRightEdge;
+      }
       if (filters.hasCircle !== null) {
         apiFilters.hasCircle = filters.hasCircle;
       }
@@ -106,10 +126,24 @@ function CanvasPage() {
         apiFilters.search = filters.search;
         console.log('Loading fragments with search filter:', filters.search);
       }
+      if (filters.custom) {
+        const custom = Object.entries(filters.custom).reduce<Record<string, string | null | undefined>>(
+          (acc, [key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+              acc[key] = value;
+            }
+            return acc;
+          },
+          {}
+        );
+        if (Object.keys(custom).length > 0) {
+          apiFilters.custom = custom;
+        }
+      }
 
       // Fetch fragments and count in parallel
       const [fragmentsResult, countResult] = await Promise.all([
-        getAllFragments(apiFilters),
+        getAllFragments(apiFilters, customFilters),
         getFragmentCount(apiFilters),
       ]);
 
@@ -125,7 +159,7 @@ function CanvasPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters, customFilters]);
 
   // Load more fragments (infinite scroll)
   const loadMoreFragments = useCallback(async () => {
@@ -141,8 +175,13 @@ function CanvasPage() {
         lineCountMax?: number;
         scripts?: string[];
         isEdgePiece?: boolean | null;
+        hasTopEdge?: boolean | null;
+        hasBottomEdge?: boolean | null;
+        hasLeftEdge?: boolean | null;
+        hasRightEdge?: boolean | null;
         hasCircle?: boolean | null;
         search?: string;
+        custom?: Record<string, string | null | undefined>;
         limit?: number;
         offset?: number;
       } = {
@@ -163,11 +202,40 @@ function CanvasPage() {
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
       }
+      if (filters.hasTopEdge !== null) {
+        apiFilters.hasTopEdge = filters.hasTopEdge;
+      }
+      if (filters.hasBottomEdge !== null) {
+        apiFilters.hasBottomEdge = filters.hasBottomEdge;
+      }
+      if (filters.hasLeftEdge !== null) {
+        apiFilters.hasLeftEdge = filters.hasLeftEdge;
+      }
+      if (filters.hasRightEdge !== null) {
+        apiFilters.hasRightEdge = filters.hasRightEdge;
+      }
       if (filters.hasCircle !== null) {
         apiFilters.hasCircle = filters.hasCircle;
       }
+      if (filters.search) {
+        apiFilters.search = filters.search;
+      }
+      if (filters.custom) {
+        const custom = Object.entries(filters.custom).reduce<Record<string, string | null | undefined>>(
+          (acc, [key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+              acc[key] = value;
+            }
+            return acc;
+          },
+          {}
+        );
+        if (Object.keys(custom).length > 0) {
+          apiFilters.custom = custom;
+        }
+      }
 
-      const moreFragments = await getAllFragments(apiFilters);
+      const moreFragments = await getAllFragments(apiFilters, customFilters);
 
       // Enrich with segmentation status
       const enrichedMore = await enrichWithSegmentationStatus(moreFragments);
@@ -179,7 +247,7 @@ function CanvasPage() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, fragments.length, totalCount, currentOffset, filters]);
+  }, [isLoadingMore, fragments.length, totalCount, currentOffset, filters, customFilters]);
 
   // Refs to track current values for auto-save without re-creating callback
   const canvasFragmentsRef = useRef(canvasFragments);
@@ -426,6 +494,15 @@ function CanvasPage() {
   useEffect(() => {
     loadFragments();
   }, [loadFragments]);
+
+  const loadCustomFilters = useCallback(async () => {
+    const list = await getCustomFilters();
+    setCustomFilters(list);
+  }, []);
+
+  useEffect(() => {
+    loadCustomFilters();
+  }, [loadCustomFilters]);
 
   // Available scripts - use the defined script types
   const availableScripts = useMemo(() => [...SCRIPT_TYPES], []);
@@ -793,6 +870,47 @@ function CanvasPage() {
     loadFragments();
   };
 
+  const handleCreateCustomFilter = useCallback(async (payload: {
+    label: string;
+    type: 'dropdown' | 'text';
+    options?: string[];
+  }) => {
+    const created = await createCustomFilter(payload);
+    if (created) {
+      setCustomFilters((prev) => [...prev, created]);
+    }
+    return created;
+  }, []);
+
+  const handleDeleteCustomFilter = useCallback(async (id: number) => {
+    const target = customFilters.find((filter) => filter.id === id);
+    if (!target) {
+      return false;
+    }
+
+    const success = await deleteCustomFilter(id);
+    if (success) {
+      setCustomFilters((prev) => prev.filter((filter) => filter.id !== id));
+      setFilters((prev) => {
+        if (!prev.custom || !(target.filterKey in prev.custom)) {
+          return prev;
+        }
+        const nextCustom = { ...prev.custom };
+        delete nextCustom[target.filterKey];
+        return { ...prev, custom: nextCustom };
+      });
+    }
+    return success;
+  }, [customFilters]);
+
+  const handleUpdateCustomFilterOptions = useCallback(async (id: number, options: string[]) => {
+    const updated = await updateCustomFilterOptions(id, options);
+    if (updated) {
+      setCustomFilters((prev) => prev.map((filter) => (filter.id === id ? updated : filter)));
+    }
+    return updated;
+  }, []);
+
   // Handle edge match request (dummy function for now)
   const handleEdgeMatch = (fragmentId: string) => {
     // TODO: Implement edge matching logic to filter sidebar fragments
@@ -813,7 +931,7 @@ function CanvasPage() {
 
     // If not found in loaded fragments, fetch from database
     if (!manuscriptFragment) {
-      manuscriptFragment = await getFragmentById(fragmentId);
+      manuscriptFragment = await getFragmentById(fragmentId, customFilters);
     }
 
     if (manuscriptFragment) {
@@ -856,7 +974,13 @@ function CanvasPage() {
           filters.lineCountMin !== undefined ||
           filters.lineCountMax !== undefined ||
           filters.scripts.length > 0 ||
-          filters.isEdgePiece !== null
+          filters.isEdgePiece !== null ||
+          filters.hasTopEdge !== null ||
+          filters.hasBottomEdge !== null ||
+          filters.hasLeftEdge !== null ||
+          filters.hasRightEdge !== null ||
+          filters.hasCircle !== null ||
+          Object.values(filters.custom || {}).some((value) => value !== undefined && value !== null && value !== '')
         }
         selectedFragmentHasSegmentation={selectedManuscriptFragment?.hasSegmentation}
         selectedFragmentShowSegmented={selectedFragment?.showSegmented}
@@ -883,6 +1007,7 @@ function CanvasPage() {
           onFragmentUpdate={loadFragments}
           canvasFragments={canvasFragments}
           gridScale={gridScale}
+          customFilters={customFilters}
         />
 
         <div
@@ -912,6 +1037,10 @@ function CanvasPage() {
           onToggle={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
           width={filterPanelWidth}
           onWidthChange={setFilterPanelWidth}
+          customFilters={customFilters}
+          onCreateCustomFilter={handleCreateCustomFilter}
+          onDeleteCustomFilter={handleDeleteCustomFilter}
+          onUpdateCustomFilterOptions={handleUpdateCustomFilterOptions}
         />
 
       </div>
@@ -924,6 +1053,7 @@ function CanvasPage() {
           onUpdate={loadFragments}
           canvasFragment={selectedCanvasFragmentForMetadata}
           gridScale={gridScale}
+          customFilters={customFilters}
         />
       )}
 

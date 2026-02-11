@@ -9,6 +9,7 @@ export interface FragmentFilters {
   hasRightEdge?: boolean | null; // null = don't care
   hasCircle?: boolean | null; // null = don't care
   search?: string; // Fragment ID search query
+  custom?: Record<string, string | null | undefined>;
 }
 
 export const DEFAULT_FILTERS: FragmentFilters = {
@@ -22,4 +23,5 @@ export const DEFAULT_FILTERS: FragmentFilters = {
   hasRightEdge: null,
   hasCircle: null,
   search: undefined,
+  custom: {},
 };

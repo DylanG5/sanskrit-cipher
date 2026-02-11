@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ManuscriptFragment, CanvasFragment } from '../types/fragment';
+import { CustomFilterDefinition } from '../types/customFilters';
 import FragmentMetadata from './FragmentMetadata';
 import VirtualizedFragmentList from './VirtualizedFragmentList';
 
@@ -20,6 +21,7 @@ interface SidebarProps {
   onFragmentUpdate?: () => void; // Callback to refresh fragments after metadata edit
   canvasFragments?: CanvasFragment[]; // Canvas fragments for scale calculation
   gridScale?: number; // Grid scale for scale calculation
+  customFilters?: CustomFilterDefinition[];
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -39,6 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onFragmentUpdate,
   canvasFragments = [],
   gridScale = 25,
+  customFilters = [],
 }) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -399,6 +402,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onUpdate={onFragmentUpdate}
             canvasFragment={canvasFragments.find(cf => cf.fragmentId === selectedFragment.id)}
             gridScale={gridScale}
+            customFilters={customFilters}
           />
         </>
       )}

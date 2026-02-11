@@ -6,7 +6,13 @@ export interface FragmentFilters {
   lineCountMax?: number;
   scripts?: string[];
   isEdgePiece?: boolean | null;
+  hasTopEdge?: boolean | null;
+  hasBottomEdge?: boolean | null;
+  hasLeftEdge?: boolean | null;
+  hasRightEdge?: boolean | null;
+  hasCircle?: boolean | null;
   search?: string;
+  custom?: Record<string, string | null | undefined>;
   limit?: number;
   offset?: number;
 }
@@ -18,12 +24,22 @@ export interface FragmentRecord {
   edge_piece: number;
   has_top_edge: number;
   has_bottom_edge: number;
+  has_left_edge: number | null;
+  has_right_edge: number | null;
   line_count: number | null;
   script_type: string | null;
   segmentation_coords: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
+  // Scale detection fields
+  scale_unit?: string | null;
+  pixels_per_unit?: number | null;
+  scale_detection_status?: string | null;
+  scale_model_version?: string | null;
+  // Circle detection field
+  has_circle?: number | null;
+  [key: string]: unknown;
 }
 
 export interface CanvasFragment {
@@ -81,6 +97,14 @@ export interface UploadResponse {
   results: UploadResult[];
 }
 
+export interface CustomFilterDefinition {
+  id: number;
+  filterKey: string;
+  label: string;
+  type: 'dropdown' | 'text';
+  options?: string[];
+}
+
 // Expose a safe API to the renderer process
 const electronAPI = {
   files: {
@@ -120,6 +144,17 @@ const electronAPI = {
       ipcRenderer.invoke('projects:delete', projectId),
     rename: (projectId: number, newName: string): Promise<ApiResponse<null>> =>
       ipcRenderer.invoke('projects:rename', projectId, newName),
+  },
+  customFilters: {
+    list: (): Promise<ApiResponse<CustomFilterDefinition[]>> =>
+      ipcRenderer.invoke('customFilters:list'),
+    create: (payload: { label: string; type: 'dropdown' | 'text'; options?: string[] }):
+      Promise<ApiResponse<CustomFilterDefinition>> =>
+      ipcRenderer.invoke('customFilters:create', payload),
+    delete: (id: number): Promise<ApiResponse<null>> =>
+      ipcRenderer.invoke('customFilters:delete', id),
+    updateOptions: (id: number, options: string[]): Promise<ApiResponse<CustomFilterDefinition>> =>
+      ipcRenderer.invoke('customFilters:updateOptions', id, options),
   },
 };
 
