@@ -57,15 +57,22 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   React.useEffect(() => {
     if (customFilters.length === 0) {
+      setLocalFilters((prev) => ({ ...prev, custom: {} }));
       return;
     }
-    setLocalFilters((prev) => ({
-      ...prev,
-      custom: customFilters.reduce<Record<string, string | null | undefined>>((acc, filter) => {
-        acc[filter.filterKey] = prev.custom?.[filter.filterKey];
-        return acc;
-      }, {}),
-    }));
+    setLocalFilters((prev) => {
+      const validKeys = new Set(customFilters.map(f => f.filterKey));
+      const cleanedCustom = Object.fromEntries(
+        Object.entries(prev.custom || {}).filter(([k]) => validKeys.has(k))
+      );
+      // Add new filter keys that don't exist yet
+      customFilters.forEach(filter => {
+        if (!(filter.filterKey in cleanedCustom)) {
+          cleanedCustom[filter.filterKey] = undefined;
+        }
+      });
+      return { ...prev, custom: cleanedCustom };
+    });
   }, [customFilters]);
 
   const handleLineCountMinChange = (value: string) => {
@@ -213,6 +220,26 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       setOptionsError('Add at least one option.');
       return;
     }
+
+    // Check if current filter value would be cleared
+    const currentValue = localFilters.custom?.[filter.filterKey];
+    if (currentValue && !options.includes(currentValue)) {
+      const confirmed = window.confirm(
+        `The current selection "${currentValue}" will be removed from the options. This will clear this value from any fragments using it. Continue?`
+      );
+      if (!confirmed) return;
+    }
+
+    // Check if any of the old options are being removed
+    const oldOptions = filter.options || [];
+    const removedOptions = oldOptions.filter(opt => !options.includes(opt));
+    if (removedOptions.length > 0) {
+      const confirmed = window.confirm(
+        `Removing option(s): ${removedOptions.join(', ')}\n\nThis will clear these values from all fragments. Continue?`
+      );
+      if (!confirmed) return;
+    }
+
     setIsSavingOptions(true);
     const updated = await onUpdateCustomFilterOptions(filter.id, options);
     setIsSavingOptions(false);
