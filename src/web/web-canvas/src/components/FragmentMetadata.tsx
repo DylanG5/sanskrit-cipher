@@ -311,6 +311,126 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
     );
   };
 
+  const renderMultiselectField = (
+    label: string,
+    icon: React.ReactNode,
+    field: string,
+    dbField: string,
+    currentValue: string[],
+    options: readonly string[],
+    colorClass: string = 'amber',
+    isUndefined: boolean = false
+  ) => {
+    const isEditing = editingField === field;
+    const isSaving = savingField === field;
+    const isSuccess = saveSuccess === field;
+    const error = fieldErrors[field];
+    const displayValue = currentValue.length > 0 ? currentValue.join(', ') : 'Not set';
+
+    const toggleOption = (option: string) => {
+      const currentValues = (editValues[field] as string[]) || currentValue || [];
+      const newValues = currentValues.includes(option)
+        ? currentValues.filter(v => v !== option)
+        : [...currentValues, option];
+      setEditValues({ ...editValues, [field]: newValues });
+    };
+
+    return (
+      <div className={`p-3 ${isUndefined ? 'bg-slate-50 border-slate-200' : `bg-gradient-to-r from-${colorClass}-50 to-${colorClass}-100/50 border-${colorClass}-200/50`} rounded-lg border`}>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-2">
+            {icon}
+            <span className="font-medium text-slate-700 text-sm">{label}</span>
+          </div>
+          <div className="flex items-start gap-2">
+            {!isEditing ? (
+              <>
+                <span className={`px-3 py-1 rounded-md text-xs font-semibold shadow-sm max-w-[180px] text-right ${isUndefined ? 'text-slate-400 bg-white' : 'text-slate-900 bg-white'}`} title={displayValue}>
+                  {displayValue}
+                </span>
+                {isSuccess ? (
+                  <div className="text-emerald-600 animate-in fade-in mt-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => startEditing(field, currentValue)}
+                    className="text-slate-400 hover:text-slate-600 p-1 hover:bg-white/50 rounded transition-colors"
+                    title="Edit"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <div className="bg-white border border-slate-300 rounded-md p-2 max-h-32 overflow-y-auto">
+                  <div className="space-y-1">
+                    {options.map((option) => {
+                      const selectedValues = (editValues[field] as string[]) || currentValue || [];
+                      return (
+                        <label
+                          key={option}
+                          className="flex items-center gap-2 p-1 rounded hover:bg-slate-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedValues.includes(option)}
+                            onChange={() => toggleOption(option)}
+                            className="w-3.5 h-3.5 text-amber-600 border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                          />
+                          <span className="text-xs text-slate-700">{option}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => saveField(field, dbField, (editValues[field] as string[]) || currentValue || [])}
+                    disabled={isSaving}
+                    className="text-emerald-600 hover:text-emerald-700 p-1 hover:bg-white/50 rounded transition-colors disabled:opacity-50"
+                    title="Save"
+                  >
+                    {isSaving ? (
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    disabled={isSaving}
+                    className="text-slate-400 hover:text-slate-600 p-1 hover:bg-white/50 rounded transition-colors disabled:opacity-50"
+                    title="Cancel"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        {error && (
+          <div className="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+            {error}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderToggleField = (
     label: string,
     icon: React.ReactNode,
@@ -531,7 +651,7 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
 
     return (
       <div className={`p-3 ${isUndefined ? 'bg-slate-50 border-slate-200' : `bg-gradient-to-r from-${colorClass}-50 to-${colorClass}-100/50 border-${colorClass}-200/50`} rounded-lg border`}>
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-3">
           <div className="flex items-center gap-2">
             {icon}
             <span className="font-medium text-slate-700 text-sm">{label}</span>
@@ -699,17 +819,19 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
             const isUndefined = value === undefined || value === null || value === '';
             const fieldKey = `custom:${filter.filterKey}`;
 
-            if (filter.type === 'dropdown') {
+            if (filter.type === 'multiselect') {
+              // Multiselect filters store a single string value per fragment
+              const stringValue = typeof value === 'string' ? value : '';
               return (
                 <React.Fragment key={fieldKey}>
-                  {renderSelectField(
+                  {renderDropdownField(
                     filter.label,
                     <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 12h6m-6 5h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
                     </svg>,
                     fieldKey,
                     filter.filterKey,
-                    value ?? undefined,
+                    stringValue,
                     filter.options || [],
                     'amber',
                     isUndefined

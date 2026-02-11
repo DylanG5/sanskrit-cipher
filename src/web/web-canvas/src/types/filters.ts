@@ -9,7 +9,7 @@ export interface FragmentFilters {
   hasRightEdge?: boolean | null; // null = don't care
   hasCircle?: boolean | null; // null = don't care
   search?: string; // Fragment ID search query
-  custom?: Record<string, string | null | undefined>;
+  custom?: Record<string, string | string[] | null | undefined>; // Support both single values and arrays
 }
 
 export const DEFAULT_FILTERS: FragmentFilters = {

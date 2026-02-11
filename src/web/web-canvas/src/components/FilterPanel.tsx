@@ -15,7 +15,7 @@ interface FilterPanelProps {
   customFilters: CustomFilterDefinition[];
   onCreateCustomFilter: (payload: {
     label: string;
-    type: 'dropdown' | 'text';
+    type: 'multiselect' | 'text';
     options?: string[];
   }) => Promise<CustomFilterDefinition | null>;
   onDeleteCustomFilter: (id: number) => Promise<boolean>;
@@ -42,7 +42,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [newFilterLabel, setNewFilterLabel] = useState('');
-  const [newFilterType, setNewFilterType] = useState<'dropdown' | 'text'>('dropdown');
+  const [newFilterType, setNewFilterType] = useState<'multiselect' | 'text'>('multiselect');
   const [newFilterOptions, setNewFilterOptions] = useState('');
   const [newFilterError, setNewFilterError] = useState<string | null>(null);
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
@@ -116,8 +116,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setLocalFilters({ ...localFilters, hasCircle: value });
   };
 
-  const handleCustomValueChange = (key: string, value: string) => {
-    const nextValue = value.trim() === '' ? undefined : value;
+  const handleCustomValueChange = (key: string, value: string | string[]) => {
+    const nextValue = Array.isArray(value)
+      ? (value.length === 0 ? undefined : value)
+      : (value.trim() === '' ? undefined : value);
     setLocalFilters({
       ...localFilters,
       custom: {
@@ -125,6 +127,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         [key]: nextValue,
       },
     });
+  };
+
+  const handleCustomMultiselectToggle = (key: string, option: string) => {
+    const currentValues = localFilters.custom?.[key];
+    const valuesArray = Array.isArray(currentValues) ? currentValues : [];
+    const newValues = valuesArray.includes(option)
+      ? valuesArray.filter(v => v !== option)
+      : [...valuesArray, option];
+    handleCustomValueChange(key, newValues);
   };
 
   const handleApply = () => {
@@ -137,7 +148,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   const hasCustomFilters = Object.values(localFilters.custom || {}).some(
-    (value) => value !== undefined && value !== null && value !== ''
+    (value) => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== undefined && value !== null && value !== '';
+    }
   );
 
   const hasActiveFilters =
@@ -167,7 +181,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     }
 
     let options: string[] | undefined;
-    if (newFilterType === 'dropdown') {
+    if (newFilterType === 'multiselect') {
       options = parseOptions(newFilterOptions);
       if (!options.length) {
         setNewFilterError('Add at least one option.');
@@ -190,7 +204,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
     setNewFilterLabel('');
     setNewFilterOptions('');
-    setNewFilterType('dropdown');
+    setNewFilterType('multiselect');
     setIsAddingCustom(false);
   };
 
@@ -415,12 +429,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                       )}
                       {customFilters.map((filter) => {
                         const value = filters.custom?.[filter.filterKey];
-                        if (!value) {
+                        if (!value || (Array.isArray(value) && value.length === 0)) {
                           return null;
                         }
+                        const displayValue = Array.isArray(value) ? value.join(', ') : value;
                         return (
                           <div key={filter.filterKey}>
-                            • {filter.label}: {value}
+                            • {filter.label}: {displayValue}
                           </div>
                         );
                       })}
@@ -820,66 +835,87 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               </div>
             </div>
 
-            {/* Custom Filters */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              hasCustomFilters ? 'border-amber-400 ring-2 ring-amber-100' : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Custom Filters</h3>
-                {hasCustomFilters && (
-                  <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
+            {/* Custom Filters - Each as its own card */}
+            {customFilters.map((filter) => {
+              const value = localFilters.custom?.[filter.filterKey];
+              const selectedValues = filter.type === 'multiselect' && Array.isArray(value) ? value : [];
+              const isActive = filter.type === 'multiselect'
+                ? selectedValues.length > 0
+                : (value !== undefined && value !== null && value !== '');
 
-              {customFilters.length === 0 && !isAddingCustom && (
-                <p className="text-sm text-slate-500 italic">No custom filters yet.</p>
-              )}
+              return (
+                <div
+                  key={filter.filterKey}
+                  className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+                    isActive
+                      ? 'border-amber-400 ring-2 ring-amber-100'
+                      : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 12h6m-6 5h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                    </svg>
+                    <h3 className="font-semibold text-slate-800 text-sm">{filter.label}</h3>
+                    {isActive && (
+                      <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                    )}
+                  </div>
 
-              {customFilters.length > 0 && (
-                <div className="space-y-3">
-                  {customFilters.map((filter) => {
-                    const value = localFilters.custom?.[filter.filterKey] ?? '';
-                    const isActive = value !== undefined && value !== null && value !== '';
-
-                    return (
-                      <div key={filter.filterKey} className="space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-slate-700">{filter.label}</span>
-                            {isActive && (
-                              <span className="text-[10px] uppercase tracking-wide text-amber-600">Active</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {filter.type === 'dropdown' && (
-                              <button
-                                onClick={() => handleStartEditOptions(filter)}
-                                className="text-[10px] font-semibold text-amber-700 hover:text-amber-800 uppercase tracking-wide"
-                                title="Edit options"
-                              >
-                                Edit Options
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteCustomFilter(filter)}
-                              className="text-[10px] font-semibold text-red-600 hover:text-red-700 uppercase tracking-wide"
-                              title="Delete filter"
+                  {filter.type === 'multiselect' ? (
+                    <>
+                      {(filter.options || []).length > 0 ? (
+                        <div className="space-y-2">
+                          {(filter.options || []).map((option) => (
+                            <label
+                              key={option}
+                              className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors group"
                             >
-                              Delete
-                            </button>
-                          </div>
+                              <input
+                                type="checkbox"
+                                checked={selectedValues.includes(option)}
+                                onChange={() => handleCustomMultiselectToggle(filter.filterKey, option)}
+                                className="w-4 h-4 text-amber-600 border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                              />
+                              <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">
+                                {option}
+                              </span>
+                            </label>
+                          ))}
                         </div>
-                        {editingOptionsId === filter.id && filter.type === 'dropdown' && (
-                          <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50/60 p-2">
-                            <label className="block text-xs text-slate-600">Options (comma or new line)</label>
+                      ) : (
+                        <p className="text-sm text-slate-500 italic">No options available</p>
+                      )}
+                      {selectedValues.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-200">
+                          <p className="text-xs text-slate-600">
+                            Selected: <span className="font-medium">{selectedValues.join(', ')}</span>
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <input
+                      type="text"
+                      value={typeof value === 'string' ? value : ''}
+                      onChange={(e) => handleCustomValueChange(filter.filterKey, e.target.value)}
+                      placeholder="Exact match"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                    />
+                  )}
+
+                  {/* Management buttons */}
+                  <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2">
+                    {filter.type === 'multiselect' && (
+                      <>
+                        {editingOptionsId === filter.id ? (
+                          <div className="flex-1 space-y-2">
                             <textarea
                               value={optionsDraft}
                               onChange={(e) => setOptionsDraft(e.target.value)}
                               rows={3}
-                              className="w-full px-2 py-1.5 border border-amber-200 rounded-md text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white"
+                              placeholder="Enter options (comma or new line separated)"
+                              className="w-full px-2 py-1.5 border border-amber-300 rounded-md text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white"
                             />
                             {optionsError && (
                               <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
@@ -902,119 +938,122 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                               </button>
                             </div>
                           </div>
-                        )}
-                        {filter.type === 'dropdown' ? (
-                          <select
-                            value={value}
-                            onChange={(e) => handleCustomValueChange(filter.filterKey, e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white"
-                          >
-                            <option value="">Any</option>
-                            {(filter.options || []).map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
                         ) : (
-                          <input
-                            type="text"
-                            value={value}
-                            onChange={(e) => handleCustomValueChange(filter.filterKey, e.target.value)}
-                            placeholder="Exact match"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                          />
+                          <button
+                            onClick={() => handleStartEditOptions(filter)}
+                            className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:bg-amber-50 px-2 py-1 rounded transition-colors"
+                            title="Edit options"
+                          >
+                            Edit Options
+                          </button>
                         )}
-                      </div>
-                    );
-                  })}
+                      </>
+                    )}
+                    <button
+                      onClick={() => handleDeleteCustomFilter(filter)}
+                      className="ml-auto text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      title="Delete filter"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              )}
+              );
+            })}
 
-              <div className="mt-4 border-t border-slate-200 pt-3">
-                {!isAddingCustom ? (
-                  <button
-                    onClick={() => setIsAddingCustom(true)}
-                    className="w-full px-3 py-2 rounded-md text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
-                  >
-                    Add Custom Filter
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs text-slate-600 mb-1">Filter name</label>
-                      <input
-                        type="text"
-                        value={newFilterLabel}
-                        onChange={(e) => setNewFilterLabel(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                        placeholder="e.g. Material"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs text-slate-600">Input type</label>
-                      <div className="flex items-center gap-3 text-sm">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="customFilterType"
-                            checked={newFilterType === 'dropdown'}
-                            onChange={() => setNewFilterType('dropdown')}
-                            className="w-4 h-4 text-amber-600 border-slate-300 focus:ring-2 focus:ring-amber-500 cursor-pointer"
-                          />
-                          Dropdown
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="customFilterType"
-                            checked={newFilterType === 'text'}
-                            onChange={() => setNewFilterType('text')}
-                            className="w-4 h-4 text-amber-600 border-slate-300 focus:ring-2 focus:ring-amber-500 cursor-pointer"
-                          />
-                          Text match
-                        </label>
-                      </div>
-                    </div>
-                    {newFilterType === 'dropdown' && (
-                      <div>
-                        <label className="block text-xs text-slate-600 mb-1">Options (comma or new line)</label>
-                        <textarea
-                          value={newFilterOptions}
-                          onChange={(e) => setNewFilterOptions(e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                          placeholder="paper, parchment, palm"
+            {/* Add Custom Filter Section */}
+            {!isAddingCustom ? (
+              <button
+                onClick={() => setIsAddingCustom(true)}
+                className="w-full px-4 py-3 rounded-lg text-sm font-semibold text-amber-700 bg-white border-2 border-dashed border-amber-300 hover:bg-amber-50 hover:border-amber-400 transition-all flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Custom Filter
+              </button>
+            ) : (
+              <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-amber-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <h3 className="font-semibold text-slate-800 text-sm">Create Custom Filter</h3>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1">Filter name</label>
+                    <input
+                      type="text"
+                      value={newFilterLabel}
+                      onChange={(e) => setNewFilterLabel(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                      placeholder="e.g. Material"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs text-slate-600">Input type</label>
+                    <div className="flex items-center gap-3 text-sm">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="customFilterType"
+                          checked={newFilterType === 'multiselect'}
+                          onChange={() => setNewFilterType('multiselect')}
+                          className="w-4 h-4 text-amber-600 border-slate-300 focus:ring-2 focus:ring-amber-500 cursor-pointer"
                         />
-                      </div>
-                    )}
-                    {newFilterError && (
-                      <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
-                        {newFilterError}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleCreateCustom}
-                        disabled={isCreatingCustom}
-                        className="flex-1 px-3 py-2 rounded-md text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 transition-colors disabled:opacity-50"
-                      >
-                        {isCreatingCustom ? 'Creating...' : 'Create Filter'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsAddingCustom(false);
-                          setNewFilterError(null);
-                        }}
-                        className="px-3 py-2 rounded-md text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
-                      >
-                        Cancel
-                      </button>
+                        Multiselect
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="customFilterType"
+                          checked={newFilterType === 'text'}
+                          onChange={() => setNewFilterType('text')}
+                          className="w-4 h-4 text-amber-600 border-slate-300 focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                        />
+                        Text match
+                      </label>
                     </div>
                   </div>
-                )}
+                  {newFilterType === 'multiselect' && (
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1">Options (comma or new line)</label>
+                      <textarea
+                        value={newFilterOptions}
+                        onChange={(e) => setNewFilterOptions(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                        placeholder="paper, parchment, palm"
+                      />
+                    </div>
+                  )}
+                  {newFilterError && (
+                    <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                      {newFilterError}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCreateCustom}
+                      disabled={isCreatingCustom}
+                      className="flex-1 px-3 py-2 rounded-md text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 transition-colors disabled:opacity-50"
+                    >
+                      {isCreatingCustom ? 'Creating...' : 'Create Filter'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsAddingCustom(false);
+                        setNewFilterError(null);
+                      }}
+                      className="px-3 py-2 rounded-md text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Action Buttons */}

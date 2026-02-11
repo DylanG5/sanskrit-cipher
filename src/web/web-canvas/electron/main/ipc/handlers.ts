@@ -21,7 +21,7 @@ interface FragmentFilters {
   hasRightEdge?: boolean | null;
   hasCircle?: boolean | null;
   search?: string;
-  custom?: Record<string, string | null | undefined>;
+  custom?: Record<string, string | string[] | null | undefined>;
   limit?: number;
   offset?: number;
 }
@@ -48,7 +48,7 @@ interface CustomFilterDefinition {
   id: number;
   filterKey: string;
   label: string;
-  type: 'dropdown' | 'text';
+  type: 'multiselect' | 'text';
   options?: string[];
 }
 
@@ -167,17 +167,29 @@ export function registerIpcHandlers(): void {
     }
 
     if (filters?.custom) {
-      const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
-      const allowedKeys = new Set(customKeys.map((row) => row.filter_key));
+      const customFilterDefs = db.prepare('SELECT filter_key, type FROM custom_filters').all() as Array<{ filter_key: string; type: string }>;
+      const allowedKeys = new Map(customFilterDefs.map((row) => [row.filter_key, row.type]));
+
       for (const [key, value] of Object.entries(filters.custom)) {
         if (!allowedKeys.has(key) || !VALID_IDENTIFIER.test(key)) {
           continue;
         }
-        if (value === undefined || value === null || value === '') {
-          continue;
+
+        const filterType = allowedKeys.get(key);
+
+        // Handle array values for multiselect filters (OR condition)
+        if (Array.isArray(value)) {
+          if (value.length === 0) continue;
+
+          // For multiselect filters, match if the fragment value equals ANY of the selected options
+          const conditions = value.map(() => `${key} = ?`).join(' OR ');
+          query += ` AND (${conditions})`;
+          params.push(...value);
+        } else if (typeof value === 'string' && value !== '') {
+          // Handle single string values for text filters
+          query += ` AND ${key} = ?`;
+          params.push(value);
         }
-        query += ` AND ${key} = ?`;
-        params.push(value);
       }
     }
 
@@ -263,17 +275,29 @@ export function registerIpcHandlers(): void {
     }
 
     if (filters?.custom) {
-      const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
-      const allowedKeys = new Set(customKeys.map((row) => row.filter_key));
+      const customFilterDefs = db.prepare('SELECT filter_key, type FROM custom_filters').all() as Array<{ filter_key: string; type: string }>;
+      const allowedKeys = new Map(customFilterDefs.map((row) => [row.filter_key, row.type]));
+
       for (const [key, value] of Object.entries(filters.custom)) {
         if (!allowedKeys.has(key) || !VALID_IDENTIFIER.test(key)) {
           continue;
         }
-        if (value === undefined || value === null || value === '') {
-          continue;
+
+        const filterType = allowedKeys.get(key);
+
+        // Handle array values for multiselect filters (OR condition)
+        if (Array.isArray(value)) {
+          if (value.length === 0) continue;
+
+          // For multiselect filters, match if the fragment value equals ANY of the selected options
+          const conditions = value.map(() => `${key} = ?`).join(' OR ');
+          query += ` AND (${conditions})`;
+          params.push(...value);
+        } else if (typeof value === 'string' && value !== '') {
+          // Handle single string values for text filters
+          query += ` AND ${key} = ?`;
+          params.push(value);
         }
-        query += ` AND ${key} = ?`;
-        params.push(value);
       }
     }
 
@@ -327,6 +351,7 @@ export function registerIpcHandlers(): void {
     for (const [key, value] of Object.entries(metadata)) {
       if (allowedFields.has(key)) {
         updates.push(`${key} = ?`);
+        // Store values as strings (custom filters store single values per fragment)
         params.push(value);
       }
     }
@@ -357,14 +382,14 @@ export function registerIpcHandlers(): void {
     try {
       const rows = db.prepare(
         'SELECT id, filter_key, label, type, options FROM custom_filters ORDER BY id ASC'
-      ).all() as Array<{ id: number; filter_key: string; label: string; type: 'dropdown' | 'text'; options: string | null }>;
+      ).all() as Array<{ id: number; filter_key: string; label: string; type: 'multiselect' | 'text'; options: string | null }>;
 
       const data: CustomFilterDefinition[] = rows.map((row) => ({
         id: row.id,
         filterKey: row.filter_key,
         label: row.label,
         type: row.type,
-        options: row.type === 'dropdown' ? parseOptionsJson(row.options) : undefined,
+        options: row.type === 'multiselect' ? parseOptionsJson(row.options) : undefined,
       }));
 
       return { success: true, data };
@@ -376,7 +401,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('customFilters:create', async (_event, payload: {
     label?: string;
-    type?: 'dropdown' | 'text';
+    type?: 'multiselect' | 'text';
     options?: string[];
   }) => {
     const label = typeof payload?.label === 'string' ? payload.label.trim() : '';
@@ -385,12 +410,12 @@ export function registerIpcHandlers(): void {
     if (!label) {
       return { success: false, error: 'Filter name is required' };
     }
-    if (type !== 'dropdown' && type !== 'text') {
+    if (type !== 'multiselect' && type !== 'text') {
       return { success: false, error: 'Invalid filter type' };
     }
 
     let options: string[] | undefined;
-    if (type === 'dropdown') {
+    if (type === 'multiselect') {
       options = parseOptions(payload?.options);
       if (!options.length) {
         return { success: false, error: 'Dropdown filters require at least one option' };
@@ -437,7 +462,7 @@ export function registerIpcHandlers(): void {
         filterKey,
         label,
         type,
-        options: type === 'dropdown' ? options : undefined,
+        options: type === 'multiselect' ? options : undefined,
       };
 
       return { success: true, data };
@@ -488,12 +513,12 @@ export function registerIpcHandlers(): void {
     try {
       const row = db.prepare(
         'SELECT id, filter_key, label, type FROM custom_filters WHERE id = ?'
-      ).get(id) as { id: number; filter_key: string; label: string; type: 'dropdown' | 'text' } | undefined;
+      ).get(id) as { id: number; filter_key: string; label: string; type: 'multiselect' | 'text' } | undefined;
 
       if (!row) {
         return { success: false, error: 'Filter not found' };
       }
-      if (row.type !== 'dropdown') {
+      if (row.type !== 'multiselect') {
         return { success: false, error: 'Only dropdown filters have options' };
       }
       if (!VALID_IDENTIFIER.test(row.filter_key)) {
