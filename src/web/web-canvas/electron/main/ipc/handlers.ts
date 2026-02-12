@@ -582,7 +582,7 @@ export function registerIpcHandlers(): void {
     const isDev = !app.isPackaged;
     const basePath = isDev
       ? path.join(process.cwd(), 'electron/resources/cache/segmented')
-      : path.join(process.resourcesPath, 'cache/segmented');
+      : path.join(process.resourcesPath, 'resources', 'cache', 'segmented');
 
     const segmentedPath = path.join(basePath, `${fragmentId}_segmented.png`);
 
@@ -601,7 +601,7 @@ export function registerIpcHandlers(): void {
     const isDev = !app.isPackaged;
     const basePath = isDev
       ? path.join(process.cwd(), 'electron/resources/cache/segmented')
-      : path.join(process.resourcesPath, 'cache/segmented');
+      : path.join(process.resourcesPath, 'resources', 'cache', 'segmented');
 
     const results: Record<string, boolean> = {};
 

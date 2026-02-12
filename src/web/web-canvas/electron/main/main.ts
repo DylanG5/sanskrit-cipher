@@ -56,7 +56,7 @@ const registerImageProtocol = () => {
       const filename = decodedUrl.replace('segmented/', '');
       const basePath = isDev
         ? path.join(process.cwd(), 'electron/resources/cache/segmented')
-        : path.join(process.resourcesPath, 'cache/segmented');
+        : path.join(process.resourcesPath, 'resources', 'cache', 'segmented');
       imagePath = path.join(basePath, filename);
     } else {
       // Original images are in the data folder

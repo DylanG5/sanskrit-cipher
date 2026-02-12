@@ -128,7 +128,8 @@ export function initDatabase(): Database.Database {
 
   // In production, copy bundled database if user database doesn't exist
   if (app.isPackaged && !fs.existsSync(dbPath)) {
-    const bundledDbPath = path.join(process.resourcesPath, 'database', 'fragments.db');
+    // extraResource copies ./electron/resources as "resources" subfolder inside Contents/Resources/
+    const bundledDbPath = path.join(process.resourcesPath, 'resources', 'database', 'fragments.db');
     if (fs.existsSync(bundledDbPath)) {
       fs.copyFileSync(bundledDbPath, dbPath);
       console.log('Copied bundled database to user data directory');
