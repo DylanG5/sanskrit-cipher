@@ -308,9 +308,8 @@ const HomePage: React.FC = () => {
 
       {/* Sidebar */}
       <div
-        className={`relative z-10 border-r transition-all duration-500 ease-out flex flex-col ${
-          sidebarOpen ? 'w-80' : 'w-0'
-        } overflow-hidden`}
+        className={`relative z-10 border-r transition-all duration-500 ease-out flex flex-col ${sidebarOpen ? 'w-80' : 'w-0'
+          } overflow-hidden`}
         style={{
           background: 'linear-gradient(180deg, #1c1917 0%, #292524 50%, #1c1917 100%)',
           borderColor: 'rgba(120, 113, 108, 0.3)',
@@ -496,8 +495,8 @@ const HomePage: React.FC = () => {
               background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
               transform: 'rotate(2deg)'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'rotate(2deg)'}>
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'rotate(2deg)'}>
               <svg className="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
@@ -538,8 +537,8 @@ const HomePage: React.FC = () => {
             <div className="relative flex items-center bg-white rounded-2xl shadow-2xl border-2 transition-all duration-300" style={{
               borderColor: 'rgba(214, 211, 209, 0.5)'
             }}
-            onFocus={(e) => e.currentTarget.style.borderColor = 'rgba(234, 88, 12, 0.5)'}
-            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(214, 211, 209, 0.5)'}>
+              onFocus={(e) => e.currentTarget.style.borderColor = 'rgba(234, 88, 12, 0.5)'}
+              onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(214, 211, 209, 0.5)'}>
               <div className="flex-shrink-0 pl-6 pr-4">
                 <svg className="w-6 h-6 transition-colors duration-300 group-focus-within:text-primary-600" style={{
                   color: '#a8a29e'
@@ -692,6 +691,33 @@ const HomePage: React.FC = () => {
               Fragments Available
             </div>
           </div>
+          <button
+            onClick={() => navigate('/search')}
+            className="px-7 py-4 rounded-2xl backdrop-blur-sm border shadow-lg transition-all duration-300 cursor-pointer group"
+            style={{
+              background: 'rgba(255, 255, 255, 0.7)',
+              borderColor: 'rgba(214, 211, 209, 0.4)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(234, 88, 12, 0.5)';
+              e.currentTarget.style.background = 'rgba(255, 247, 237, 0.9)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(214, 211, 209, 0.4)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.7)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <div className="text-2xl mb-1.5 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 mx-auto" style={{ color: '#ea580c' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <div className="text-xs font-semibold font-body" style={{ color: '#57534e' }}>
+              Advanced Search
+            </div>
+          </button>
         </div>
 
         {/* Keyboard shortcut hint */}
