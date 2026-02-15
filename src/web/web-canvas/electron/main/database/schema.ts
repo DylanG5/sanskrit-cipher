@@ -79,6 +79,28 @@ CREATE TABLE IF NOT EXISTS custom_filters (
     options TEXT,       -- JSON array for dropdown options
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Edge matches: pairwise edge match results from reconstruction pipeline
+CREATE TABLE IF NOT EXISTS edge_matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fragment_a_id TEXT NOT NULL,
+    edge_a_name TEXT NOT NULL,
+    fragment_b_id TEXT NOT NULL,
+    edge_b_name TEXT NOT NULL,
+    score REAL NOT NULL,
+    rank INTEGER NOT NULL,
+    confidence REAL,
+    score_details TEXT,        -- JSON breakdown
+    relative_x_cm REAL,
+    relative_y_cm REAL,
+    rotation_deg REAL DEFAULT 0,
+    algorithm_version TEXT,
+    computed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fragment_a_id) REFERENCES fragments(fragment_id),
+    FOREIGN KEY (fragment_b_id) REFERENCES fragments(fragment_id)
+);
+CREATE INDEX IF NOT EXISTS idx_edge_matches_a ON edge_matches(fragment_a_id);
+CREATE INDEX IF NOT EXISTS idx_edge_matches_b ON edge_matches(fragment_b_id);
 `;
 
 export default SCHEMA_SQL;

@@ -103,6 +103,28 @@ export interface UploadResponse {
   results: UploadResult[];
 }
 
+export interface EdgeMatchRecord {
+  id: number;
+  fragment_a_id: string;
+  edge_a_name: string;
+  fragment_b_id: string;
+  edge_b_name: string;
+  score: number;
+  rank: number;
+  confidence: number | null;
+  score_details: string | null;
+  relative_x_cm: number | null;
+  relative_y_cm: number | null;
+  rotation_deg: number | null;
+  algorithm_version: string | null;
+  computed_at: string;
+  image_path?: string;
+  line_count?: number | null;
+  script_type?: string | null;
+  pixels_per_unit?: number | null;
+  scale_unit?: string | null;
+}
+
 // Declare the global electronAPI type
 declare global {
   interface Window {
@@ -139,6 +161,11 @@ declare global {
         }) => Promise<ApiResponse<CustomFilterDefinition>>;
         delete: (id: number) => Promise<ApiResponse<null>>;
         updateOptions: (id: number, options: string[]) => Promise<ApiResponse<CustomFilterDefinition>>;
+      };
+      edgeMatches: {
+        hasData: () => Promise<{ success: boolean; hasData: boolean; count: number }>;
+        getForFragment: (fragmentId: string) => Promise<ApiResponse<EdgeMatchRecord[]>>;
+        getBestMatches: (fragmentId: string, limit?: number) => Promise<ApiResponse<EdgeMatchRecord[]>>;
       };
     };
   }

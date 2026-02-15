@@ -582,7 +582,7 @@ export function registerIpcHandlers(): void {
     const isDev = !app.isPackaged;
     const basePath = isDev
       ? path.join(process.cwd(), 'electron/resources/cache/segmented')
-      : path.join(process.resourcesPath, 'cache/segmented');
+      : path.join(process.resourcesPath, 'resources', 'cache', 'segmented');
 
     const segmentedPath = path.join(basePath, `${fragmentId}_segmented.png`);
 
@@ -601,7 +601,7 @@ export function registerIpcHandlers(): void {
     const isDev = !app.isPackaged;
     const basePath = isDev
       ? path.join(process.cwd(), 'electron/resources/cache/segmented')
-      : path.join(process.resourcesPath, 'cache/segmented');
+      : path.join(process.resourcesPath, 'resources', 'cache', 'segmented');
 
     const results: Record<string, boolean> = {};
 
@@ -849,6 +849,71 @@ export function registerIpcHandlers(): void {
     }
 
     return { success: true, results };
+  });
+
+  // ============================================
+  // Edge Match Handlers
+  // ============================================
+
+  /**
+   * Check if edge_matches table exists and has data
+   */
+  ipcMain.handle('edgeMatches:hasData', () => {
+    try {
+      const row = db.prepare(
+        "SELECT COUNT(*) as cnt FROM edge_matches"
+      ).get() as { cnt: number } | undefined;
+      return { success: true, hasData: (row?.cnt ?? 0) > 0, count: row?.cnt ?? 0 };
+    } catch {
+      // Table might not exist yet
+      return { success: true, hasData: false, count: 0 };
+    }
+  });
+
+  /**
+   * Get all matches for a specific fragment, joined with fragment metadata
+   */
+  ipcMain.handle('edgeMatches:getForFragment', (_event, fragmentId: string) => {
+    try {
+      const rows = db.prepare(`
+        SELECT em.*,
+               fb.image_path, fb.line_count, fb.script_type,
+               fb.pixels_per_unit, fb.scale_unit,
+               fb.segmentation_coords
+        FROM edge_matches em
+        JOIN fragments fb ON fb.fragment_id = em.fragment_b_id
+        WHERE em.fragment_a_id = ?
+        ORDER BY em.score ASC
+      `).all(fragmentId);
+      return { success: true, data: rows };
+    } catch (error) {
+      console.error('Error getting edge matches:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  /**
+   * Get best unique match per target fragment (best score per fragment_b_id)
+   */
+  ipcMain.handle('edgeMatches:getBestMatches', (_event, fragmentId: string, limit: number = 20) => {
+    try {
+      const rows = db.prepare(`
+        SELECT em.*,
+               fb.image_path, fb.line_count, fb.script_type,
+               fb.pixels_per_unit, fb.scale_unit
+        FROM edge_matches em
+        JOIN fragments fb ON fb.fragment_id = em.fragment_b_id
+        WHERE em.fragment_a_id = ?
+        GROUP BY em.fragment_b_id
+        HAVING em.score = MIN(em.score)
+        ORDER BY em.score ASC
+        LIMIT ?
+      `).all(fragmentId, limit);
+      return { success: true, data: rows };
+    } catch (error) {
+      console.error('Error getting best edge matches:', error);
+      return { success: false, error: String(error) };
+    }
   });
 
   console.log('IPC handlers registered');

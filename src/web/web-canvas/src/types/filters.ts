@@ -10,6 +10,8 @@ export interface FragmentFilters {
   hasCircle?: boolean | null; // null = don't care
   search?: string; // Fragment ID search query
   custom?: Record<string, string | string[] | null | undefined>; // Support both single values and arrays
+  edgeMatchMode?: boolean;       // When true, sidebar shows edge match results
+  edgeMatchAnchorId?: string;    // Fragment ID that edge matches are relative to
 }
 
 export const DEFAULT_FILTERS: FragmentFilters = {

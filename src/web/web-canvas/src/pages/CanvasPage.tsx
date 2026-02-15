@@ -9,7 +9,7 @@ import UploadDialog from "../components/UploadDialog";
 import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
 import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus, getFragmentById } from "../services/fragment-service";
-import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData } from "../services/electron-api";
+import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData, EdgeMatchRecord } from "../services/electron-api";
 import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
 import { SCRIPT_TYPES, getScriptTypeDB } from "../types/constants";
 import { CustomFilterDefinition } from "../types/customFilters";
@@ -43,6 +43,11 @@ function CanvasPage() {
   const [gridScale, setGridScale] = useState(25); // pixels per cm
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Edge match state
+  const [edgeMatchMode, setEdgeMatchMode] = useState(false);
+  const [edgeMatchAnchorId, setEdgeMatchAnchorId] = useState<string | null>(null);
+  const [edgeMatches, setEdgeMatches] = useState<EdgeMatchRecord[]>([]);
 
   // Search state
   const [initialSearchQuery, setInitialSearchQuery] = useState<string | null>(null);
@@ -432,6 +437,23 @@ function CanvasPage() {
     setCanvasFragments(restoredFragments);
     setSaveStatus('saved');
     setHasUnsavedChanges(false);
+
+    // Load original image dimensions for restored fragments
+    // This is needed for the "Set Scale from Resize" feature to work
+    for (const frag of restoredFragments) {
+      const img = new Image();
+      img.src = frag.imagePath;
+      img.onload = () => {
+        const originalWidth = img.naturalWidth;
+        const originalHeight = img.naturalHeight;
+
+        setCanvasFragments(prev => prev.map(f =>
+          f.id === frag.id
+            ? { ...f, originalWidth, originalHeight }
+            : f
+        ));
+      };
+    }
 
     // Small delay before allowing auto-save
     setTimeout(() => {
@@ -911,11 +933,131 @@ function CanvasPage() {
     return updated;
   }, []);
 
-  // Handle edge match request (dummy function for now)
-  const handleEdgeMatch = (fragmentId: string) => {
-    // TODO: Implement edge matching logic to filter sidebar fragments
-    // For now, this is just a placeholder
-    console.log('Edge match requested for fragment:', fragmentId);
+  // Handle edge match request: query DB for matches and switch sidebar to match view
+  const handleEdgeMatch = async (fragmentId: string) => {
+    const api = getElectronAPISafe();
+    if (!api?.edgeMatches) {
+      console.warn('Edge match API not available');
+      return;
+    }
+
+    // Check if edge match data exists
+    const check = await api.edgeMatches.hasData();
+    if (!check.hasData) {
+      console.log('No edge match data in database. Run the reconstruction pipeline first.');
+      return;
+    }
+
+    // Fetch best matches
+    const result = await api.edgeMatches.getBestMatches(fragmentId, 20);
+    if (result.success && result.data) {
+      setEdgeMatchMode(true);
+      setEdgeMatchAnchorId(fragmentId);
+      setEdgeMatches(result.data);
+    } else {
+      setEdgeMatchMode(false);
+      setEdgeMatchAnchorId(null);
+      setEdgeMatches([]);
+    }
+  };
+
+  // Handle placing a matched fragment on the canvas
+  const handlePlaceEdgeMatch = async (match: EdgeMatchRecord) => {
+    if (!edgeMatchAnchorId) return;
+
+    // Find the anchor fragment's position on canvas
+    const anchor = canvasFragments.find(cf => cf.fragmentId === edgeMatchAnchorId);
+    if (!anchor) {
+      console.warn('Anchor fragment not on canvas');
+      return;
+    }
+
+    // Convert cm offset to canvas pixels
+    const relPx = (match.relative_x_cm ?? 0) * gridScale;
+    const relPy = (match.relative_y_cm ?? 0) * gridScale;
+
+    // Rotate the offset vector by the anchor's current rotation
+    // so placement is correct even if the anchor has been rotated on canvas
+    const anchorRotRad = ((anchor.rotation ?? 0) * Math.PI) / 180;
+    const cosA = Math.cos(anchorRotRad);
+    const sinA = Math.sin(anchorRotRad);
+    const newX = anchor.x + relPx * cosA - relPy * sinA;
+    const newY = anchor.y + relPx * sinA + relPy * cosA;
+
+    // Combine pipeline rotation with anchor's canvas rotation
+    const rotation = (match.rotation_deg ?? 0) + (anchor.rotation ?? 0);
+
+    // Check if already on canvas
+    const existing = canvasFragments.find(cf => cf.fragmentId === match.fragment_b_id);
+    if (existing) {
+      // Update position of existing fragment
+      setCanvasFragments(prev =>
+        prev.map(cf =>
+          cf.fragmentId === match.fragment_b_id
+            ? { ...cf, x: newX, y: newY, rotation, showSegmented: true }
+            : cf
+        )
+      );
+      return;
+    }
+
+    // Load fragment image to get display size
+    const api = getElectronAPISafe();
+    if (!api) return;
+
+    // Fetch the fragment from DB to get metadata for sizing
+    const fragResult = await api.fragments.getById(match.fragment_b_id);
+    if (!fragResult.success || !fragResult.data) return;
+    const fragData = fragResult.data;
+
+    // Build resolved image path using electron-image:// protocol (consistent with drag-drop and restore)
+    const imagePath = `electron-image://${fragData.image_path}`;
+    const img = new Image();
+    img.src = imagePath;
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+
+    // Build a ManuscriptFragment-like object for calculateDisplaySize
+    const scaleInfo = fragData.pixels_per_unit
+      ? { unit: (fragData.scale_unit ?? 'cm') as 'cm' | 'mm', pixelsPerUnit: fragData.pixels_per_unit }
+      : undefined;
+    const mockFragment: ManuscriptFragment = {
+      id: match.fragment_b_id,
+      name: match.fragment_b_id,
+      imagePath: imagePath,
+      thumbnailPath: imagePath,
+      metadata: scaleInfo ? { scale: { ...scaleInfo, detectionStatus: 'success' as const } } : undefined,
+    };
+    const { width, height } = calculateDisplaySize(mockFragment, img.naturalWidth || 300, img.naturalHeight || 300);
+
+    const newFragment: CanvasFragment = {
+      id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+      fragmentId: match.fragment_b_id,
+      name: match.fragment_b_id,
+      imagePath: imagePath,
+      segmentationCoords: fragData.segmentation_coords ?? undefined,
+      x: newX,
+      y: newY,
+      width,
+      height,
+      rotation,
+      scaleX: 1,
+      scaleY: 1,
+      isLocked: false,
+      isSelected: false,
+      showSegmented: true,
+    };
+
+    setCanvasFragments(prev => [...prev, newFragment]);
+  };
+
+  // Exit edge match mode
+  const handleExitEdgeMatch = () => {
+    setEdgeMatchMode(false);
+    setEdgeMatchAnchorId(null);
+    setEdgeMatches([]);
   };
 
   // State to track the canvas fragment for metadata display
@@ -1008,6 +1150,11 @@ function CanvasPage() {
           canvasFragments={canvasFragments}
           gridScale={gridScale}
           customFilters={customFilters}
+          edgeMatchMode={edgeMatchMode}
+          edgeMatchAnchorId={edgeMatchAnchorId}
+          edgeMatches={edgeMatches}
+          onPlaceEdgeMatch={handlePlaceEdgeMatch}
+          onExitEdgeMatch={handleExitEdgeMatch}
         />
 
         <div
