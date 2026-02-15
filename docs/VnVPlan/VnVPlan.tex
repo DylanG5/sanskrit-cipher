@@ -36,6 +36,7 @@ Date October 27 & 1.1 & Adding FR testing plan\\
 Date October 27 & 1.2 & Added section 2 and reflection\\
 Date October 27 & 1.3 & Added section 3.1 - 3.4\\
 Date October 27 & 1.4 & Added implementation, automated, and software verification\\
+Feb.\ 15, 2026 & 1.5 & Updated plan to match implemented scope and added unit test section\\
 \bottomrule
 \end{tabularx}
 
@@ -56,11 +57,9 @@ Date October 27 & 1.4 & Added implementation, automated, and software verificati
 \section{General Information}
 
 \subsection{Summary}
-The software system being tested is \textbf{Sanskrit Manuscript Reconstruction Platform}, a web-based research tool designed to assist scholars in reconstructing fragmented Buddhist manuscripts through computational analysis. The system integrates machine learning, computer vision, and database management to enable users to upload digitized manuscript fragments, perform automated preprocessing and orientation correction, and generate similarity based match suggestions across fragments. 
+The software system being tested is \textbf{Sanskrit Manuscript Reconstruction Platform}, a research tool designed to assist scholars in reconstructing fragmented Buddhist manuscripts through computational analysis. The system integrates machine learning, computer vision, and local data management to enable users to upload digitized manuscript fragments, search and filter fragment collections, and visually arrange fragments on an interactive canvas. An offline ML pipeline provides segmentation, script classification, line counting, circle/scale detection, and related metadata; edge matching is an active area of development.
 \newline
-The platform consists of a front-end interface for visualization and user interaction, a back-end API for data management and orchestration, and multiple AI/ML components responsible for text extraction, edge and damage pattern analysis, and handwriting classification.  
-\newline
-The verification and validation process will ensure that all core functionalities, including fragment upload, orientation correction, transcription assistance, and match discovery, perform correctly, reliably, and consistently across diverse manuscript inputs. It will also verify that data integrity, user authentication, and safety-critical requirements identified in the Hazard Analysis are met. 
+The verification and validation process will ensure that all core functionalities, including fragment upload, search/filtering, canvas workspace interactions, ML analysis outputs, and edge matching, perform correctly, reliably, and consistently across diverse manuscript inputs. It will also verify that data integrity and safety-critical requirements identified in the Hazard Analysis are met.
 \newline
 Testing will be conducted incrementally across all major milestones (Proof of Concept, Revision 0, and Revision 1) using a combination of unit testing, integration testing, usability testing, and system-level validation to confirm that the software meets its specified functional and non-functional requirements as outlined in the SRS.
   
@@ -70,19 +69,22 @@ The primary objective of this Verification and Validation (V\&V) Plan is to ensu
 
 \textbf{In-Scope Objectives:}
 \begin{itemize}
-    \item \textbf{Functional correctness:} Verify that all major workflows (fragment upload, image normalization, fragment matching, OCR transcription, and session management) produce accurate and expected outcomes.
+    \item \textbf{Functional correctness:} Verify that core workflows (fragment upload, search/filtering, canvas workspace, and session management) produce accurate and expected outcomes.
+    \item \textbf{ML analysis integration:} Validate that pipeline outputs (segmentation, script type, line count, circle/scale detection) are generated and stored correctly for use in the UI.
+    \item \textbf{Edge matching:} Validate that edge matching tooling produces reasonable candidate rankings on curated fragment pairs.
     \item \textbf{Reliability:} Validate that the system performs consistently across multiple sessions and input types, with appropriate handling of errors, interruptions, and data corruption.
-    \item \textbf{Data integrity and security:} Ensure that user data, manuscript fragments, and annotations are stored and transmitted securely, as outlined in the Safety and Security Requirements.
+    \item \textbf{Data integrity and security:} Ensure that user data, manuscript fragments, and annotations are stored securely and remain consistent, as outlined in the Safety and Security Requirements.
     \item \textbf{Usability and accessibility:} Evaluate that scholars can intuitively use the system to complete core reconstruction tasks with minimal training, supported by the usability study and user manual deliverables.
-    \item \textbf{Model transparency:} Confirm that AI-generated suggestions (match rankings, OCR outputs, classifications) include interpretable confidence levels and require explicit human confirmation before acceptance.
     \item \textbf{Traceability:} Establish end-to-end verification between requirements, test cases, and hazard mitigations to ensure all critical safety-related functionalities are validated.
 \end{itemize}
 
 \textbf{Out-of-Scope Objectives:}
 \begin{itemize}
+    \item \textbf{User authentication and role-based access control:} Account management and access control are not implemented in the current prototype.
+    \item \textbf{OCR transcription assistance:} OCR-based transcription is not implemented in the current prototype.
     \item \textbf{External library verification:} The correctness of third-party libraries and frameworks (e.g., OpenCV, PyTorch, TensorFlow) will be assumed based on their established reliability and community validation.
     \item \textbf{Extensive performance benchmarking:} While basic response-time and load-handling tests will be conducted, large-scale benchmarking under production conditions is beyond the project’s resource and time constraints.
-    \item \textbf{Cross-platform hardware testing:} The V\&V plan focuses on web deployment via modern browsers and does not include testing on specialized hardware or legacy systems.
+    \item \textbf{Cross-platform hardware testing:} The V\&V plan focuses on desktop deployment and does not include testing on specialized hardware or legacy systems.
     \item \textbf{Formal verification:} Mathematical proofs or model checking of algorithms are not feasible within the capstone timeline and are deferred to potential future work.
 \end{itemize}
 
@@ -491,15 +493,15 @@ These tests correspond to requirements S.4.6 of the SRS, which specify functiona
 
 \subsection{Tests for Nonfunctional Requirements}
 
-The following subsections detail tests for system performance, AI matching quality, usability, reliability, data integrity, security, scalability, cross-browser compatibility, and performance benchmarking. These tests align with the nonfunctional requirements specified in the SRS document and provide measurable criteria for validating system quality attributes.
+The following subsections detail tests for system performance, ML analysis quality, usability, reliability, data integrity, security, scalability, cross-platform compatibility, and performance benchmarking. These tests align with the nonfunctional requirements specified in the SRS document and provide measurable criteria for validating system quality attributes.
 
 \subsubsection{System Performance Testing}
 
-System performance testing validates that the platform meets specified performance requirements under expected workloads. These tests measure processing throughput for large fragment collections and system responsiveness under concurrent user load.
+System performance testing validates ML pipeline throughput and the responsiveness of local UI workflows.
 
 \paragraph{Collection Processing Performance}
 
-These tests verify the system can process large collections of manuscript fragments within acceptable timeframes and handle concurrent research use as specified in the SRS.
+These tests verify the system can process large collections of manuscript fragments within acceptable timeframes.
 
 \begin{enumerate}
 
@@ -507,9 +509,9 @@ These tests verify the system can process large collections of manuscript fragme
 
 \textbf{Type:} Dynamic, Automated, Performance
 
-\textbf{Initial State:} System deployed with empty database; sample dataset of 500 representative fragments from the British Library collection prepared for ingestion
+\textbf{Initial State:} Sample dataset of 500 fragments prepared for ingestion.
 
-\textbf{Input/Condition:} Execute bulk fragment processing pipeline with sample dataset; monitor processing time, resource utilization, and completion rate
+\textbf{Input/Condition:} Execute bulk fragment processing pipeline with the sample dataset; monitor processing time and completion rate.
 
 \textbf{Output/Result:} Processing completes within 1.15 hours for 500 fragments; all fragments successfully processed with metadata extracted and indexed; system logs show no critical errors; extrapolated processing rate indicates full 21,000-fragment collection would process within $\leq$ 48 hours (per SRS NFR criteria)
 
@@ -517,52 +519,37 @@ These tests verify the system can process large collections of manuscript fragme
 
 \item \textbf{test-nfr-perf-2}
 
-\textbf{Type:} Dynamic, Automated, Load Testing
+\textbf{Type:} Dynamic, Automated, Performance Testing
 
-\textbf{Initial State:} System fully operational with sample dataset (500-1000 fragments) loaded; load testing framework configured
+\textbf{Initial State:} System fully operational with sample dataset (500-1000 fragments) loaded.
 
-\textbf{Input/Condition:} Simulate 15 concurrent users performing typical research workflows (searches, filtering, canvas operations) over a 20-minute period to verify system can support 15+ concurrent users (per SRS NFR criteria)
+\textbf{Input/Condition:} Execute a scripted single-user workflow (search, filtering, canvas operations) over a 20-minute period.
 
-\textbf{Output/Result:} System maintains responsiveness throughout test period with 15 concurrent users; search queries return results within 3 seconds; canvas operations respond within 500ms; 95\% of operations complete successfully without errors; no server crashes or performance degradation
+\textbf{Output/Result:} Search queries return results within 3 seconds; canvas operations respond within 500 ms; 95\% of operations complete successfully without errors; no crashes or performance degradation.
 
-\textbf{How test will be performed:} Load testing tool (e.g., Locust or k6) will simulate 15 concurrent users executing scripted realistic research workflows. Test will ramp up from 1 to 15 users over 2 minutes, then maintain 15 concurrent users for 18 minutes. Test scenarios include: (1) search by fragment ID (10\% of operations), (2) metadata filter queries (40\%), (3) canvas workspace creation with 5-10 fragments (30\%), (4) session save/restore operations (20\%). Performance metrics (response times, error rates, throughput, server resource utilization) will be logged continuously. Test passes if: (1) mean search response time $\leq$ 2 seconds under load, (2) 95th percentile search time $\leq$ 3 seconds, (3) canvas operations complete within 500ms, (4) error rate $\leq$ 2\%, (5) system successfully handles 15 concurrent users without crashes (meeting SRS requirement), and (6) no unhandled exceptions or out-of-memory errors occur. Results will include response time graphs, throughput metrics, and resource utilization charts.
+\textbf{How test will be performed:} A scripted workflow will execute: (1) search by fragment ID (10\% of operations), (2) metadata filter queries (40\%), (3) canvas workspace creation with 5-10 fragments (30\%), (4) session save/restore operations (20\%). Performance metrics (response times, error rates, resource utilization) will be logged continuously. Test passes if: (1) mean search response time $\leq$ 2 seconds, (2) 95th percentile search time $\leq$ 3 seconds, (3) canvas operations complete within 500 ms, (4) error rate $\leq$ 2\%, and (5) no unhandled exceptions occur.
 
 \end{enumerate}
 
-\subsubsection{AI Matching Assistance Quality}
+\subsubsection{ML Analysis Quality}
 
-AI matching quality tests evaluate whether the system's machine learning-based fragment matching suggestions provide practical utility for scholarly research workflows.
+ML analysis quality tests evaluate whether pipeline outputs (script type and line count) are accurate enough for scholarly use.
 
-\paragraph{Matching Suggestion Utility}
-
-This test validates that AI-generated matching suggestions are sufficiently accurate and useful to assist researchers in identifying potential fragment connections.
+\paragraph{Script and Line Count Accuracy}
 
 \begin{enumerate}
 
 \item \textbf{test-nfr-ai-1}
 
-\textbf{Type:} Dynamic, Manual, Expert Evaluation
+\textbf{Type:} Dynamic, Manual/Automated, Expert Evaluation
 
-\textbf{Initial State:} System operational with AI matching model trained and deployed; test set of 20 fragment queries prepared with known ground truth (10 fragments with confirmed matches, 10 without matches in collection)
+\textbf{Initial State:} Labeled evaluation set with script labels and line counts.
 
-\textbf{Input/Condition:} For each test fragment, request AI matching suggestions; record top 5 suggestions and their confidence scores
+\textbf{Input/Condition:} Run the ML pipeline on the evaluation set.
 
-\textbf{Output/Result:} For fragments with known matches: true match appears in top 5 suggestions in $\geq$ 60\% of cases; for fragments without matches: system correctly identifies low confidence or provides diverse alternatives; overall suggestion relevance rated as "potentially useful" by domain expert(s) in $\geq$ 50\% of cases
+\textbf{Output/Result:} Script classification accuracy $\geq$ 70\%; line count within $\pm$1 for $\geq$ 80\% of samples.
 
-\textbf{How test will be performed:} Project supervisor and/or 1-2 domain experts (e.g., faculty member, graduate student in relevant field) will evaluate AI matching suggestions for the 30-fragment test set. For each fragment, evaluators will complete a standardized evaluation form.
-
-\textbf{Evaluation Form (per fragment):}
-\begin{itemize}
-\item Fragment ID: [ID]
-\item Known Ground Truth: [Has match in collection: Yes/No] [If yes, Fragment ID of match: \_\_\_]
-\item Top 5 AI Suggestions: [List 5 suggestion IDs and confidence scores]
-\item Ground Truth in Top 5?: [Yes/No]
-\item Visual Feature Relevance: Do suggestions show similar edge patterns, damage, or script characteristics? [Yes/Somewhat/No]
-\item Overall Utility Rating: Would these suggestions be useful for scholarly investigation? [Useful / Potentially Useful / Not Useful]
-\item Comments: [Brief explanation of rating]
-\end{itemize}
-
-Results will be documented in a spreadsheet with one row per fragment. Test passes if: (1) known matches appear in top 5 for $\geq$ 60\% of test cases (6 out of 10 fragments with known matches), and (2) overall utility ratings are "useful" or "potentially useful" in $\geq$ 50\% of all 20 cases (10 or more fragments rated positively).
+\textbf{How test will be performed:} Compare pipeline outputs to ground truth and report accuracy metrics in a summary table.
 
 \end{enumerate}
 
@@ -626,11 +613,9 @@ For each issue identified, document: (1) specific location/feature, (2) principl
 
 \subsubsection{System Availability and Reliability}
 
-Reliability testing validates that the system maintains consistent availability for academic research and can recover from failures without data loss.
+Reliability testing validates stability under repeated use and recovery from interruptions without data loss.
 
-\paragraph{Uptime and Availability Testing}
-
-These tests measure system uptime and verify recovery capabilities to ensure the platform reliably supports ongoing research activities.
+\paragraph{Stability Under Repeated Use}
 
 \begin{enumerate}
 
@@ -638,31 +623,31 @@ These tests measure system uptime and verify recovery capabilities to ensure the
 
 \textbf{Type:} Dynamic, Automated, Reliability Testing
 
-\textbf{Initial State:} System deployed to test/staging environment; GitHub Actions workflow configured for automated monitoring
+\textbf{Initial State:} Desktop app installed with sample dataset loaded.
 
-\textbf{Input/Condition:} Continuous operation over 7-day period with automated health checks every 30 minutes via GitHub Actions scheduled workflow; simulated user activity via automated test script
+\textbf{Input/Condition:} Daily automated smoke test for 7 days: launch app, run search/filter, open canvas, save and reload project, then exit.
 
-\textbf{Output/Result:} System availability $\geq$ 95\% during the test period (per SRS NFR criteria); no more than 2 unplanned outages lasting $>$ 1 hour; system recovers automatically or can be restarted successfully after any failures
+\textbf{Output/Result:} $\geq$ 95\% of runs complete without errors; database remains consistent with no corruption.
 
-\textbf{How test will be performed:} GitHub Actions scheduled workflow (using cron syntax) will run every 30 minutes to perform health checks: (1) HTTP request to home page (expect 200 status), (2) execute test search query via API (verify JSON response), (3) verify database connectivity through health endpoint. Each workflow run logs results to a file committed to repository with timestamp and status. Additionally, a separate workflow runs hourly to simulate realistic user activity (perform searches, create canvas session, save/restore operations) and verify end-to-end functionality. All workflow runs are recorded in GitHub Actions history. For any failed health check: workflow creates GitHub issue automatically with failure details and timestamp. Test passes if: (1) uptime $\geq$ 95\% over 7 days (calculated as successful health checks / total health checks; allowing maximum 8.4 hours downtime), (2) no more than 2 unplanned outages lasting $>$ 1 hour, and (3) system recovers within 1 hour of failure detection (verified through subsequent health check passes). Results documented in availability report generated from workflow logs showing: total checks, successful checks, failed checks, outage periods, and uptime percentage.
+\textbf{How test will be performed:} Scripted smoke test logs pass/fail for each run; failures recorded with timestamps and logs.
 
 \item \textbf{test-nfr-reliability-2}
 
-\textbf{Type:} Dynamic, Manual, Disaster Recovery
+\textbf{Type:} Dynamic, Manual, Recovery
 
-\textbf{Initial State:} System operational with sample dataset loaded; backup procedures documented and tested; test environment available for recovery simulation
+\textbf{Initial State:} Project open with unsaved changes.
 
-\textbf{Input/Condition:} Simulate critical failure scenario (e.g., accidental database deletion, container/server crash); initiate recovery procedures using documented backup strategy
+\textbf{Input/Condition:} Force-close the application during save; restart and reload the project.
 
-\textbf{Output/Result:} System restored to functional state within 2 hours; sample dataset and user data successfully recovered with no loss; all core functionality (search, canvas, authentication) verified operational post-recovery
+\textbf{Output/Result:} App restarts cleanly; project data is either preserved or rolled back without corruption.
 
-\textbf{How test will be performed:} Recovery test will be conducted in isolated test environment to avoid impacting production. Test scenario: (1) create backup of current system state (database, uploaded images, configuration), (2) simulate failure by stopping services and removing/corrupting critical data, (3) execute documented recovery procedures from backup, (4) measure time from "failure" to full restoration. Post-recovery verification checklist: database accessible and contains expected records, search returns correct results for sample queries, canvas workspace can be created and manipulated, user authentication works, uploaded images accessible. Test passes if: (1) recovery completed within 2 hours, (2) all verification checks pass, (3) no data loss detected (verified by record count and sample data spot-check), and (4) recovery procedure documentation is sufficient for team member unfamiliar with process to execute successfully.
+\textbf{How test will be performed:} Manual recovery test with database integrity check after restart.
 
 \end{enumerate}
 
 \subsubsection{Data Integrity and Security}
 
-Data integrity and security testing ensures that fragment metadata and provenance information are preserved accurately and that the system protects against common security vulnerabilities.
+Data integrity and security testing ensures that fragment metadata and local file paths are preserved accurately and that the system protects against common security vulnerabilities.
 
 \paragraph{Data Preservation and Attribution}
 
@@ -674,38 +659,34 @@ These tests verify that all fragment data maintains referential integrity and pr
 
 \textbf{Type:} Functional, Automated, Data Validation
 					
-\textbf{Initial State:} British Library collection metadata and user-submitted images loaded into system
+\textbf{Initial State:} Sample dataset and user-uploaded images loaded into the system.
 					
-\textbf{Input/Condition:} Execute comprehensive data validation checks across entire collection
+\textbf{Input/Condition:} Execute comprehensive data validation checks across the collection.
 					
-\textbf{Output/Result:} 100\% of fragments retain original British Library catalog information (shelfmark, collection, provenance); all user-submitted images maintain uploaded attribution; no corruption or loss of metadata fields
+\textbf{Output/Result:} 100\% of fragments have required fields populated; image paths point to existing files; no corruption or loss of metadata fields.
 					
 \textbf{How test will be performed:} Automated validation script will query all fragments in the database and verify metadata integrity.
 
 \textbf{Required Metadata Fields:}
 \begin{itemize}
 \item \textbf{Fragment ID}: Unique identifier (non-null, unique constraint)
-\item \textbf{Collection Source}: "British Library" or user-uploaded indicator (non-null)
-\item \textbf{Shelfmark}: Original catalog reference (required for British Library fragments)
-\item \textbf{Provenance}: Geographic/historical origin information (if available in source)
-\item \textbf{Image URL/Path}: Location of fragment image (non-null, valid path)
-\item \textbf{Upload Attribution}: Username or source for user-submitted fragments (non-null for user uploads)
+\item \textbf{Image Path}: Location of fragment image (non-null, valid path)
 \item \textbf{Timestamp}: Date added to system (non-null)
 \end{itemize}
 
-Validation checks: (1) all required fields present and non-null, (2) British Library fragments cross-referenced against source catalog CSV (shelfmark, collection matches), (3) user-uploaded fragments have valid attribution field, (4) referential integrity verified (foreign keys valid, no orphaned records). Script generates exception report listing any fragments with missing/inconsistent data. Manual spot-check of 100 randomly selected fragments verifies field accuracy. Test passes with 100\% of fragments having all required fields populated and $\geq$ 99\% matching source data exactly.
+Validation checks: (1) all required fields present and non-null, (2) image files exist on disk, (3) referential integrity verified (no orphaned records). Script generates exception report listing any fragments with missing/inconsistent data. Test passes with 100\% of fragments having all required fields populated.
 
 \item \textbf{test-nfr-data-2}
 
 \textbf{Type:} Static, Manual, Code Review
 
-\textbf{Initial State:} Data handling, authentication, and API code modules identified for review; security review checklist prepared based on OWASP guidelines
+\textbf{Initial State:} Data handling and IPC modules identified for review; security review checklist prepared.
 
-\textbf{Input/Condition:} Security-focused code review conducted by team members not primarily responsible for implementing the reviewed modules, supplemented by automated security scanning tools
+\textbf{Input/Condition:} Security-focused code review conducted by team members not primarily responsible for implementing the reviewed modules, supplemented by automated security scanning tools.
 
-\textbf{Output/Result:} Review checklist completed with findings documented; no critical security vulnerabilities identified; common security best practices verified (input validation, SQL injection prevention, authentication, authorization, API security)
+\textbf{Output/Result:} Review checklist completed with findings documented; no critical security vulnerabilities identified; common security best practices verified (input validation, SQL injection prevention, safe file handling).
 
-\textbf{How test will be performed:} Two team members (preferably those who did not write the security-critical code) will conduct peer code review focusing on security aspects. Review checklist will cover: (1) input validation and sanitization for user-provided data, (2) SQL injection prevention (parameterized queries/ORM usage), (3) authentication mechanisms (password hashing, session management), (4) authorization controls (proper access checks before sensitive operations), (5) secure handling of API keys and secrets (not committed to repository), (6) protection against common web vulnerabilities (XSS, CSRF). Additionally, run automated security scanning tool appropriate for tech stack (e.g., npm audit for Node.js, Bandit for Python, pip-audit, or built-in IDE security warnings). All findings documented with severity ratings (critical/high/medium/low). Test passes if: (1) no critical or high-severity vulnerabilities identified in manual review, (2) checklist completed for all security-critical modules (authentication, data access, API endpoints), (3) automated scanning shows no critical issues, and (4) any medium/low findings have documented remediation plans or accepted risk justifications.
+\textbf{How test will be performed:} Two team members (preferably those who did not write the security-critical code) will conduct peer code review focusing on security aspects. Review checklist will cover: (1) input validation and sanitization for user-provided data, (2) SQL injection prevention (parameterized queries), (3) safe file path handling in IPC, (4) secure handling of local secrets or API keys (not committed to repository). Additionally, run automated security scanning tools appropriate for the tech stack (e.g., npm audit for Node.js, Bandit for Python, pip-audit, or built-in IDE security warnings). All findings documented with severity ratings (critical/high/medium/low). Test passes if: (1) no critical or high-severity vulnerabilities identified in manual review, (2) checklist completed for all security-critical modules, (3) automated scanning shows no critical issues, and (4) any medium/low findings have documented remediation plans or accepted risk justifications.
 
 \end{enumerate}
 
@@ -733,13 +714,13 @@ This test measures system performance with varying dataset sizes to project scal
 
 \end{enumerate}
 
-\subsubsection{Cross-Browser and Device Compatibility}
+\subsubsection{Cross-Platform Compatibility}
 
-Cross-browser compatibility testing ensures that the web-based interface functions correctly across major desktop browsers used by researchers.
+Cross-platform compatibility testing ensures that the desktop application functions correctly across supported operating systems used by researchers.
 
-\paragraph{Interface Compatibility Testing}
+\paragraph{Desktop Compatibility Testing}
 
-This test verifies that core functionality operates consistently across Chrome and at least one additional modern browser.
+This test verifies that core functionality operates consistently across Windows and macOS (Linux optional if available).
 
 \begin{enumerate}
 
@@ -747,13 +728,13 @@ This test verifies that core functionality operates consistently across Chrome a
 
 \textbf{Type:} Manual, Dynamic, Compatibility Testing
 					
-\textbf{Initial State:} System deployed and accessible via URL
+\textbf{Initial State:} Application packaged or run in development mode on each target OS.
 					
-\textbf{Input/Condition:} Access system and perform core workflows on multiple browser and device combinations: Chrome, Firefox, Safari (desktop); Chrome, Safari (mobile); tablets
+\textbf{Input/Condition:} Access system and perform core workflows on multiple operating systems: Windows and macOS (Linux optional if available).
 					
-\textbf{Output/Result:} All core functionality (search, filter, canvas) operates correctly across tested platforms; visual layout renders appropriately; no critical browser-specific bugs identified
+\textbf{Output/Result:} All core functionality (search, filter, canvas, upload, project save/load) operates correctly across tested platforms; no critical OS-specific bugs identified.
 					
-\textbf{How test will be performed:} Test team will execute standardized test suite on each browser/device combination.
+\textbf{How test will be performed:} Test team will execute standardized test suite on each OS.
 
 \textbf{Test Suite (perform on each platform):}
 \begin{enumerate}
@@ -764,12 +745,11 @@ This test verifies that core functionality operates consistently across Chrome a
 \item \textbf{Image Rendering}: Verify fragment images load at full resolution, zoom controls work
 \item \textbf{Session Save}: Save canvas session, verify success message
 \item \textbf{Session Restore}: Reload page, restore saved session, verify fragments reappear in correct positions
-\item \textbf{Responsive Layout}: Resize browser window to mobile width (375px), verify layout adapts without breaking
+\item \textbf{Upload Test}: Upload a new fragment image, verify it appears in the fragment list
 \end{enumerate}
+\textbf{Target Platforms:} Windows 10/11 (primary development OS), macOS (if team has access); Linux optional.
 
-\textbf{Target Platforms:} Chrome (latest, primary development browser), Firefox (latest, secondary browser), Safari (latest macOS if team has access).
-
-For each test-platform combination, record: Pass/Fail, any errors/warnings, visual issues, performance notes. Issues documented with severity (critical/major/minor) and browser-specific details. Test passes if all critical functionality works on Chrome and $\geq$ 1 additional browser. Critical issues on Chrome must be resolved; issues on secondary browsers documented for future work. Mobile testing is optional/out of scope for this project phase.
+For each test-platform combination, record: Pass/Fail, any errors/warnings, visual issues, performance notes. Issues documented with severity (critical/major/minor) and OS-specific details. Test passes if all critical functionality works on Windows and at least one additional OS. Issues on secondary platforms documented for future work.
 
 \end{enumerate}
 
@@ -793,7 +773,7 @@ This test documents average response times for common operations to establish pe
 
 \textbf{Output/Result:} Performance report documenting average response times for each operation type; simple table showing mean response time for each operation; baseline metrics documented for future regression testing
 
-\textbf{How test will be performed:} For each operation type, execute 10 test runs and record response times using browser developer tools or simple timing script. Calculate average (mean) response time for each operation type. Document results in simple table format: Operation Type | Average Response Time | Notes. Example acceptable targets: ID search $\leq$ 1 second, single filter $\leq$ 2 seconds, multi-filter $\leq$ 3 seconds, canvas operations $\leq$ 2 seconds. This benchmark establishes baseline performance metrics for future comparison rather than strict pass/fail criteria. Results provide data for identifying performance regressions in future releases.
+\textbf{How test will be performed:} For each operation type, execute 10 test runs and record response times using Electron dev tools or a simple timing script. Calculate average (mean) response time for each operation type. Document results in simple table format: Operation Type | Average Response Time | Notes. Example acceptable targets: ID search $\leq$ 1 second, single filter $\leq$ 2 seconds, multi-filter $\leq$ 3 seconds, canvas operations $\leq$ 2 seconds. This benchmark establishes baseline performance metrics for future comparison rather than strict pass/fail criteria. Results provide data for identifying performance regressions in future releases.
 
 \end{enumerate}
 
@@ -807,19 +787,19 @@ This test documents average response times for common operations to establish pe
         \hline
         \textbf{Req. ID} & \textbf{Description} & \textbf{Test ID(s)} & \textbf{Method} \\
         \hline
-        S.4.1 & Secure login and authentication & test-fr-auth-1 to test-fr-auth-5 & Manual UI \\
+        S.4.1 & Secure login and authentication & Deferred (not implemented) & N/A \\
         \hline
-        S.4.2 & Fragment upload and preprocessing & test-fr-upload-1 to test-fr-upload-4, test-fr-preprocess-1 to test-fr-preprocess-3 & Manual and automated \\
+        S.4.2 & Fragment upload and ingestion & test-fr-upload-1, test-fr-upload-2 & Manual and automated \\
         \hline
-        S.4.3 & Fragment matching and reconstruction & test-fr-match-1 to test-fr-match-6 & Manual UI \\
+        S.4.3 & Fragment matching and reconstruction (edge matching in progress) & test-fr-edge-match-1, test-fr-canvas-1, test-fr-canvas-2 & Manual and automated \\
         \hline
-        G.4.3, S.4.3 & Interactive canvas workspace & test-fr-canvas-1 to test-fr-canvas-8 & Manual UI \\
+        G.4.3, S.4.3 & Interactive canvas workspace & test-fr-canvas-1, test-fr-canvas-2 & Manual UI \\
         \hline
-        S.4.4 & Script identification & test-fr-script-1 to test-fr-script-4 & Automated and manual \\
+        S.4.4 & Script identification and analysis outputs & test-fr-ml-1, test-fr-ml-2 & Automated \\
         \hline
-        S.4.5 & Transcription assistance & test-fr-transcript-1 to test-fr-transcript-7 & Automated OCR and manual \\
+        S.4.5 & Transcription assistance & Deferred (not implemented) & N/A \\
         \hline
-        S.4.6 & Database search and exploration & test-fr-search-1 & Manual API and UI \\
+        S.4.6 & Database search and exploration & test-fr-search-1, test-fr-search-2 & Manual and automated \\
         \hline
     \end{tabular}
     \caption{Traceability for Functional Requirements}
@@ -835,7 +815,7 @@ This test documents average response times for common operations to establish pe
         \hline
         S.6, E.3 & System performance & test-nfr-perf-1, test-nfr-perf-2 & Automated \\
         \hline
-        S.6 & AI matching quality & test-nfr-ai-1 & Manual expert eval \\
+        S.6 & ML analysis quality & test-nfr-ai-1 & Manual/automated eval \\
         \hline
         S.6, S.2.1 & Usability & test-nfr-usability-1, test-nfr-usability-2 & Manual testing \\
         \hline
@@ -845,7 +825,7 @@ This test documents average response times for common operations to establish pe
         \hline
         E.3, S.6 & Scalability & test-nfr-scale-1 & Manual analysis \\
         \hline
-        S.2.1 & Cross-browser compatibility & test-nfr-compat-1 & Manual \\
+        S.2.1 & Cross-platform compatibility & test-nfr-compat-1 & Manual \\
         \hline
         S.6 & Performance benchmarking & test-nfr-bench-1 & Manual benchmark \\
         \hline
@@ -855,128 +835,128 @@ This test documents average response times for common operations to establish pe
 
 \section{Unit Test Description}
 
-\wss{This section should not be filled in until after the MIS (detailed design
-  document) has been completed.}
-
-\wss{Reference your MIS (detailed design document) and explain your overall
-philosophy for test case selection.}  
-
-\wss{To save space and time, it may be an option to provide less detail in this section.  
-For the unit tests you can potentially layout your testing strategy here.  That is, you 
-can explain how tests will be selected for each module.  For instance, your test building 
-approach could be test cases for each access program, including one test for normal behaviour 
-and as many tests as needed for edge cases.  Rather than create the details of the input 
-and output here, you could point to the unit testing code.  For this to work, you code 
-needs to be well-documented, with meaningful names for all of the tests.}
+Unit testing focuses on deterministic modules identified in the MIS, particularly the ML pipeline utilities and database access layer. Tests are implemented with PyTest in \texttt{src/ml\_pipeline/tests}.
 
 \subsection{Unit Testing Scope}
 
-\wss{What modules are outside of the scope.  If there are modules that are
-  developed by someone else, then you would say here if you aren't planning on
-  verifying them.  There may also be modules that are part of your software, but
-  have a lower priority for verification than others.  If this is the case,
-  explain your rationale for the ranking of module importance.}
+\textbf{In scope:} \texttt{ml\_pipeline.core.utils}, \texttt{ml\_pipeline.core.registry}, and \texttt{ml\_pipeline.core.database}.  
+\textbf{Out of scope:} GPU-heavy model inference/training, Electron UI components, and full IPC integration (covered by integration/system tests).
 
 \subsection{Tests for Functional Requirements}
 
-\wss{Most of the verification will be through automated unit testing.  If
-  appropriate specific modules can be verified by a non-testing based
-  technique.  That can also be documented in this section.}
-
-\subsubsection{Module 1}
-
-\wss{Include a blurb here to explain why the subsections below cover the module.
-  References to the MIS would be good.  You will want tests from a black box
-  perspective and from a white box perspective.  Explain to the reader how the
-  tests were selected.}
+\subsubsection{ML Pipeline Utilities (\texttt{ml\_pipeline.core.utils})}
 
 \begin{enumerate}
+\item \textbf{test-ut-utils-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Temporary base directory.\\
+Input: Relative and absolute paths.\\
+Output: Correct resolved path.\\
+Test Case Derivation: Ensures path resolution works for both relative and absolute inputs.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_utils.py}.\\
 
-\item{test-id1\\}
+\item \textbf{test-ut-utils-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Missing config file.\\
+Input: Non-existent config path.\\
+Output: \texttt{FileNotFoundError}.\\
+Test Case Derivation: Verifies invalid configuration paths are rejected.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_utils.py}.\\
 
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
+\item \textbf{test-ut-utils-3}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Valid YAML config in temp directory.\\
+Input: Config path.\\
+Output: Parsed configuration dictionary.\\
+Test Case Derivation: Confirms correct YAML parsing.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_utils.py}.\\
 
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-
-\item{...\\}
-    
+\item \textbf{test-ut-utils-4}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Temporary log directory.\\
+Input: Logging configuration with file path.\\
+Output: Log files created (pipeline log and error log).\\
+Test Case Derivation: Verifies logging setup writes to expected files.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_utils.py}.\\
 \end{enumerate}
 
-\subsubsection{Module 2}
+\subsubsection{Processor Registry (\texttt{ml\_pipeline.core.registry})}
 
-...
+\begin{enumerate}
+\item \textbf{test-ut-registry-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Empty registry.\\
+Input: Register and retrieve a dummy processor.\\
+Output: Retrieved class matches the registered class.\\
+Test Case Derivation: Confirms registry bookkeeping and lookup.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_registry.py}.\\
+
+\item \textbf{test-ut-registry-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Empty registry.\\
+Input: Request an unknown processor name.\\
+Output: \texttt{KeyError}.\\
+Test Case Derivation: Ensures missing processors are reported.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_registry.py}.\\
+\end{enumerate}
+
+\subsubsection{Database Manager (\texttt{ml\_pipeline.core.database})}
+
+\begin{enumerate}
+\item \textbf{test-ut-db-1}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Temporary SQLite database with sample fragments.\\
+Input: Query all fragments.\\
+Output: List of \texttt{FragmentRecord} objects with expected IDs.\\
+Test Case Derivation: Validates mapping from DB rows to records.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_database.py}.\\
+
+\item \textbf{test-ut-db-2}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Temporary SQLite database with one fragment.\\
+Input: Update fragment fields.\\
+Output: Updated values persisted in DB.\\
+Test Case Derivation: Confirms update queries commit correctly.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_database.py}.\\
+
+\item \textbf{test-ut-db-3}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Temporary SQLite database with mixed processing statuses.\\
+Input: Request processing statistics.\\
+Output: Correct totals for completed/pending/failed.\\
+Test Case Derivation: Ensures aggregate queries return correct counts.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_database.py}.\\
+
+\item \textbf{test-ut-db-4}\\
+Type: Functional, Dynamic, Automatic\\
+Initial State: Temporary SQLite database with completed fragments and timestamps.\\
+Input: Request last processed ID.\\
+Output: Correct fragment ID returned.\\
+Test Case Derivation: Ensures ordering by timestamp works as expected.\\
+How test will be performed: PyTest in \texttt{src/ml\_pipeline/tests/test\_database.py}.\\
+\end{enumerate}
 
 \subsection{Tests for Nonfunctional Requirements}
 
-\wss{If there is a module that needs to be independently assessed for
-  performance, those test cases can go here.  In some projects, planning for
-  nonfunctional tests of units will not be that relevant.}
-
-\wss{These tests may involve collecting performance data from previously
-  mentioned functional tests.}
-
-\subsubsection{Module ?}
-		
-\begin{enumerate}
-
-\item{test-id1\\}
-
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input/Condition: 
-					
-Output/Result: 
-					
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input: 
-					
-Output: 
-					
-How test will be performed: 
-
-\end{enumerate}
-
-\subsubsection{Module ?}
-
-...
+Unit tests are not the primary mechanism for NFR verification. NFRs are evaluated at the system and integration levels (see Section 4).
 
 \subsection{Traceability Between Test Cases and Modules}
 
-\wss{Provide evidence that all of the modules have been considered.}
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|p{5cm}|p{7cm}|}
+        \hline
+        \textbf{Module} & \textbf{Unit Test ID(s)} \\
+        \hline
+        \texttt{ml\_pipeline.core.utils} & test-ut-utils-1 to test-ut-utils-4 \\
+        \hline
+        \texttt{ml\_pipeline.core.registry} & test-ut-registry-1 to test-ut-registry-2 \\
+        \hline
+        \texttt{ml\_pipeline.core.database} & test-ut-db-1 to test-ut-db-4 \\
+        \hline
+    \end{tabular}
+    \caption{Traceability Between Unit Tests and Modules}
+\end{table}
 				
 \bibliographystyle{plainnat}
 
