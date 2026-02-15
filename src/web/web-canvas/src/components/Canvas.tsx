@@ -200,7 +200,7 @@ const Canvas: React.FC<CanvasProps> = ({
         setEdgeMatchButtonPosition({
           x: selectedFragment.x + selectedFragment.width + 10,
           y: selectedFragment.y,
-          fragmentId: selectedFragment.id,
+          fragmentId: selectedFragment.fragmentId,
         });
       }
     } else {
@@ -343,7 +343,7 @@ const Canvas: React.FC<CanvasProps> = ({
       </Stage>
 
       {/* Edge Match Button */}
-      {/* {edgeMatchButtonPosition && !isDragging && (
+      {edgeMatchButtonPosition && !isDragging && (
         <button
           onClick={() => {
             if (onEdgeMatch) {
@@ -372,7 +372,7 @@ const Canvas: React.FC<CanvasProps> = ({
           </svg>
           Edge Match?
         </button>
-      )} */}
+      )}
 
       {/* Grid Scale Indicator */}
       {isGridVisible && (

@@ -14,9 +14,11 @@ module.exports = {
       './electron/resources'
     ],
 
-    // Exclude the cache directory - segmented images generated on-demand
+    // Exclude data and resources from asar (they're in extraResource)
+    // Also exclude the cache directory
     ignore: [
-      /^\/electron\/resources\/cache\//
+      /^\/data\//,
+      /^\/electron\/resources\//
     ],
 
     // App metadata
@@ -34,8 +36,11 @@ module.exports = {
       }
     },
     {
-      name: '@electron-forge/maker-zip',
-      platforms: ['darwin'],
+      name: '@electron-forge/maker-dmg',
+      config: {
+        name: 'Sanskrit Cipher',
+        format: 'ULFO'
+      }
     },
     {
       name: '@electron-forge/maker-deb',

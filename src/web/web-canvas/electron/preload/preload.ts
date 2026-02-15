@@ -105,6 +105,29 @@ export interface CustomFilterDefinition {
   options?: string[];
 }
 
+export interface EdgeMatchRecord {
+  id: number;
+  fragment_a_id: string;
+  edge_a_name: string;
+  fragment_b_id: string;
+  edge_b_name: string;
+  score: number;
+  rank: number;
+  confidence: number | null;
+  score_details: string | null;
+  relative_x_cm: number | null;
+  relative_y_cm: number | null;
+  rotation_deg: number | null;
+  algorithm_version: string | null;
+  computed_at: string;
+  // Joined fragment metadata
+  image_path?: string;
+  line_count?: number | null;
+  script_type?: string | null;
+  pixels_per_unit?: number | null;
+  scale_unit?: string | null;
+}
+
 // Expose a safe API to the renderer process
 const electronAPI = {
   files: {
@@ -155,6 +178,14 @@ const electronAPI = {
       ipcRenderer.invoke('customFilters:delete', id),
     updateOptions: (id: number, options: string[]): Promise<ApiResponse<CustomFilterDefinition>> =>
       ipcRenderer.invoke('customFilters:updateOptions', id, options),
+  },
+  edgeMatches: {
+    hasData: (): Promise<{ success: boolean; hasData: boolean; count: number }> =>
+      ipcRenderer.invoke('edgeMatches:hasData'),
+    getForFragment: (fragmentId: string): Promise<ApiResponse<EdgeMatchRecord[]>> =>
+      ipcRenderer.invoke('edgeMatches:getForFragment', fragmentId),
+    getBestMatches: (fragmentId: string, limit?: number): Promise<ApiResponse<EdgeMatchRecord[]>> =>
+      ipcRenderer.invoke('edgeMatches:getBestMatches', fragmentId, limit ?? 20),
   },
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ManuscriptFragment, CanvasFragment } from '../types/fragment';
 import { CustomFilterDefinition } from '../types/customFilters';
+import { EdgeMatchRecord } from '../services/electron-api';
 import FragmentMetadata from './FragmentMetadata';
 import VirtualizedFragmentList from './VirtualizedFragmentList';
 
@@ -22,6 +23,11 @@ interface SidebarProps {
   canvasFragments?: CanvasFragment[]; // Canvas fragments for scale calculation
   gridScale?: number; // Grid scale for scale calculation
   customFilters?: CustomFilterDefinition[];
+  edgeMatchMode?: boolean;
+  edgeMatchAnchorId?: string | null;
+  edgeMatches?: EdgeMatchRecord[];
+  onPlaceEdgeMatch?: (match: EdgeMatchRecord) => void;
+  onExitEdgeMatch?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -42,6 +48,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   canvasFragments = [],
   gridScale = 25,
   customFilters = [],
+  edgeMatchMode = false,
+  edgeMatchAnchorId = null,
+  edgeMatches = [],
+  onPlaceEdgeMatch,
+  onExitEdgeMatch,
 }) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -307,7 +318,111 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {isLoading ? (
+          {edgeMatchMode ? (
+            /* Edge Match Ranking View */
+            <div>
+              <div className="mb-3 px-3 py-2.5 rounded-xl border" style={{
+                background: '#eff6ff',
+                borderColor: 'rgba(59, 130, 246, 0.3)'
+              }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <span className="text-sm font-semibold text-blue-800 font-body">
+                      Edge Matches for {edgeMatchAnchorId}
+                    </span>
+                  </div>
+                  {onExitEdgeMatch && (
+                    <button
+                      onClick={onExitEdgeMatch}
+                      className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors"
+                      title="Exit edge match mode"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <div className="text-xs text-blue-600 mt-1 font-body">
+                  {edgeMatches.length} match{edgeMatches.length !== 1 ? 'es' : ''} found
+                </div>
+              </div>
+
+              {edgeMatches.length === 0 ? (
+                <div className="bg-white rounded-2xl p-6 shadow-md border text-center" style={{
+                  borderColor: 'rgba(214, 211, 209, 0.3)'
+                }}>
+                  <p className="text-sm font-bold mb-1 font-body" style={{ color: '#292524' }}>No matches found</p>
+                  <p className="text-xs font-body" style={{ color: '#a8a29e' }}>
+                    No compatible edges detected for this fragment
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2 overflow-y-auto" style={{ maxHeight: containerHeight - 120 }}>
+                  {edgeMatches.map((match, idx) => {
+                    const confidence = match.confidence ?? (1 / (1 + match.score));
+                    const confidencePct = Math.round(confidence * 100);
+                    return (
+                      <div
+                        key={match.id}
+                        className="bg-white rounded-xl p-3 shadow-sm border transition-all hover:shadow-md"
+                        style={{ borderColor: 'rgba(214, 211, 209, 0.3)' }}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-body">
+                                #{idx + 1}
+                              </span>
+                              <span className="text-sm font-semibold text-slate-800 truncate font-body">
+                                {match.fragment_b_id}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500 font-body">
+                              {match.edge_a_name} ↔ {match.edge_b_name}
+                            </div>
+                            <div className="mt-1 flex items-center gap-2">
+                              <div className="flex-1 bg-slate-100 rounded-full h-1.5">
+                                <div
+                                  className="h-1.5 rounded-full transition-all"
+                                  style={{
+                                    width: `${confidencePct}%`,
+                                    background: confidencePct > 70
+                                      ? '#16a34a'
+                                      : confidencePct > 40
+                                        ? '#eab308'
+                                        : '#dc2626'
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs font-semibold text-slate-600 font-body">
+                                {confidencePct}%
+                              </span>
+                            </div>
+                          </div>
+                          {onPlaceEdgeMatch && (
+                            <button
+                              onClick={() => onPlaceEdgeMatch(match)}
+                              className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white rounded-lg transition-colors font-body"
+                              style={{ background: '#2563eb' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = '#1d4ed8'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = '#2563eb'; }}
+                              title="Place matched fragment on canvas"
+                            >
+                              Place
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : isLoading ? (
             <div className="bg-white rounded-2xl p-6 shadow-md border text-center" style={{
               borderColor: 'rgba(214, 211, 209, 0.3)'
             }}>

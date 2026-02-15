@@ -72,6 +72,34 @@ function runMigrations(database: Database.Database): void {
   ensureIndex('idx_project_fragments_project', 'project_fragments', 'project_id');
   ensureIndex('idx_custom_filters_key', 'custom_filters', 'filter_key');
 
+  // Ensure edge_matches table exists (created by Python pipeline, but also ensure via migration)
+  try {
+    database.exec(`
+      CREATE TABLE IF NOT EXISTS edge_matches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fragment_a_id TEXT NOT NULL,
+        edge_a_name TEXT NOT NULL,
+        fragment_b_id TEXT NOT NULL,
+        edge_b_name TEXT NOT NULL,
+        score REAL NOT NULL,
+        rank INTEGER NOT NULL,
+        confidence REAL,
+        score_details TEXT,
+        relative_x_cm REAL,
+        relative_y_cm REAL,
+        rotation_deg REAL DEFAULT 0,
+        algorithm_version TEXT,
+        computed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (fragment_a_id) REFERENCES fragments(fragment_id),
+        FOREIGN KEY (fragment_b_id) REFERENCES fragments(fragment_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_edge_matches_a ON edge_matches(fragment_a_id);
+      CREATE INDEX IF NOT EXISTS idx_edge_matches_b ON edge_matches(fragment_b_id);
+    `);
+  } catch {
+    // Table already exists - that's fine
+  }
+
   // Ensure custom filter columns exist on fragments table
   const customFilterRows = database.prepare("SELECT filter_key FROM custom_filters").all() as Array<{ filter_key: string }>;
 
@@ -128,7 +156,8 @@ export function initDatabase(): Database.Database {
 
   // In production, copy bundled database if user database doesn't exist
   if (app.isPackaged && !fs.existsSync(dbPath)) {
-    const bundledDbPath = path.join(process.resourcesPath, 'database', 'fragments.db');
+    // extraResource copies ./electron/resources as a "resources" subfolder inside Contents/Resources/
+    const bundledDbPath = path.join(process.resourcesPath, 'resources', 'database', 'fragments.db');
     if (fs.existsSync(bundledDbPath)) {
       fs.copyFileSync(bundledDbPath, dbPath);
       console.log('Copied bundled database to user data directory');

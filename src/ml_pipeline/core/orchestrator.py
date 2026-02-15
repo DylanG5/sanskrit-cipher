@@ -247,6 +247,8 @@ class PipelineOrchestrator:
         Returns:
             True if all processors succeeded, False otherwise
         """
+        from dataclasses import replace
+        
         all_updates = {}
         all_cache_files = {}
         any_success = False
@@ -271,6 +273,14 @@ class PipelineOrchestrator:
                 self.logger.debug(f"    OK {metadata.name} succeeded")
                 all_updates.update(result.updates)
 
+                # Update the fragment record with the new data so downstream processors can use it
+                if result.updates:
+                    # Filter updates to only include fields that exist in FragmentRecord
+                    fragment_updates = {k: v for k, v in result.updates.items() 
+                                      if hasattr(fragment, k)}
+                    if fragment_updates:
+                        fragment = replace(fragment, **fragment_updates)
+
                 if result.cache_files:
                     all_cache_files.update(result.cache_files)
 
@@ -284,6 +294,11 @@ class PipelineOrchestrator:
                 # Update with error
                 if result.updates:
                     all_updates.update(result.updates)
+                    # Also update fragment record with error info for downstream processors
+                    fragment_updates = {k: v for k, v in result.updates.items() 
+                                      if hasattr(fragment, k)}
+                    if fragment_updates:
+                        fragment = replace(fragment, **fragment_updates)
 
         # Update database if we have changes
         if all_updates and not dry_run:
