@@ -1122,6 +1122,7 @@ function CanvasPage() {
           filters.hasLeftEdge !== null ||
           filters.hasRightEdge !== null ||
           filters.hasCircle !== null ||
+          (filters.search !== undefined && filters.search.trim().length > 0) ||
           Object.values(filters.custom || {}).some((value) => value !== undefined && value !== null && value !== '')
         }
         selectedFragmentHasSegmentation={selectedManuscriptFragment?.hasSegmentation}

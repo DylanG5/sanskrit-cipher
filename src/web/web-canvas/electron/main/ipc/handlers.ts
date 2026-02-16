@@ -159,10 +159,11 @@ export function registerIpcHandlers(): void {
     }
 
     if (filters?.search) {
-      query += ' AND fragment_id LIKE ?';
-      params.push(`%${filters.search}%`);
+      query += ' AND (fragment_id LIKE ? OR transcription LIKE ? OR notes LIKE ?)';
+      const likePattern = `%${filters.search}%`;
+      params.push(likePattern, likePattern, likePattern);
       console.log('Search query:', filters.search);
-      console.log('SQL LIKE pattern:', `%${filters.search}%`);
+      console.log('SQL LIKE pattern:', likePattern);
       console.log('Full SQL query:', query);
     }
 
@@ -270,8 +271,9 @@ export function registerIpcHandlers(): void {
     }
 
     if (filters?.search) {
-      query += ' AND fragment_id LIKE ?';
-      params.push(`%${filters.search}%`);
+      query += ' AND (fragment_id LIKE ? OR transcription LIKE ? OR notes LIKE ?)';
+      const likePattern = `%${filters.search}%`;
+      params.push(likePattern, likePattern, likePattern);
     }
 
     if (filters?.custom) {
@@ -338,7 +340,9 @@ export function registerIpcHandlers(): void {
       'script_type',
       'scale_unit',
       'pixels_per_unit',
-      'scale_detection_status'
+      'scale_detection_status',
+      'transcription',
+      'notes'
     ];
     const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
     const allowedFields = new Set<string>([

@@ -50,6 +50,8 @@ function runMigrations(database: Database.Database): void {
   ensureFragmentColumn('pixels_per_unit', 'REAL');
   ensureFragmentColumn('scale_detection_status', 'TEXT');
   ensureFragmentColumn('scale_model_version', 'TEXT');
+  ensureFragmentColumn('transcription', 'TEXT');
+  ensureFragmentColumn('notes', 'TEXT');
 
   // Create common indexes if columns exist
   const ensureIndex = (indexName: string, table: string, column: string) => {
