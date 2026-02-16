@@ -24,6 +24,8 @@ export interface ManuscriptFragment {
       detectionStatus: 'success' | 'error';  // Detection result
     };
     segmentationStatus?: string; // For displaying segmentation processing status
+    transcription?: string; // User-entered transcription text
+    notes?: string; // User-entered notes
   };
 }
 

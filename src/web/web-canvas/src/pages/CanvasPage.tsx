@@ -99,8 +99,23 @@ function CanvasPage() {
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
       }
+      if (filters.hasTopEdge !== null) {
+        apiFilters.hasTopEdge = filters.hasTopEdge;
+      }
+      if (filters.hasBottomEdge !== null) {
+        apiFilters.hasBottomEdge = filters.hasBottomEdge;
+      }
+      if (filters.hasLeftEdge !== null) {
+        apiFilters.hasLeftEdge = filters.hasLeftEdge;
+      }
+      if (filters.hasRightEdge !== null) {
+        apiFilters.hasRightEdge = filters.hasRightEdge;
+      }
       if (filters.hasCircle !== null) {
         apiFilters.hasCircle = filters.hasCircle;
+      }
+      if (filters.search) {
+        apiFilters.search = filters.search;
       }
       if (filters.search) {
         apiFilters.search = filters.search;
@@ -162,6 +177,18 @@ function CanvasPage() {
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
+      }
+      if (filters.hasTopEdge !== null) {
+        apiFilters.hasTopEdge = filters.hasTopEdge;
+      }
+      if (filters.hasBottomEdge !== null) {
+        apiFilters.hasBottomEdge = filters.hasBottomEdge;
+      }
+      if (filters.hasLeftEdge !== null) {
+        apiFilters.hasLeftEdge = filters.hasLeftEdge;
+      }
+      if (filters.hasRightEdge !== null) {
+        apiFilters.hasRightEdge = filters.hasRightEdge;
       }
       if (filters.hasCircle !== null) {
         apiFilters.hasCircle = filters.hasCircle;
@@ -856,7 +883,13 @@ function CanvasPage() {
           filters.lineCountMin !== undefined ||
           filters.lineCountMax !== undefined ||
           filters.scripts.length > 0 ||
-          filters.isEdgePiece !== null
+          filters.isEdgePiece !== null ||
+          filters.hasTopEdge !== null ||
+          filters.hasBottomEdge !== null ||
+          filters.hasLeftEdge !== null ||
+          filters.hasRightEdge !== null ||
+          filters.hasCircle !== null ||
+          (filters.search !== undefined && filters.search.trim().length > 0)
         }
         selectedFragmentHasSegmentation={selectedManuscriptFragment?.hasSegmentation}
         selectedFragmentShowSegmented={selectedFragment?.showSegmented}

@@ -3,6 +3,12 @@ export interface FragmentFilters {
   lineCountMax?: number;
   scripts?: string[];
   isEdgePiece?: boolean | null;
+  hasTopEdge?: boolean | null;
+  hasBottomEdge?: boolean | null;
+  hasLeftEdge?: boolean | null;
+  hasRightEdge?: boolean | null;
+  hasCircle?: boolean | null;
+  search?: string;
 }
 
 export interface ElectronAPI {

@@ -8,7 +8,7 @@ export interface FragmentFilters {
   hasLeftEdge?: boolean | null; // null = don't care
   hasRightEdge?: boolean | null; // null = don't care
   hasCircle?: boolean | null; // null = don't care
-  search?: string; // Fragment ID search query
+  search?: string; // Keyword search (ID, transcription, notes)
 }
 
 export const DEFAULT_FILTERS: FragmentFilters = {

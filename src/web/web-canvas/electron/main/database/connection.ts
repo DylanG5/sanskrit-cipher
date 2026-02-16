@@ -26,6 +26,31 @@ function runMigrations(database: Database.Database): void {
       console.error('Migration failed:', error);
     }
   }
+
+  // Check for new columns in fragments table
+  const fragmentTableInfo = database.prepare("PRAGMA table_info(fragments)").all() as Array<{ name: string }>;
+  const hasTranscriptionColumn = fragmentTableInfo.some(col => col.name === 'transcription');
+  const hasNotesColumn = fragmentTableInfo.some(col => col.name === 'notes');
+
+  if (!hasTranscriptionColumn) {
+    console.log('Running migration: Adding transcription column to fragments');
+    try {
+      database.exec('ALTER TABLE fragments ADD COLUMN transcription TEXT');
+      console.log('Migration completed: transcription column added');
+    } catch (error) {
+      console.error('Migration failed:', error);
+    }
+  }
+
+  if (!hasNotesColumn) {
+    console.log('Running migration: Adding notes column to fragments');
+    try {
+      database.exec('ALTER TABLE fragments ADD COLUMN notes TEXT');
+      console.log('Migration completed: notes column added');
+    } catch (error) {
+      console.error('Migration failed:', error);
+    }
+  }
 }
 
 /**

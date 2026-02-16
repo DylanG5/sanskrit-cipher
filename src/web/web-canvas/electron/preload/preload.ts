@@ -6,6 +6,11 @@ export interface FragmentFilters {
   lineCountMax?: number;
   scripts?: string[];
   isEdgePiece?: boolean | null;
+  hasTopEdge?: boolean | null;
+  hasBottomEdge?: boolean | null;
+  hasLeftEdge?: boolean | null;
+  hasRightEdge?: boolean | null;
+  hasCircle?: boolean | null;
   search?: string;
   limit?: number;
   offset?: number;
@@ -21,6 +26,7 @@ export interface FragmentRecord {
   line_count: number | null;
   script_type: string | null;
   segmentation_coords: string | null;
+  transcription: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

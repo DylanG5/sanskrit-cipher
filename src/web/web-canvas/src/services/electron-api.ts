@@ -32,6 +32,7 @@ export interface FragmentRecord {
   line_count: number | null;
   script_type: string | null;
   segmentation_coords: string | null;
+  transcription: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

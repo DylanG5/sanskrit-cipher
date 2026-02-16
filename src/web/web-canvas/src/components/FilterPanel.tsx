@@ -28,6 +28,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  React.useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
   const handleLineCountMinChange = (value: string) => {
     const num = value === '' ? undefined : parseInt(value);
     setLocalFilters({ ...localFilters, lineCountMin: num });
@@ -69,8 +73,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setLocalFilters({ ...localFilters, hasCircle: value });
   };
 
+  const handleSearchChange = (value: string) => {
+    setLocalFilters({ ...localFilters, search: value });
+  };
+
   const handleApply = () => {
-    onFiltersChange(localFilters);
+    const normalizedFilters = {
+      ...localFilters,
+      search: localFilters.search?.trim() || undefined,
+    };
+    setLocalFilters(normalizedFilters);
+    onFiltersChange(normalizedFilters);
   };
 
   const handleReset = () => {
@@ -87,7 +100,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     localFilters.hasBottomEdge !== null ||
     localFilters.hasLeftEdge !== null ||
     localFilters.hasRightEdge !== null ||
-    localFilters.hasCircle !== null;
+    localFilters.hasCircle !== null ||
+    (localFilters.search !== undefined && localFilters.search.trim().length > 0);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -226,6 +240,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                       {filters.hasCircle === false && (
                         <div>• No circle only</div>
                       )}
+                      {filters.search && (
+                        <div>• Search: "{filters.search}"</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -235,6 +252,30 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
           {/* Filter Controls */}
           <div className="flex-1 p-4 space-y-6">
+            {/* Keyword Search */}
+            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
+              localFilters.search && localFilters.search.trim().length > 0
+                ? 'border-indigo-400 ring-2 ring-indigo-100'
+                : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <h3 className="font-semibold text-slate-800 text-sm">Keyword Search</h3>
+                {localFilters.search && localFilters.search.trim().length > 0 && (
+                  <span className="ml-auto text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                )}
+              </div>
+              <input
+                type="text"
+                value={localFilters.search ?? ''}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search ID, transcription, notes..."
+                className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              />
+            </div>
+
             {/* Line Count Filter */}
             <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
               (localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined)

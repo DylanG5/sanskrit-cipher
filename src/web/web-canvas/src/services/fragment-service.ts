@@ -43,6 +43,8 @@ export function mapToManuscriptFragment(record: FragmentRecord): ManuscriptFragm
         pixelsPerUnit: record.pixels_per_unit,
         detectionStatus: record.scale_detection_status === 'success' ? 'success' : 'error',
       } : undefined,
+      transcription: record.transcription ?? undefined,
+      notes: record.notes ?? undefined,
     },
   };
 }

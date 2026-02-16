@@ -78,6 +78,10 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
     if (field === 'script') {
       dbValue = getScriptTypeDB(value) || value;
     }
+    if (field === 'transcription' || field === 'notes') {
+      const trimmed = String(value ?? '').trim();
+      dbValue = trimmed.length > 0 ? trimmed : null;
+    }
 
     try {
       const result = await updateFragmentMetadata(fragment.id, { [dbField]: dbValue });
@@ -200,6 +204,121 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
             )}
           </div>
         </div>
+        {error && (
+          <div className="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+            {error}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderTextAreaField = (
+    label: string,
+    icon: React.ReactNode,
+    field: string,
+    dbField: string,
+    currentValue: string | undefined,
+    placeholder: string,
+    rows: number = 4,
+    colorClass: string = 'indigo'
+  ) => {
+    const isEditing = editingField === field;
+    const isSaving = savingField === field;
+    const isSuccess = saveSuccess === field;
+    const error = fieldErrors[field];
+    const displayValue = (currentValue ?? '').trim();
+
+    const handleSave = async () => {
+      const valueToSave = editValues[field] ?? currentValue ?? '';
+      await saveField(field, dbField, valueToSave);
+    };
+
+    return (
+      <div className={`p-3 rounded-lg border bg-gradient-to-r from-${colorClass}-50 to-${colorClass}-100/50 border-${colorClass}-200/50`}>
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex items-center gap-2">
+            {icon}
+            <span className="font-medium text-slate-700 text-sm">{label}</span>
+          </div>
+          {!isEditing ? (
+            <div className="flex items-center gap-2">
+              {isSuccess ? (
+                <div className="text-emerald-600 animate-in fade-in">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                </div>
+              ) : (
+                <button
+                  onClick={() => startEditing(field, currentValue ?? '')}
+                  className="text-slate-400 hover:text-slate-600 p-1 hover:bg-white/50 rounded transition-colors"
+                  title={displayValue ? 'Edit' : 'Add'}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ) : null}
+        </div>
+        {!isEditing ? (
+          <div className="mt-2 bg-white/70 border border-white rounded-md px-3 py-2 text-sm">
+            {displayValue ? (
+              <p className="text-slate-700 whitespace-pre-wrap">{displayValue}</p>
+            ) : (
+              <p className="text-slate-400 italic">{placeholder}</p>
+            )}
+          </div>
+        ) : (
+          <div className="mt-2 space-y-2">
+            <textarea
+              rows={rows}
+              value={editValues[field] ?? currentValue ?? ''}
+              onChange={(e) => setEditValues({ ...editValues, [field]: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  cancelEditing();
+                } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                  handleSave();
+                }
+              }}
+            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="text-emerald-600 hover:text-emerald-700 p-1 hover:bg-white/50 rounded transition-colors disabled:opacity-50"
+                title="Save"
+              >
+                {isSaving ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={cancelEditing}
+                disabled={isSaving}
+                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-white/50 rounded transition-colors disabled:opacity-50"
+                title="Cancel"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
+                </svg>
+              </button>
+              <span className="text-xs text-slate-400">Ctrl/⌘+Enter to save</span>
+            </div>
+          </div>
+        )}
         {error && (
           <div className="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
             {error}
@@ -589,6 +708,34 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
             SCRIPT_TYPES,
             'purple',
             metadata?.script === undefined
+          )}
+
+          {/* Transcription */}
+          {renderTextAreaField(
+            'Transcription',
+            <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+            </svg>,
+            'transcription',
+            'transcription',
+            metadata?.transcription,
+            'No transcription yet',
+            5,
+            'indigo'
+          )}
+
+          {/* Notes */}
+          {renderTextAreaField(
+            'Notes',
+            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h10M7 16h6M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+            </svg>,
+            'notes',
+            'notes',
+            metadata?.notes,
+            'No notes yet',
+            4,
+            'amber'
           )}
 
           {/* Edge Piece */}

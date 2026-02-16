@@ -27,3 +27,5 @@ public/
 out/
 
 *.db
+fragments.db
+electron/resources/database/*.db
