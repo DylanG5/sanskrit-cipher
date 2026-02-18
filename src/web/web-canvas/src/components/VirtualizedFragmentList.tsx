@@ -6,6 +6,7 @@ interface VirtualizedFragmentListProps {
   fragments: ManuscriptFragment[];
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
+  onFragmentDoubleClick?: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
   containerHeight: number;
   onLoadMore?: () => void;
   hasMore?: boolean;
@@ -20,12 +21,13 @@ interface FragmentRowData {
   fragments: ManuscriptFragment[];
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
+  onFragmentDoubleClick?: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
 }
 
 const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRowData>) => {
   if (!data) return null;
 
-  const { fragments, onDragStart, onFragmentClick } = data;
+  const { fragments, onDragStart, onFragmentClick, onFragmentDoubleClick } = data;
   const fragment = fragments[index];
 
   if (!fragment) return null;
@@ -36,6 +38,7 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
         draggable
         onDragStart={(e) => onDragStart(fragment, e)}
         onClick={(e) => onFragmentClick(fragment, e)}
+        onDoubleClick={(e) => onFragmentDoubleClick?.(fragment, e)}
         className="cursor-move bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 p-3 border border-slate-200 relative group hover:border-blue-300 h-full"
       >
         <img
@@ -84,6 +87,7 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   fragments,
   onDragStart,
   onFragmentClick,
+  onFragmentDoubleClick,
   containerHeight,
   onLoadMore,
   hasMore = false,
@@ -125,8 +129,9 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
       fragments,
       onDragStart,
       onFragmentClick,
+      onFragmentDoubleClick,
     }),
-    [fragments, onDragStart, onFragmentClick]
+    [fragments, onDragStart, onFragmentClick, onFragmentDoubleClick]
   );
 
   // Calculate total item count

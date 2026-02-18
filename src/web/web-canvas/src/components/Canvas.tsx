@@ -21,8 +21,9 @@ interface FragmentImageProps {
   onSelect: (e: any) => void;
   onChange: (newAttrs: Partial<CanvasFragment>) => void;
   onDoubleClick?: () => void;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
+  onDragStart?: (e: Konva.KonvaEventObject<DragEvent>) => void;
+  onDragMove?: (e: Konva.KonvaEventObject<DragEvent>) => void;
+  onDragEnd?: (e: Konva.KonvaEventObject<DragEvent>) => void;
   onTransformStart?: () => void;
   onTransformEnd?: () => void;
 }
@@ -34,6 +35,7 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
   onChange,
   onDoubleClick,
   onDragStart,
+  onDragMove,
   onDragEnd,
   onTransformStart,
   onTransformEnd,
@@ -78,15 +80,18 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
         onDblTap={() => {
           if (onDoubleClick) onDoubleClick();
         }}
-        onDragStart={() => {
-          if (onDragStart) onDragStart();
+        onDragStart={(e) => {
+          if (onDragStart) onDragStart(e);
+        }}
+        onDragMove={(e) => {
+          if (onDragMove) onDragMove(e);
         }}
         onDragEnd={(e) => {
           onChange({
             x: e.target.x(),
             y: e.target.y(),
           });
-          if (onDragEnd) onDragEnd();
+          if (onDragEnd) onDragEnd(e);
         }}
         onTransform={() => {
           if (onTransformStart) onTransformStart();
@@ -149,6 +154,11 @@ const Canvas: React.FC<CanvasProps> = ({
   const [edgeMatchButtonPosition, setEdgeMatchButtonPosition] = useState<{ x: number; y: number; fragmentId: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isTransformingRef = useRef(false);
+  const dragContextRef = useRef<{
+    anchorId: string;
+    anchorStart: { x: number; y: number };
+    memberStart: Record<string, { x: number; y: number }>;
+  } | null>(null);
 
   // Update stage size
   useEffect(() => {
@@ -215,22 +225,88 @@ const Canvas: React.FC<CanvasProps> = ({
     onFragmentsChange(updatedFragments);
   };
 
+  const getSelectionUnit = (id: string): string[] => {
+    const target = fragments.find((f) => f.id === id);
+    if (!target) return [id];
+    if (!target.groupId) return [id];
+    return fragments.filter((f) => f.groupId === target.groupId).map((f) => f.id);
+  };
+
   const handleSelect = (id: string, e?: React.MouseEvent | React.TouchEvent) => {
     // Allow selecting locked fragments so they can be unlocked
     const metaPressed = e && ('ctrlKey' in e ? e.ctrlKey || e.metaKey : false);
     const shiftPressed = e && ('shiftKey' in e ? e.shiftKey : false);
+    const idsToSelect = getSelectionUnit(id);
 
     if (metaPressed || shiftPressed) {
       // Multi-select
-      if (selectedFragmentIds.includes(id)) {
-        onSelectionChange(selectedFragmentIds.filter((fid) => fid !== id));
+      const allSelected = idsToSelect.every((fid) => selectedFragmentIds.includes(fid));
+      if (allSelected) {
+        onSelectionChange(selectedFragmentIds.filter((fid) => !idsToSelect.includes(fid)));
       } else {
-        onSelectionChange([...selectedFragmentIds, id]);
+        onSelectionChange(Array.from(new Set([...selectedFragmentIds, ...idsToSelect])));
       }
     } else {
       // Single select
-      onSelectionChange([id]);
+      onSelectionChange(idsToSelect);
     }
+  };
+
+  const handleFragmentDragStart = (id: string) => {
+    const dragIds = selectedFragmentIds.includes(id) ? selectedFragmentIds : [id];
+    if (dragIds.length <= 1) {
+      dragContextRef.current = null;
+      return;
+    }
+
+    const anchor = fragments.find((f) => f.id === id);
+    if (!anchor) {
+      dragContextRef.current = null;
+      return;
+    }
+
+    const memberStart: Record<string, { x: number; y: number }> = {};
+    for (const fid of dragIds) {
+      const fragment = fragments.find((f) => f.id === fid);
+      if (fragment && !fragment.isLocked) {
+        memberStart[fid] = { x: fragment.x, y: fragment.y };
+      }
+    }
+
+    if (Object.keys(memberStart).length <= 1) {
+      dragContextRef.current = null;
+      return;
+    }
+
+    dragContextRef.current = {
+      anchorId: id,
+      anchorStart: { x: anchor.x, y: anchor.y },
+      memberStart,
+    };
+  };
+
+  const handleFragmentDragMove = (id: string, e: Konva.KonvaEventObject<DragEvent>) => {
+    const dragCtx = dragContextRef.current;
+    if (!dragCtx || dragCtx.anchorId !== id) return;
+
+    const dx = e.target.x() - dragCtx.anchorStart.x;
+    const dy = e.target.y() - dragCtx.anchorStart.y;
+
+    const updated = fragments.map((fragment) => {
+      const start = dragCtx.memberStart[fragment.id];
+      if (!start) return fragment;
+      return {
+        ...fragment,
+        x: start.x + dx,
+        y: start.y + dy,
+      };
+    });
+
+    onFragmentsChange(updated);
+  };
+
+  const handleFragmentDragEnd = () => {
+    dragContextRef.current = null;
   };
 
   const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -311,8 +387,15 @@ const Canvas: React.FC<CanvasProps> = ({
                   onFragmentDoubleClick(fragment.fragmentId);
                 }
               }}
-              onDragStart={() => setIsDragging(true)}
+              onDragStart={() => {
+                handleFragmentDragStart(fragment.id);
+                setIsDragging(true);
+              }}
+              onDragMove={(e) => {
+                handleFragmentDragMove(fragment.id, e);
+              }}
               onDragEnd={() => {
+                handleFragmentDragEnd();
                 // Small delay to allow position to update before showing button
                 setTimeout(() => setIsDragging(false), 0);
               }}
