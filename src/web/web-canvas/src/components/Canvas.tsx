@@ -149,6 +149,25 @@ const Canvas: React.FC<CanvasProps> = ({
   const [edgeMatchButtonPosition, setEdgeMatchButtonPosition] = useState<{ x: number; y: number; fragmentId: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isTransformingRef = useRef(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const splashTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-dismiss splash after 4 seconds
+  useEffect(() => {
+    if (fragments.length === 0 && showSplash) {
+      splashTimerRef.current = setTimeout(() => setShowSplash(false), 4000);
+    }
+    return () => {
+      if (splashTimerRef.current) clearTimeout(splashTimerRef.current);
+    };
+  }, [fragments.length, showSplash]);
+
+  // Reset splash when canvas is cleared
+  useEffect(() => {
+    if (fragments.length === 0) {
+      setShowSplash(true);
+    }
+  }, [fragments.length]);
 
   // Update stage size
   useEffect(() => {
@@ -429,9 +448,12 @@ const Canvas: React.FC<CanvasProps> = ({
       )}
 
       {/* Instructions overlay */}
-      {fragments.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-2xl border border-slate-200 text-center max-w-lg">
+      {fragments.length === 0 && showSplash && (
+        <div
+          className="absolute inset-0 flex items-center justify-center cursor-pointer"
+          onClick={() => setShowSplash(false)}
+        >
+          <div className="bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-2xl border border-slate-200 text-center max-w-lg pointer-events-none">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-5 shadow-lg">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
@@ -469,6 +491,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 <span className="font-medium">Use Lock button to prevent accidental changes</span>
               </div>
             </div>
+            <p className="text-xs text-slate-400 mt-6">Click anywhere to dismiss</p>
           </div>
         </div>
       )}
