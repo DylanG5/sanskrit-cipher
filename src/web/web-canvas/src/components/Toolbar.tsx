@@ -18,6 +18,7 @@ interface ToolbarProps {
   selectedFragmentHasSegmentation?: boolean;
   selectedFragmentShowSegmented?: boolean;
   onToggleSelectedFragmentSegmentation?: () => void;
+  onBulkEditMetadata?: () => void;
   // Session management props
   projectName?: string;
   saveStatus?: 'saved' | 'saving' | 'unsaved';
@@ -39,6 +40,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   selectedFragmentHasSegmentation,
   selectedFragmentShowSegmented,
   onToggleSelectedFragmentSegmentation,
+  onBulkEditMetadata,
   projectName,
   saveStatus = 'saved',
 }) => {
@@ -260,6 +262,38 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 <span className="text-sm font-bold">
                   {selectedFragmentShowSegmented ? 'Segmented' : 'Original'}
                 </span>
+              </button>
+            )}
+
+            {selectedCount >= 2 && onBulkEditMetadata && (
+              <button
+                onClick={onBulkEditMetadata}
+                className="px-4 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+                style={{
+                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)';
+                }}
+                title="Edit metadata for all selected fragments"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <span className="text-sm font-bold">Edit Metadata</span>
               </button>
             )}
 
