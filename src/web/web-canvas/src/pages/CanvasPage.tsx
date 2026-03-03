@@ -5,6 +5,7 @@ import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
 import FilterPanel from "../components/FilterPanel";
 import FragmentMetadata from "../components/FragmentMetadata";
+import BulkMetadataEditor from "../components/BulkMetadataEditor";
 import UploadDialog from "../components/UploadDialog";
 import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
@@ -43,6 +44,7 @@ function CanvasPage() {
   const [gridScale, setGridScale] = useState(25); // pixels per cm
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const draggedSelectionRef = useRef<ManuscriptFragment[] | null>(null);
 
   // Edge match state
   const [edgeMatchMode, setEdgeMatchMode] = useState(false);
@@ -66,6 +68,9 @@ function CanvasPage() {
 
   // Upload dialog state
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
+  // Bulk metadata editor state — holds fragment IDs to edit, or null when closed
+  const [bulkEditFragmentIds, setBulkEditFragmentIds] = useState<string[] | null>(null);
 
   // Load fragments from database (initial load)
   const loadFragments = useCallback(async () => {
@@ -538,6 +543,11 @@ function CanvasPage() {
     e.dataTransfer.effectAllowed = "copy";
   };
 
+  // When sidebar drag starts with a selection, store all selected fragments
+  const handleDragStartSelected = useCallback((selectedFragments: ManuscriptFragment[]) => {
+    draggedSelectionRef.current = selectedFragments;
+  }, []);
+
   // Handle drag over canvas
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -552,7 +562,7 @@ function CanvasPage() {
 
   // Handle drop on canvas
   // Helper function to calculate display size based on scale data
-  const calculateDisplaySize = (
+  const calculateDisplaySize = useCallback((
     fragment: ManuscriptFragment,
     originalWidth: number,
     originalHeight: number
@@ -609,7 +619,7 @@ function CanvasPage() {
       width: clampedWidth,
       height: clampedHeight,
     };
-  };
+  }, [gridScale]);
 
   // Auto-place fragment in center of canvas (for search results)
   const autoPlaceFragment = useCallback(async (fragment: ManuscriptFragment) => {
@@ -726,54 +736,107 @@ function CanvasPage() {
 
     const fragment = draggedFragmentRef.current;
     const position = dropPositionRef.current;
+    const selectedFragments = draggedSelectionRef.current;
 
     if (!fragment || !position) {
       return;
     }
 
-    // Load the image to get its natural dimensions
-    const img = new Image();
-    // Always use original image path - segmentation handled on-demand
-    const imagePath = fragment.imagePath;
-    img.src = imagePath;
-    img.onload = () => {
-      const originalWidth = img.naturalWidth;
-      const originalHeight = img.naturalHeight;
+    // If we have a multi-selection, drop all selected fragments with staggered offsets
+    const fragmentsToDrop = selectedFragments && selectedFragments.length > 1
+      ? selectedFragments
+      : [fragment];
 
-      // Calculate display size (auto-scaled if scale data available)
-      const { width, height } = calculateDisplaySize(
-        fragment,
-        originalWidth,
-        originalHeight
-      );
+    const OFFSET = 50;
+    let loadedCount = 0;
+    const newFragments: CanvasFragment[] = [];
 
-      const newCanvasFragment: CanvasFragment = {
-        id: `canvas-fragment-${Date.now()}-${Math.random()}`,
-        fragmentId: fragment.id,
-        name: fragment.name,
-        imagePath: imagePath,
-        segmentationCoords: fragment.segmentationCoords,
-        x: position.x - width / 2,
-        y: position.y - height / 2,
-        width: width,
-        height: height,
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        isLocked: false,
-        isSelected: false,
-        showSegmented: true, // Default to showing segmented version
-        originalWidth: originalWidth,
-        originalHeight: originalHeight,
-        hasBeenResized: false,
+    fragmentsToDrop.forEach((frag, idx) => {
+      const img = new Image();
+      img.src = frag.imagePath;
+      img.onload = () => {
+        const { width, height } = calculateDisplaySize(frag, img.naturalWidth, img.naturalHeight);
+
+        const newCanvasFragment: CanvasFragment = {
+          id: `canvas-fragment-${Date.now()}-${idx}-${Math.random()}`,
+          fragmentId: frag.id,
+          name: frag.name,
+          imagePath: frag.imagePath,
+          segmentationCoords: frag.segmentationCoords,
+          x: position.x - width / 2 + idx * OFFSET,
+          y: position.y - height / 2 + idx * OFFSET,
+          width,
+          height,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          isLocked: false,
+          isSelected: false,
+          showSegmented: true,
+          originalWidth: img.naturalWidth,
+          originalHeight: img.naturalHeight,
+          hasBeenResized: false,
+        };
+
+        newFragments.push(newCanvasFragment);
+        loadedCount++;
+        if (loadedCount === fragmentsToDrop.length) {
+          setCanvasFragments(prev => [...prev, ...newFragments]);
+        }
       };
-
-      setCanvasFragments([...canvasFragments, newCanvasFragment]);
-    };
+    });
 
     draggedFragmentRef.current = null;
     dropPositionRef.current = null;
+    draggedSelectionRef.current = null;
   };
+
+  // Handle bulk add to canvas from sidebar multiselect
+  const handleBulkAddToCanvas = useCallback((selectedFragments: ManuscriptFragment[]) => {
+    const OFFSET = 50; // px offset between staggered fragments
+    let loadedCount = 0;
+    const newFragments: CanvasFragment[] = [];
+
+    selectedFragments.forEach((fragment, idx) => {
+      const img = new Image();
+      img.src = fragment.imagePath;
+      img.onload = () => {
+        const { width, height } = calculateDisplaySize(fragment, img.naturalWidth, img.naturalHeight);
+        const newFrag: CanvasFragment = {
+          id: `canvas-fragment-${Date.now()}-${idx}-${Math.random()}`,
+          fragmentId: fragment.id,
+          name: fragment.name,
+          imagePath: fragment.imagePath,
+          segmentationCoords: fragment.segmentationCoords,
+          x: 100 + idx * OFFSET,
+          y: 100 + idx * OFFSET,
+          width,
+          height,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          isLocked: false,
+          isSelected: false,
+          showSegmented: true,
+          originalWidth: img.naturalWidth,
+          originalHeight: img.naturalHeight,
+          hasBeenResized: false,
+        };
+        newFragments.push(newFrag);
+        loadedCount++;
+        if (loadedCount === selectedFragments.length) {
+          setCanvasFragments(prev => [...prev, ...newFragments]);
+        }
+      };
+    });
+  }, [calculateDisplaySize, gridScale]);
+
+  // Handle bulk edit metadata from sidebar multiselect
+  const handleBulkEditSidebarMetadata = useCallback((fragmentIds: string[]) => {
+    if (fragmentIds.length >= 2) {
+      setBulkEditFragmentIds(fragmentIds);
+    }
+  }, []);
 
   // Clear search and reset to normal mode
   const handleClearSearch = useCallback(() => {
@@ -1127,6 +1190,12 @@ function CanvasPage() {
         selectedFragmentHasSegmentation={selectedManuscriptFragment?.hasSegmentation}
         selectedFragmentShowSegmented={selectedFragment?.showSegmented}
         onToggleSelectedFragmentSegmentation={handleToggleSelectedFragmentSegmentation}
+        onBulkEditMetadata={() => {
+          const ids = selectedFragmentIds.map(
+            (id) => canvasFragments.find((cf) => cf.id === id)?.fragmentId ?? id
+          );
+          setBulkEditFragmentIds(ids);
+        }}
         projectName={currentProjectName}
         saveStatus={saveStatus}
       />
@@ -1155,6 +1224,9 @@ function CanvasPage() {
           edgeMatches={edgeMatches}
           onPlaceEdgeMatch={handlePlaceEdgeMatch}
           onExitEdgeMatch={handleExitEdgeMatch}
+          onBulkAddToCanvas={handleBulkAddToCanvas}
+          onBulkEditSidebarMetadata={handleBulkEditSidebarMetadata}
+          onDragStartSelected={handleDragStartSelected}
         />
 
         <div
@@ -1200,6 +1272,16 @@ function CanvasPage() {
           onUpdate={loadFragments}
           canvasFragment={selectedCanvasFragmentForMetadata}
           gridScale={gridScale}
+          customFilters={customFilters}
+        />
+      )}
+
+      {/* Bulk Metadata Editor Modal */}
+      {bulkEditFragmentIds && bulkEditFragmentIds.length >= 2 && (
+        <BulkMetadataEditor
+          fragmentIds={bulkEditFragmentIds}
+          onClose={() => setBulkEditFragmentIds(null)}
+          onUpdate={loadFragments}
           customFilters={customFilters}
         />
       )}

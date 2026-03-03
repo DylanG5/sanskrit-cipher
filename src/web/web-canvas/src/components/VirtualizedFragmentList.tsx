@@ -12,6 +12,8 @@ interface VirtualizedFragmentListProps {
   isLoadingMore?: boolean;
   scrollPosition?: number;
   onScrollPositionChange?: (position: number) => void;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string, multi: boolean) => void;
 }
 
 const ITEM_HEIGHT = 180; // Height of each fragment card (image height + padding + text)
@@ -20,24 +22,60 @@ interface FragmentRowData {
   fragments: ManuscriptFragment[];
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
+  selectedIds: Set<string>;
+  onToggleSelect?: (id: string, multi: boolean) => void;
 }
 
 const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRowData>) => {
   if (!data) return null;
 
-  const { fragments, onDragStart, onFragmentClick } = data;
+  const { fragments, onDragStart, onFragmentClick, selectedIds, onToggleSelect } = data;
   const fragment = fragments[index];
 
   if (!fragment) return null;
+
+  const isSelected = selectedIds.has(fragment.id);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if ((e.metaKey || e.ctrlKey) && onToggleSelect) {
+      e.stopPropagation();
+      onToggleSelect(fragment.id, true);
+    } else {
+      onFragmentClick(fragment, e);
+    }
+  };
 
   return (
     <div style={style} className="px-4 pb-3">
       <div
         draggable
         onDragStart={(e) => onDragStart(fragment, e)}
-        onClick={(e) => onFragmentClick(fragment, e)}
-        className="cursor-move bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 p-3 border border-slate-200 relative group hover:border-blue-300 h-full"
+        onClick={handleClick}
+        className={`cursor-move bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 p-3 border-2 relative group h-full ${
+          isSelected
+            ? 'border-orange-500 ring-2 ring-orange-200'
+            : 'border-slate-200 hover:border-blue-300'
+        }`}
       >
+        {/* Selection checkbox — always visible on hover, filled when selected */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect?.(fragment.id, true);
+          }}
+          className={`absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center shadow-sm transition-all ${
+            isSelected
+              ? 'bg-orange-500 border-orange-500'
+              : 'bg-white/80 border-slate-300 opacity-0 group-hover:opacity-100 hover:border-orange-400'
+          }`}
+          title={isSelected ? 'Deselect' : 'Select'}
+        >
+          {isSelected && (
+            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </button>
         <img
           src={fragment.thumbnailPath}
           alt={fragment.name}
@@ -90,6 +128,8 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   isLoadingMore = false,
   scrollPosition = 0,
   onScrollPositionChange,
+  selectedIds = new Set(),
+  onToggleSelect,
 }) => {
   const listRef = useRef<FixedSizeList>(null);
 
@@ -125,8 +165,10 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
       fragments,
       onDragStart,
       onFragmentClick,
+      selectedIds,
+      onToggleSelect,
     }),
-    [fragments, onDragStart, onFragmentClick]
+    [fragments, onDragStart, onFragmentClick, selectedIds, onToggleSelect]
   );
 
   // Calculate total item count

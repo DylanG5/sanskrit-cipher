@@ -28,6 +28,9 @@ interface SidebarProps {
   edgeMatches?: EdgeMatchRecord[];
   onPlaceEdgeMatch?: (match: EdgeMatchRecord) => void;
   onExitEdgeMatch?: () => void;
+  onBulkAddToCanvas?: (fragments: ManuscriptFragment[]) => void;
+  onBulkEditSidebarMetadata?: (fragmentIds: string[]) => void;
+  onDragStartSelected?: (selectedFragments: ManuscriptFragment[]) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -53,6 +56,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   edgeMatches = [],
   onPlaceEdgeMatch,
   onExitEdgeMatch,
+  onBulkAddToCanvas,
+  onBulkEditSidebarMetadata,
+  onDragStartSelected,
 }) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -61,6 +67,36 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [scrollPosition, setScrollPosition] = useState(0);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [selectedSidebarIds, setSelectedSidebarIds] = useState<Set<string>>(new Set());
+
+  // Clear sidebar selection when fragments list changes (filter/search)
+  useEffect(() => {
+    setSelectedSidebarIds(new Set());
+  }, [fragments]);
+
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedSidebarIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleDragStart = useCallback((fragment: ManuscriptFragment, e: React.DragEvent) => {
+    // If the dragged fragment is part of a selection, notify parent of all selected fragments
+    if (selectedSidebarIds.size > 0 && onDragStartSelected) {
+      // Include the dragged fragment in selection if not already
+      const allIds = new Set(selectedSidebarIds);
+      allIds.add(fragment.id);
+      const selectedFrags = fragments.filter(f => allIds.has(f.id));
+      onDragStartSelected(selectedFrags);
+    }
+    onDragStart(fragment, e);
+  }, [fragments, selectedSidebarIds, onDragStart, onDragStartSelected]);
 
   const handleFragmentClick = (fragment: ManuscriptFragment, e: React.MouseEvent) => {
     // Don't show metadata if we're starting a drag
@@ -458,17 +494,65 @@ const Sidebar: React.FC<SidebarProps> = ({
           ) : (
           <VirtualizedFragmentList
             fragments={fragments}
-            onDragStart={onDragStart}
+            onDragStart={handleDragStart}
             onFragmentClick={handleFragmentClick}
-            containerHeight={containerHeight}
+            containerHeight={selectedSidebarIds.size > 0 ? containerHeight - 56 : containerHeight}
             onLoadMore={onLoadMore}
             hasMore={hasMore}
             isLoadingMore={isLoadingMore}
             scrollPosition={scrollPosition}
             onScrollPositionChange={setScrollPosition}
+            selectedIds={selectedSidebarIds}
+            onToggleSelect={handleToggleSelect}
           />
           )}
         </div>
+
+        {/* Multiselect Action Bar */}
+        {selectedSidebarIds.size > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-3 py-2 flex items-center gap-2 z-10 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+            <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+              {selectedSidebarIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedSidebarIds(new Set())}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+              title="Clear selection"
+            >
+              Clear
+            </button>
+            <div className="flex-1" />
+            {onBulkAddToCanvas && (
+              <button
+                onClick={() => {
+                  const selected = fragments.filter(f => selectedSidebarIds.has(f.id));
+                  if (selected.length > 0) onBulkAddToCanvas(selected);
+                }}
+                className="px-2.5 py-1.5 text-xs font-semibold text-white rounded-lg transition-colors"
+                style={{ background: '#2563eb' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#1d4ed8'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#2563eb'; }}
+                title="Add selected fragments to canvas"
+              >
+                Add to Canvas
+              </button>
+            )}
+            {onBulkEditSidebarMetadata && (
+              <button
+                onClick={() => {
+                  onBulkEditSidebarMetadata(Array.from(selectedSidebarIds));
+                }}
+                className="px-2.5 py-1.5 text-xs font-semibold text-white rounded-lg transition-colors"
+                style={{ background: '#ea580c' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#c2410c'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#ea580c'; }}
+                title="Edit metadata for selected fragments"
+              >
+                Edit Metadata
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Resize Handle */}
         <div

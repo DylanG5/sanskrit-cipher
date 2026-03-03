@@ -374,6 +374,64 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  /**
+   * Bulk update metadata for multiple fragments
+   */
+  ipcMain.handle('fragments:bulkUpdateMetadata', async (_event, fragmentIds: string[], metadata: Record<string, unknown>) => {
+    if (!Array.isArray(fragmentIds) || fragmentIds.length === 0) {
+      return { success: false, error: 'No fragment IDs provided' };
+    }
+
+    const staticFields = [
+      'edge_piece',
+      'has_top_edge',
+      'has_bottom_edge',
+      'has_left_edge',
+      'has_right_edge',
+      'has_circle',
+      'line_count',
+      'script_type',
+      'scale_unit',
+      'pixels_per_unit',
+      'scale_detection_status'
+    ];
+    const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
+    const allowedFields = new Set<string>([
+      ...staticFields,
+      ...customKeys.map((row) => row.filter_key),
+    ]);
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    for (const [key, value] of Object.entries(metadata)) {
+      if (allowedFields.has(key)) {
+        updates.push(`${key} = ?`);
+        params.push(value);
+      }
+    }
+
+    if (updates.length === 0) {
+      return { success: false, error: 'No valid fields to update' };
+    }
+
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+
+    const placeholders = fragmentIds.map(() => '?').join(',');
+    const query = `UPDATE fragments SET ${updates.join(', ')} WHERE fragment_id IN (${placeholders})`;
+
+    try {
+      const transaction = db.transaction(() => {
+        const result = db.prepare(query).run(...params, ...fragmentIds);
+        return result.changes;
+      });
+      const changes = transaction();
+      return { success: true, changes };
+    } catch (error) {
+      console.error('Error bulk updating fragments:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
   // ============================================
   // Custom Filter Handlers
   // ============================================

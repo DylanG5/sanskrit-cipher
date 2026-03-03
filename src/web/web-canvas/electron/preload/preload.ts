@@ -143,6 +143,8 @@ const electronAPI = {
       ipcRenderer.invoke('fragments:getById', id),
     updateMetadata: (id: string, metadata: Record<string, unknown>): Promise<ApiResponse<null>> =>
       ipcRenderer.invoke('fragments:updateMetadata', id, metadata),
+    bulkUpdateMetadata: (ids: string[], metadata: Record<string, unknown>): Promise<ApiResponse<null>> =>
+      ipcRenderer.invoke('fragments:bulkUpdateMetadata', ids, metadata),
     uploadFiles: (filePaths: string[]): Promise<UploadResponse> =>
       ipcRenderer.invoke('fragments:uploadFiles', filePaths),
   },
