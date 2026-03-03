@@ -358,7 +358,7 @@ const HomePage: React.FC = () => {
             <svg className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            New Reconstruction
+            New Project
           </button>
         </div>
 
@@ -508,7 +508,7 @@ const HomePage: React.FC = () => {
           </div>
 
           <h1
-            className="text-6xl font-bold mb-4 tracking-tight font-body"
+            className="text-5xl font-bold mb-4 tracking-tight font-body"
             style={{
               background: 'linear-gradient(135deg, #292524 0%, #ea580c 50%, #292524 100%)',
               WebkitBackgroundClip: 'text',
@@ -517,11 +517,8 @@ const HomePage: React.FC = () => {
               letterSpacing: '-0.02em'
             }}
           >
-            Buddhist Manuscript
+            Sanskrit Fragment Reconstruction Studio
           </h1>
-          <p className="text-xl font-semibold mb-3 font-body" style={{ color: '#57534e', letterSpacing: '-0.01em' }}>
-            Fragment Reconstruction Studio
-          </p>
           <p className="text-sm text-neutral-600 max-w-md mx-auto font-body leading-relaxed">
             Search for fragments by ID or begin a new reconstruction project
           </p>
@@ -692,6 +689,13 @@ const HomePage: React.FC = () => {
               Fragments Available
             </div>
           </div>
+        </div>
+
+        {/* Credits */}
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-center animate-fadeIn font-body" style={{ animationDelay: '500ms' }}>
+          <p className="text-xs font-medium" style={{ color: '#a8a29e' }}>
+            Created by Muhammad Umar Khan, Dylan Garner, Omar El Aref, Yousef Shahin &amp; Aswin Kuganesan
+          </p>
         </div>
 
         {/* Keyboard shortcut hint */}
