@@ -11,6 +11,45 @@ class EdgeExtractor:
         self.smoothing_iterations = smoothing_iterations
         self.epsilon_factor = epsilon_factor
 
+    def get_contour_edge_span(self, contour: np.ndarray, mask: np.ndarray, side: str) -> float:
+        """
+        Calculate what fraction of the bbox side is covered by contour points near that edge.
+        This helps distinguish true borders (high span) from partial tears (low span).
+        """
+        pts = contour.reshape(-1, 2)
+
+        ys, xs = np.where(mask > 0)
+        if len(xs) == 0:
+            return 0.0
+        bbox_x0, bbox_x1 = xs.min(), xs.max()
+        bbox_y0, bbox_y1 = ys.min(), ys.max()
+        bw = max(1, bbox_x1 - bbox_x0)
+        bh = max(1, bbox_y1 - bbox_y0)
+
+        margin_x = 0.05 * bw
+        margin_y = 0.05 * bh
+
+        if side == 'left_edge':
+            edge_pts = pts[pts[:, 0] <= bbox_x0 + margin_x]
+            if len(edge_pts) < 5:
+                return 0.0
+            return float((edge_pts[:, 1].max() - edge_pts[:, 1].min()) / bh)
+        elif side == 'right_edge':
+            edge_pts = pts[pts[:, 0] >= bbox_x1 - margin_x]
+            if len(edge_pts) < 5:
+                return 0.0
+            return float((edge_pts[:, 1].max() - edge_pts[:, 1].min()) / bh)
+        elif side == 'top_edge':
+            edge_pts = pts[pts[:, 1] <= bbox_y0 + margin_y]
+            if len(edge_pts) < 5:
+                return 0.0
+            return float((edge_pts[:, 0].max() - edge_pts[:, 0].min()) / bw)
+        else:  # bottom_edge
+            edge_pts = pts[pts[:, 1] >= bbox_y1 - margin_y]
+            if len(edge_pts) < 5:
+                return 0.0
+            return float((edge_pts[:, 0].max() - edge_pts[:, 0].min()) / bw)
+
     def classify_edges(
         self,
         contour: np.ndarray,
@@ -370,6 +409,16 @@ class EdgeDetectionProcessor(BaseProcessor):
         self.hull_angle_h = self.config['config'].get('hull_angle_h', 12.0)
         self.hull_angle_v = self.config['config'].get('hull_angle_v', 78.0)
 
+        # Separate thresholds for classification (applied after detection)
+        # Horizontal edges (top/bottom) tend to have lower error
+        self.classify_max_err_h = self.config['config'].get('classify_max_err_h', 2.0)
+        # Vertical edges (left/right) tend to have higher error
+        self.classify_max_err_v = self.config['config'].get('classify_max_err_v', 3.5)
+        # Minimum hull coverage to classify as border
+        self.classify_min_cov = self.config['config'].get('classify_min_cov', 0.40)
+        # Minimum contour edge span (fraction of side covered by contour points)
+        self.classify_min_span = self.config['config'].get('classify_min_span', 0.60)
+
         self.version = self.config['config'].get('model_version', '1.0')
 
     def get_metadata(self) -> ProcessorMetadata:
@@ -450,14 +499,43 @@ class EdgeDetectionProcessor(BaseProcessor):
                 max_mean_line_err=self.max_mean_line_err,
             )
         
+        # Calculate contour edge spans for each side
+        contour_spans = {
+            side: self.extractor.get_contour_edge_span(contour, mask, side)
+            for side in ("top_edge", "bottom_edge", "left_edge", "right_edge")
+        }
+
         print("EDGE SCORES:", fragment.fragment_id, edge_data["scores"])
+        print("CONTOUR SPANS:", contour_spans)
         print("BORDERS:", edge_data["border_edges"])
 
-        # Set edge flags as booleans
-        has_top = "top_edge" in edge_data["border_edges"]
-        has_bottom = "bottom_edge" in edge_data["border_edges"]
-        has_left = "left_edge" in edge_data["border_edges"]
-        has_right = "right_edge" in edge_data["border_edges"]
+        # Apply classification thresholds with different values for horizontal vs vertical
+        scores = edge_data["scores"]
+
+        def is_border(side: str) -> bool:
+            """Check if a side qualifies as a border edge."""
+            cov = scores[side]["coverage"]
+            err = scores[side]["mean_line_err"]
+            span = contour_spans[side]
+
+            # Must meet minimum hull coverage
+            if cov is None or cov < self.classify_min_cov:
+                return False
+            if err is None:
+                return False
+            # Must meet minimum contour span (real borders span most of the side)
+            if span < self.classify_min_span:
+                return False
+            # Use different error thresholds for horizontal vs vertical edges
+            if side in ("top_edge", "bottom_edge"):
+                return err <= self.classify_max_err_h
+            else:  # left_edge, right_edge
+                return err <= self.classify_max_err_v
+
+        has_top = is_border("top_edge")
+        has_bottom = is_border("bottom_edge")
+        has_left = is_border("left_edge")
+        has_right = is_border("right_edge")
 
         is_edge_piece = has_top or has_bottom or has_left or has_right
 

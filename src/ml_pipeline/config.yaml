@@ -70,13 +70,19 @@ processors:
       near_frac: 0.05
       min_run_frac: 0.05
       max_mean_line_err: 12.0
+      # Hull segment detection params (finds candidate segments)
       hull_err_thresh: 3.5
       hull_min_len_pts: 35
-      hull_min_cov: 0.45
-      hull_max_err: 4.5
+      hull_min_cov: 0.45           # detection coverage threshold
+      hull_max_err: 4.5            # detection error threshold (lenient)
       hull_near_frac: 0.06
       hull_angle_h: 12.0
       hull_angle_v: 78.0
+      # Classification thresholds (applied after detection)
+      classify_min_cov: 0.40       # min hull coverage to classify as border
+      classify_min_span: 0.65      # min contour edge span (fraction of side covered)
+      classify_max_err_h: 2.0      # max error for horizontal edges (top/bottom)
+      classify_max_err_v: 3.45     # max error for vertical edges (left/right)
   linedetection:
     enabled: true
     model_path: "../models/line-detection/best.pt"
