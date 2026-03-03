@@ -1227,6 +1227,7 @@ function CanvasPage() {
           onBulkAddToCanvas={handleBulkAddToCanvas}
           onBulkEditSidebarMetadata={handleBulkEditSidebarMetadata}
           onDragStartSelected={handleDragStartSelected}
+          onFragmentsDeleted={loadFragments}
         />
 
         <div

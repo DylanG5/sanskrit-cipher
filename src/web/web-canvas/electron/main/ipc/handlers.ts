@@ -432,6 +432,40 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  /**
+   * Bulk delete fragments from the database
+   */
+  ipcMain.handle('fragments:bulkDelete', async (_event, fragmentIds: string[]) => {
+    if (!Array.isArray(fragmentIds) || fragmentIds.length === 0) {
+      return { success: false, error: 'No fragment IDs provided' };
+    }
+
+    // Sanitize: ensure every ID is a non-empty string
+    const safeIds = fragmentIds.filter(id => typeof id === 'string' && id.trim().length > 0);
+    if (safeIds.length === 0) {
+      return { success: false, error: 'No valid fragment IDs provided' };
+    }
+
+    const placeholders = safeIds.map(() => '?').join(',');
+
+    try {
+      const transaction = db.transaction(() => {
+        // Remove from any projects first (cascade)
+        db.prepare(`DELETE FROM project_fragments WHERE fragment_id IN (${placeholders})`).run(...safeIds);
+        // Remove edge match entries referencing these fragments
+        db.prepare(`DELETE FROM edge_matches WHERE fragment_a_id IN (${placeholders}) OR fragment_b_id IN (${placeholders})`).run(...safeIds, ...safeIds);
+        // Delete the fragments themselves
+        const result = db.prepare(`DELETE FROM fragments WHERE fragment_id IN (${placeholders})`).run(...safeIds);
+        return result.changes;
+      });
+      const changes = transaction();
+      return { success: true, changes };
+    } catch (error) {
+      console.error('Error bulk deleting fragments:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
   // ============================================
   // Custom Filter Handlers
   // ============================================
