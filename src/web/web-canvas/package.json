@@ -10,6 +10,8 @@
     "package": "electron-forge package",
     "lint": "eslint .",
     "seed:database": "tsx scripts/seed-database.ts",
+    "smoke:test": "tsx scripts/smoke-test.ts",
+    "perf:test2": "tsx scripts/perf_test_nfr_perf_2.ts",
     "start": "electron-forge start",
     "make": "electron-forge make"
   },
