@@ -1,6 +1,13 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { FragmentFilters, DEFAULT_FILTERS } from '../types/filters';
 import { CustomFilterDefinition } from '../types/customFilters';
+
+const BUILTIN_FILTER_IDS = [
+  'lineCount', 'scriptType', 'edgePiece', 'topEdge',
+  'bottomEdge', 'leftEdge', 'rightEdge', 'circle',
+] as const;
+
+const FILTER_ORDER_KEY = 'filterOrder';
 
 interface FilterPanelProps {
   filters: FragmentFilters;
@@ -50,6 +57,105 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const [optionsDraft, setOptionsDraft] = useState('');
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [isSavingOptions, setIsSavingOptions] = useState(false);
+
+  // Drag-to-reorder state
+  const [filterOrder, setFilterOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(FILTER_ORDER_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as string[];
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { /* ignore */ }
+    return [...BUILTIN_FILTER_IDS];
+  });
+  const draggedFilterId = useRef<string | null>(null);
+  const [dragOverFilterId, setDragOverFilterId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Sync filterOrder when customFilters change
+  useEffect(() => {
+    setFilterOrder(prev => {
+      const customIds = customFilters.map(f => `custom-${f.filterKey}`);
+      const customIdSet = new Set(customIds);
+      const builtinSet = new Set<string>(BUILTIN_FILTER_IDS);
+      // Remove deleted custom filter IDs, keep built-ins and existing custom IDs
+      const filtered = prev.filter(id => builtinSet.has(id) || customIdSet.has(id));
+      // Append any new custom filter IDs not already in the list
+      const existingSet = new Set(filtered);
+      const newIds = customIds.filter(id => !existingSet.has(id));
+      const next = [...filtered, ...newIds];
+      // Ensure all built-in IDs are present (in case localStorage was stale)
+      const nextSet = new Set(next);
+      for (const id of BUILTIN_FILTER_IDS) {
+        if (!nextSet.has(id)) next.push(id);
+      }
+      return next;
+    });
+  }, [customFilters]);
+
+  // Persist filterOrder to localStorage
+  useEffect(() => {
+    localStorage.setItem(FILTER_ORDER_KEY, JSON.stringify(filterOrder));
+  }, [filterOrder]);
+
+  // Drag-and-drop handlers
+  const handleFilterDragStart = (e: React.DragEvent, filterId: string) => {
+    draggedFilterId.current = filterId;
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', filterId);
+  };
+
+  const handleFilterDragOver = (e: React.DragEvent, filterId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedFilterId.current === filterId) {
+      setDragOverFilterId(null);
+      setDropPosition(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    setDragOverFilterId(filterId);
+    setDropPosition(e.clientY < midY ? 'before' : 'after');
+  };
+
+  const handleFilterDragLeave = () => {
+    setDragOverFilterId(null);
+    setDropPosition(null);
+  };
+
+  const handleFilterDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const dragId = draggedFilterId.current;
+    const overId = dragOverFilterId;
+    if (!dragId || !overId || dragId === overId) {
+      cleanupDrag();
+      return;
+    }
+    setFilterOrder(prev => {
+      const next = prev.filter(id => id !== dragId);
+      let targetIdx = next.indexOf(overId);
+      if (targetIdx === -1) { cleanupDrag(); return prev; }
+      if (dropPosition === 'after') targetIdx += 1;
+      next.splice(targetIdx, 0, dragId);
+      return next;
+    });
+    cleanupDrag();
+  };
+
+  const handleFilterDragEnd = () => {
+    cleanupDrag();
+  };
+
+  const cleanupDrag = () => {
+    draggedFilterId.current = null;
+    setDragOverFilterId(null);
+    setDropPosition(null);
+    setIsDragging(false);
+  };
 
   React.useEffect(() => {
     setLocalFilters(filters);
@@ -447,516 +553,475 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
 
           {/* Filter Controls */}
-          <div className="flex-1 p-4 space-y-6">
-            {/* Line Count Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              (localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined)
-                ? 'border-blue-400 ring-2 ring-blue-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Line Count</h3>
-                {(localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined) && (
-                  <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <label className="block text-xs text-slate-600 mb-1">Min</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={localFilters.lineCountMin ?? ''}
-                    onChange={(e) => handleLineCountMinChange(e.target.value)}
-                    placeholder="Any"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
+          <div className="flex-1 p-4 space-y-0">
+            {filterOrder.map((filterId) => {
+              // Drag handle positioned at top-right of each card
+              const dragHandle = (
+                <div
+                  draggable
+                  onDragStart={(e) => handleFilterDragStart(e, filterId)}
+                  className="absolute top-2 right-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors select-none p-1 rounded hover:bg-slate-100 z-[1]"
+                  title="Drag to reorder"
+                >
+                  <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
+                    <circle cx="2" cy="2" r="1.5"/>
+                    <circle cx="8" cy="2" r="1.5"/>
+                    <circle cx="2" cy="8" r="1.5"/>
+                    <circle cx="8" cy="8" r="1.5"/>
+                    <circle cx="2" cy="14" r="1.5"/>
+                    <circle cx="8" cy="14" r="1.5"/>
+                  </svg>
                 </div>
-                <div className="text-slate-400 mt-5">—</div>
-                <div className="flex-1">
-                  <label className="block text-xs text-slate-600 mb-1">Max</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={localFilters.lineCountMax ?? ''}
-                    onChange={(e) => handleLineCountMaxChange(e.target.value)}
-                    placeholder="Any"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              {(localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined) && (
-                <p className="mt-2 text-xs text-slate-500">
-                  {localFilters.lineCountMin ?? '0'} - {localFilters.lineCountMax ?? '∞'} lines
-                </p>
-              )}
-            </div>
+              );
 
-            {/* Script Type Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              localFilters.scripts.length > 0
-                ? 'border-purple-400 ring-2 ring-purple-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Script Type</h3>
-                {localFilters.scripts.length > 0 && (
-                  <span className="ml-auto text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              {availableScripts.length > 0 ? (
-                <div className="space-y-2">
-                  {availableScripts.map((script) => (
-                    <label
-                      key={script}
-                      className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors group"
-                    >
+              const isOver = dragOverFilterId === filterId;
+              const wrapperStyle: React.CSSProperties = {
+                opacity: isDragging && draggedFilterId.current === filterId ? 0.5 : 1,
+                position: 'relative' as const,
+              };
+
+              const dropIndicator = isOver && dropPosition ? (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    background: '#d97706',
+                    borderRadius: '1px',
+                    zIndex: 10,
+                    ...(dropPosition === 'before' ? { top: 0 } : { bottom: 0 }),
+                  }}
+                />
+              ) : null;
+
+              let cardContent: React.ReactNode = null;
+
+              // --- Built-in filter cards ---
+              if (filterId === 'lineCount') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    (localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined)
+                      ? 'border-blue-400 ring-2 ring-blue-100'
+                      : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Line Count</h3>
+                      {(localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined) && (
+                        <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <label className="block text-xs text-slate-600 mb-1">Min</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={localFilters.lineCountMin ?? ''}
+                          onChange={(e) => handleLineCountMinChange(e.target.value)}
+                          placeholder="Any"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                      <div className="text-slate-400 mt-5">—</div>
+                      <div className="flex-1">
+                        <label className="block text-xs text-slate-600 mb-1">Max</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={localFilters.lineCountMax ?? ''}
+                          onChange={(e) => handleLineCountMaxChange(e.target.value)}
+                          placeholder="Any"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+                    {(localFilters.lineCountMin !== undefined || localFilters.lineCountMax !== undefined) && (
+                      <p className="mt-2 text-xs text-slate-500">
+                        {localFilters.lineCountMin ?? '0'} - {localFilters.lineCountMax ?? '∞'} lines
+                      </p>
+                    )}
+                  </div>
+                );
+              } else if (filterId === 'scriptType') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    localFilters.scripts.length > 0
+                      ? 'border-purple-400 ring-2 ring-purple-100'
+                      : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Script Type</h3>
+                      {localFilters.scripts.length > 0 && (
+                        <span className="ml-auto text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    {availableScripts.length > 0 ? (
+                      <div className="space-y-2">
+                        {availableScripts.map((script) => (
+                          <label
+                            key={script}
+                            className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors group"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={localFilters.scripts.includes(script)}
+                              onChange={() => handleScriptToggle(script)}
+                              className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                            />
+                            <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">
+                              {script}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">No script types available</p>
+                    )}
+                    {localFilters.scripts.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-slate-200">
+                        <p className="text-xs text-slate-600">
+                          Selected: <span className="font-medium">{localFilters.scripts.join(', ')}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              } else if (filterId === 'edgePiece') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    localFilters.isEdgePiece !== null
+                      ? 'border-emerald-400 ring-2 ring-emerald-100'
+                      : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Edge Piece</h3>
+                      {localFilters.isEdgePiece !== null && (
+                        <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="edgePiece" checked={localFilters.isEdgePiece === null} onChange={() => handleEdgePieceChange(null)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="edgePiece" checked={localFilters.isEdgePiece === true} onChange={() => handleEdgePieceChange(true)} className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="edgePiece" checked={localFilters.isEdgePiece === false} onChange={() => handleEdgePieceChange(false)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">No</span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              } else if (filterId === 'topEdge') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    localFilters.hasTopEdge !== null ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Top Edge</h3>
+                      {localFilters.hasTopEdge !== null && (
+                        <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="topEdge" checked={localFilters.hasTopEdge === null} onChange={() => handleTopEdgeChange(null)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="topEdge" checked={localFilters.hasTopEdge === true} onChange={() => handleTopEdgeChange(true)} className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="topEdge" checked={localFilters.hasTopEdge === false} onChange={() => handleTopEdgeChange(false)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">No</span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              } else if (filterId === 'bottomEdge') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    localFilters.hasBottomEdge !== null ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Bottom Edge</h3>
+                      {localFilters.hasBottomEdge !== null && (
+                        <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="bottomEdge" checked={localFilters.hasBottomEdge === null} onChange={() => handleBottomEdgeChange(null)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="bottomEdge" checked={localFilters.hasBottomEdge === true} onChange={() => handleBottomEdgeChange(true)} className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="bottomEdge" checked={localFilters.hasBottomEdge === false} onChange={() => handleBottomEdgeChange(false)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">No</span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              } else if (filterId === 'leftEdge') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    localFilters.hasLeftEdge !== null ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Left Edge</h3>
+                      {localFilters.hasLeftEdge !== null && (
+                        <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="leftEdge" checked={localFilters.hasLeftEdge === null} onChange={() => handleLeftEdgeChange(null)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="leftEdge" checked={localFilters.hasLeftEdge === true} onChange={() => handleLeftEdgeChange(true)} className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="leftEdge" checked={localFilters.hasLeftEdge === false} onChange={() => handleLeftEdgeChange(false)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">No</span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              } else if (filterId === 'rightEdge') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    localFilters.hasRightEdge !== null ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Right Edge</h3>
+                      {localFilters.hasRightEdge !== null && (
+                        <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="rightEdge" checked={localFilters.hasRightEdge === null} onChange={() => handleRightEdgeChange(null)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="rightEdge" checked={localFilters.hasRightEdge === true} onChange={() => handleRightEdgeChange(true)} className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="rightEdge" checked={localFilters.hasRightEdge === false} onChange={() => handleRightEdgeChange(false)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">No</span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              } else if (filterId === 'circle') {
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    localFilters.hasCircle !== null ? 'border-cyan-400 ring-2 ring-cyan-100' : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">Has Circle</h3>
+                      {localFilters.hasCircle !== null && (
+                        <span className="ml-auto text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="hasCircle" checked={localFilters.hasCircle === null} onChange={() => handleCircleChange(null)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Don't care</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="hasCircle" checked={localFilters.hasCircle === true} onChange={() => handleCircleChange(true)} className="w-4 h-4 text-cyan-600 border-slate-300 focus:ring-2 focus:ring-cyan-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">Yes</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="radio" name="hasCircle" checked={localFilters.hasCircle === false} onChange={() => handleCircleChange(false)} className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                        <span className="text-sm text-slate-700 font-medium">No</span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              } else if (filterId.startsWith('custom-')) {
+                // Custom filter card
+                const filterKey = filterId.slice('custom-'.length);
+                const filter = customFilters.find(f => f.filterKey === filterKey);
+                if (!filter) return null;
+                const value = localFilters.custom?.[filter.filterKey];
+                const selectedValues = filter.type === 'multiselect' && Array.isArray(value) ? value : [];
+                const isActive = filter.type === 'multiselect'
+                  ? selectedValues.length > 0
+                  : (value !== undefined && value !== null && value !== '');
+
+                cardContent = (
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all relative ${
+                    isActive ? 'border-amber-400 ring-2 ring-amber-100' : 'border-slate-200'
+                  }`}>
+                    {dragHandle}
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 12h6m-6 5h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                      </svg>
+                      <h3 className="font-semibold text-slate-800 text-sm">{filter.label}</h3>
+                      {isActive && (
+                        <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                      )}
+                    </div>
+
+                    {filter.type === 'multiselect' ? (
+                      <>
+                        {(filter.options || []).length > 0 ? (
+                          <div className="space-y-2">
+                            {(filter.options || []).map((option) => (
+                              <label
+                                key={option}
+                                className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors group"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedValues.includes(option)}
+                                  onChange={() => handleCustomMultiselectToggle(filter.filterKey, option)}
+                                  className="w-4 h-4 text-amber-600 border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                                />
+                                <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">
+                                  {option}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-500 italic">No options available</p>
+                        )}
+                        {selectedValues.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-slate-200">
+                            <p className="text-xs text-slate-600">
+                              Selected: <span className="font-medium">{selectedValues.join(', ')}</span>
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
                       <input
-                        type="checkbox"
-                        checked={localFilters.scripts.includes(script)}
-                        onChange={() => handleScriptToggle(script)}
-                        className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                        type="text"
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(e) => handleCustomValueChange(filter.filterKey, e.target.value)}
+                        placeholder="Exact match"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
                       />
-                      <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">
-                        {script}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500 italic">No script types available</p>
-              )}
-              {localFilters.scripts.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-600">
-                    Selected: <span className="font-medium">{localFilters.scripts.join(', ')}</span>
-                  </p>
-                </div>
-              )}
-            </div>
+                    )}
 
-            {/* Edge Piece Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              localFilters.isEdgePiece !== null
-                ? 'border-emerald-400 ring-2 ring-emerald-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Edge Piece</h3>
-                {localFilters.isEdgePiece !== null && (
-                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="edgePiece"
-                    checked={localFilters.isEdgePiece === null}
-                    onChange={() => handleEdgePieceChange(null)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="edgePiece"
-                    checked={localFilters.isEdgePiece === true}
-                    onChange={() => handleEdgePieceChange(true)}
-                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Yes</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="edgePiece"
-                    checked={localFilters.isEdgePiece === false}
-                    onChange={() => handleEdgePieceChange(false)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">No</span>
-                </label>
-              </div>
-            </div>
+                    {/* Management buttons */}
+                    <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2">
+                      {filter.type === 'multiselect' && (
+                        <>
+                          {editingOptionsId === filter.id ? (
+                            <div className="flex-1 space-y-2">
+                              <textarea
+                                value={optionsDraft}
+                                onChange={(e) => setOptionsDraft(e.target.value)}
+                                rows={3}
+                                placeholder="Enter options (comma or new line separated)"
+                                className="w-full px-2 py-1.5 border border-amber-300 rounded-md text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white"
+                              />
+                              {optionsError && (
+                                <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                                  {optionsError}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleSaveOptions(filter)}
+                                  disabled={isSavingOptions}
+                                  className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 transition-colors disabled:opacity-50"
+                                >
+                                  {isSavingOptions ? 'Saving...' : 'Save'}
+                                </button>
+                                <button
+                                  onClick={handleCancelEditOptions}
+                                  className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleStartEditOptions(filter)}
+                              className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:bg-amber-50 px-2 py-1 rounded transition-colors"
+                              title="Edit options"
+                            >
+                              Edit Options
+                            </button>
+                          )}
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleDeleteCustomFilter(filter)}
+                        className="ml-auto text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                        title="Delete filter"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
 
-            {/* Top Edge Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              localFilters.hasTopEdge !== null
-                ? 'border-emerald-400 ring-2 ring-emerald-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Top Edge</h3>
-                {localFilters.hasTopEdge !== null && (
-                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="topEdge"
-                    checked={localFilters.hasTopEdge === null}
-                    onChange={() => handleTopEdgeChange(null)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="topEdge"
-                    checked={localFilters.hasTopEdge === true}
-                    onChange={() => handleTopEdgeChange(true)}
-                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Yes</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="topEdge"
-                    checked={localFilters.hasTopEdge === false}
-                    onChange={() => handleTopEdgeChange(false)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">No</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Bottom Edge Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              localFilters.hasBottomEdge !== null
-                ? 'border-emerald-400 ring-2 ring-emerald-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Bottom Edge</h3>
-                {localFilters.hasBottomEdge !== null && (
-                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="bottomEdge"
-                    checked={localFilters.hasBottomEdge === null}
-                    onChange={() => handleBottomEdgeChange(null)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="bottomEdge"
-                    checked={localFilters.hasBottomEdge === true}
-                    onChange={() => handleBottomEdgeChange(true)}
-                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Yes</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="bottomEdge"
-                    checked={localFilters.hasBottomEdge === false}
-                    onChange={() => handleBottomEdgeChange(false)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">No</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Left Edge Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              localFilters.hasLeftEdge !== null
-                ? 'border-emerald-400 ring-2 ring-emerald-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Left Edge</h3>
-                {localFilters.hasLeftEdge !== null && (
-                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="leftEdge"
-                    checked={localFilters.hasLeftEdge === null}
-                    onChange={() => handleLeftEdgeChange(null)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="leftEdge"
-                    checked={localFilters.hasLeftEdge === true}
-                    onChange={() => handleLeftEdgeChange(true)}
-                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Yes</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="leftEdge"
-                    checked={localFilters.hasLeftEdge === false}
-                    onChange={() => handleLeftEdgeChange(false)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">No</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Right Edge Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              localFilters.hasRightEdge !== null
-                ? 'border-emerald-400 ring-2 ring-emerald-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Right Edge</h3>
-                {localFilters.hasRightEdge !== null && (
-                  <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="rightEdge"
-                    checked={localFilters.hasRightEdge === null}
-                    onChange={() => handleRightEdgeChange(null)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="rightEdge"
-                    checked={localFilters.hasRightEdge === true}
-                    onChange={() => handleRightEdgeChange(true)}
-                    className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Yes</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="rightEdge"
-                    checked={localFilters.hasRightEdge === false}
-                    onChange={() => handleRightEdgeChange(false)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">No</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Circle Detection Filter */}
-            <div className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-              localFilters.hasCircle !== null
-                ? 'border-cyan-400 ring-2 ring-cyan-100'
-                : 'border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="9" strokeWidth={2} />
-                </svg>
-                <h3 className="font-semibold text-slate-800 text-sm">Has Circle</h3>
-                {localFilters.hasCircle !== null && (
-                  <span className="ml-auto text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="hasCircle"
-                    checked={localFilters.hasCircle === null}
-                    onChange={() => handleCircleChange(null)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Don't care</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="hasCircle"
-                    checked={localFilters.hasCircle === true}
-                    onChange={() => handleCircleChange(true)}
-                    className="w-4 h-4 text-cyan-600 border-slate-300 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">Yes</span>
-                </label>
-                <label className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="hasCircle"
-                    checked={localFilters.hasCircle === false}
-                    onChange={() => handleCircleChange(false)}
-                    className="w-4 h-4 text-slate-600 border-slate-300 focus:ring-2 focus:ring-slate-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-slate-700 font-medium">No</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Custom Filters - Each as its own card */}
-            {customFilters.map((filter) => {
-              const value = localFilters.custom?.[filter.filterKey];
-              const selectedValues = filter.type === 'multiselect' && Array.isArray(value) ? value : [];
-              const isActive = filter.type === 'multiselect'
-                ? selectedValues.length > 0
-                : (value !== undefined && value !== null && value !== '');
+              if (!cardContent) return null;
 
               return (
                 <div
-                  key={filter.filterKey}
-                  className={`bg-white rounded-lg p-4 shadow-sm border-2 transition-all ${
-                    isActive
-                      ? 'border-amber-400 ring-2 ring-amber-100'
-                      : 'border-slate-200'
-                  }`}
+                  key={filterId}
+                  style={wrapperStyle}
+                  onDragOver={(e) => handleFilterDragOver(e, filterId)}
+                  onDragLeave={handleFilterDragLeave}
+                  onDrop={handleFilterDrop}
+                  onDragEnd={handleFilterDragEnd}
+                  className="py-3 first:pt-0 last:pb-0"
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 12h6m-6 5h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-                    </svg>
-                    <h3 className="font-semibold text-slate-800 text-sm">{filter.label}</h3>
-                    {isActive && (
-                      <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Active</span>
-                    )}
-                  </div>
-
-                  {filter.type === 'multiselect' ? (
-                    <>
-                      {(filter.options || []).length > 0 ? (
-                        <div className="space-y-2">
-                          {(filter.options || []).map((option) => (
-                            <label
-                              key={option}
-                              className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 cursor-pointer transition-colors group"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedValues.includes(option)}
-                                onChange={() => handleCustomMultiselectToggle(filter.filterKey, option)}
-                                className="w-4 h-4 text-amber-600 border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
-                              />
-                              <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">
-                                {option}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-slate-500 italic">No options available</p>
-                      )}
-                      {selectedValues.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-200">
-                          <p className="text-xs text-slate-600">
-                            Selected: <span className="font-medium">{selectedValues.join(', ')}</span>
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <input
-                      type="text"
-                      value={typeof value === 'string' ? value : ''}
-                      onChange={(e) => handleCustomValueChange(filter.filterKey, e.target.value)}
-                      placeholder="Exact match"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                    />
-                  )}
-
-                  {/* Management buttons */}
-                  <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2">
-                    {filter.type === 'multiselect' && (
-                      <>
-                        {editingOptionsId === filter.id ? (
-                          <div className="flex-1 space-y-2">
-                            <textarea
-                              value={optionsDraft}
-                              onChange={(e) => setOptionsDraft(e.target.value)}
-                              rows={3}
-                              placeholder="Enter options (comma or new line separated)"
-                              className="w-full px-2 py-1.5 border border-amber-300 rounded-md text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white"
-                            />
-                            {optionsError && (
-                              <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
-                                {optionsError}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleSaveOptions(filter)}
-                                disabled={isSavingOptions}
-                                className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 transition-colors disabled:opacity-50"
-                              >
-                                {isSavingOptions ? 'Saving...' : 'Save'}
-                              </button>
-                              <button
-                                onClick={handleCancelEditOptions}
-                                className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleStartEditOptions(filter)}
-                            className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:bg-amber-50 px-2 py-1 rounded transition-colors"
-                            title="Edit options"
-                          >
-                            Edit Options
-                          </button>
-                        )}
-                      </>
-                    )}
-                    <button
-                      onClick={() => handleDeleteCustomFilter(filter)}
-                      className="ml-auto text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                      title="Delete filter"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  {dropIndicator}
+                  {cardContent}
                 </div>
               );
             })}
