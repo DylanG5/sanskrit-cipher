@@ -13,6 +13,8 @@
     urlcolor=blue
 }
 \usepackage[round]{natbib}
+\usepackage{graphicx}
+\usepackage{float}
 
 \input{../Comments}
 \input{../Common}
@@ -67,7 +69,7 @@ March 3, 2026 & 1.0 & Initial complete V\&V report populated from project artifa
 
 \pagenumbering{arabic}
 
-This document reports the verification and validation outcomes for the Sanskrit Ciphers project based on implemented code, available scripts, and documentation artifacts in the repository as of March 4, 2026. The report records what has been validated, what remains partially validated, and how evidence traces to requirements and modules. The evaluation is aligned to the V\&V Plan (\path{docs/VnVPlan/VnVPlan.tex}). Items explicitly out of scope in the plan (user authentication/roles and OCR transcription assistance) are not evaluated here.
+This document reports the verification and validation outcomes for the Sanskrit Ciphers project based on implemented code, available scripts, and documentation artifacts in the repository. The report records what has been validated, what remains partially validated, and how evidence traces to requirements and modules. The evaluation is aligned to the V\&V Plan (\path{docs/VnVPlan/VnVPlan.tex}). Items explicitly out of scope in the plan (user authentication/roles and OCR transcription assistance) are not evaluated here.
 
 This document reports the verification and validation outcomes for the \textit{Sanskrit Ciphers} project. Testing and evaluation were performed according to the procedures and test cases defined in the V\&V Plan (\path{docs/VnVPlan/VnVPlan.tex}). All test IDs referenced in the V\&V Plan were executed by the development team, and all tests met their respective pass criteria.
 
@@ -78,7 +80,7 @@ The following evidence types were produced exactly as described in the V\&V Plan
 \begin{itemize}
   \item \textbf{Manual functional tests (FR):} Executed by the team using defined step-by-step procedures in the V\&V Plan and validated through observation of expected system behavior.
   \item \textbf{Automated unit tests:} Executed using PyTest for ML pipeline utilities, database operations, and registry behavior.
-  \item \textbf{ML evaluation scripts:} Executed using the evaluation scripts specified in the V\&V Plan to compute task-level metrics (accuracy and F1).
+  \item \textbf{ML evaluation scripts:} Executed using the evaluation scripts specified in the V\&V Plan to compute task-level metrics (recall and F1).
   \item \textbf{Performance and scalability benchmarks:} Executed using the benchmarking scripts defined in the V\&V Plan, repeated for multiple runs, and compared to pass thresholds.
   \item \textbf{Usability testing:} Executed using representative user workflows described in the V\&V Plan with a small set of test users; results were summarized against the usability acceptance criteria.
 \end{itemize}
@@ -95,8 +97,8 @@ Functional evaluation is aligned to the test cases defined in the V\&V Plan (Sec
 \caption{Functional Requirement Evaluation Summary (Part 1)}
 \begin{tabularx}{\textwidth}{
 p{1.5cm}
->{\raggedright\arraybackslash}p{4.4cm}
->{\raggedright\arraybackslash}p{5.2cm}
+>{\raggedright\arraybackslash}p{3.4cm}
+>{\raggedright\arraybackslash}p{6.2cm}
 p{2cm}
 }
 \toprule
@@ -124,8 +126,8 @@ Pass\\
 \caption{Functional Requirement Evaluation Summary (Part 2)}
 \begin{tabularx}{\textwidth}{
 p{1.5cm}
->{\raggedright\arraybackslash}p{4.4cm}
->{\raggedright\arraybackslash}p{5.2cm}
+>{\raggedright\arraybackslash}p{3.4cm}
+>{\raggedright\arraybackslash}p{6.2cm}
 p{2cm}
 }
 \toprule
@@ -167,14 +169,14 @@ p{2cm}
 
 Performance (test-nfr-perf-1, test-nfr-perf-2) &
 Executed interactive workflow timing checks and script benchmarks using \url{scripts/vnv/benchmark_queries.py}. Verified UI interactions remained responsive under normal usage and query timings met thresholds (Table~\ref{tab:perf-bench}). &
-Pass\\
+In Progress\\
 
 ML output completeness (test-nfr-ai-1) &
 Executed evaluation scripts to compute task-level metrics and verify required ML fields are produced for processed fragments. Metrics summarized in Table~\ref{tab:ml-metrics}. &
 Pass\\
 
 Usability (test-nfr-usability-1, test-nfr-usability-2) &
-Executed usability sessions using representative workflows (create session, search/filter, place fragments, edit metadata, save/load, run pipeline). Participants completed tasks within the acceptance criteria and provided usability ratings meeting thresholds (Table~\ref{tab:usability-summary}). User Guide: \url{docs/UserGuide/UserGuide.pdf}. &
+Executed usability sessions using representative workflows (create session, search/filter, place fragments, edit metadata, save/load, run pipeline). Participants completed tasks within the acceptance criteria and provided usability ratings meeting thresholds (Table~\ref{tab:usability-summary}). &
 Pass\\
 
 Reliability (test-nfr-reliability-1, test-nfr-reliability-2) &
@@ -203,15 +205,15 @@ p{2cm}
 
 Scalability (test-nfr-scale-1) &
 Executed dataset scaling using \url{scripts/vnv/scale_dataset.py} and benchmarked queries using \url{scripts/vnv/benchmark_queries.py}. Verified average query times remained below threshold for all dataset sizes (Table~\ref{tab:scale-bench}). &
-Pass\\
+In Progress\\
 
 Cross-platform compatibility (test-nfr-compat-1) &
-Executed core workflows on Windows 10/11 (primary) and macOS (secondary): install/run app, load dataset, search/filter, canvas placement, save/load, and pipeline execution; no critical issues encountered. &
+Executed core workflows on macOS (primary) and Windows 11 (secondary): install/run app, load dataset, search/filter, canvas placement, save/load, and pipeline execution; no critical issues encountered. &
 Pass\\
 
 Performance benchmarking (test-nfr-bench-1) &
 Executed repeatable benchmark suite (10-run averages) using \url{scripts/vnv/benchmark_queries.py} and compared results to pass criteria (Table~\ref{tab:perf-bench}). &
-Pass\\
+In Progress\\
 
 \bottomrule
 \end{tabularx}
@@ -225,18 +227,50 @@ Pass\\
 \label{tab:ml-metrics}
 \begin{tabularx}{\textwidth}{p{4.0cm}p{4.0cm}p{4.0cm}}
 \toprule
-\textbf{Model/Task} & \textbf{Accuracy} & \textbf{F1 Score}\\
+\textbf{Model/Task} & \textbf{Recall} & \textbf{F1 Score}\\
 \midrule
-Circle detection & 81.1\% & 0.722\\
+Circle detection & 98.509\% & 0.9923\\
 Classification & 87.7\% & 0.802\\
 Edge detection & 77.2\% & 0.698\\
 Line detection & 94.8\% & 0.855\\
 Scale detection & 81.3\% & 0.880\\
 Script type & 82.6\% & 0.792\\
-Segmentation & 96.1\% & 0.924\\
+Segmentation & 99.749\% & 0.9987\\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+
+\subsection{Machine Learning Model Visual Results}
+
+In addition to the quantitative evaluation metrics reported in Table~\ref{tab:ml-metrics}, visual outputs from each ML model were reviewed to verify that the models produce meaningful predictions on manuscript fragments. These visualizations provide qualitative confirmation that the pipeline correctly detects relevant structural features.
+
+All images shown below were generated using the evaluation scripts described in the V\&V Plan and are stored in the repository under the \path{VNVREPORT/results/} directory.
+
+\FloatBarrier
+
+\subsubsection{Circle Detection}
+
+The circle detection model identifies circular features present in manuscript fragments. These circles often correspond to structural or annotation marks within the manuscript images.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{results/Circle-Detection/results.png}
+\caption{Circle detection model output showing predicted circular regions on fragments.}
+\label{fig:circle-detection}
+\end{figure}
+
+\subsubsection{Fragment Segmentation}
+
+The segmentation model isolates manuscript fragments from the background. This step is required before higher level analysis such as line detection and script classification.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{results/Segmentation/results.png}
+\caption{Segmentation model output showing predicted fragment masks.}
+\label{fig:segmentation-results}
+\end{figure}
+
 
 \subsection{Performance Benchmark Results}
 
@@ -294,15 +328,23 @@ Number of critical usability issues & 0 & $= 0$\\
 
 \section{Comparison to Existing Implementation}
 
-This project reused an existing ML pipeline architecture and extended it with a script-type classifier. The new processor follows the same design contract as existing processors:
+Prior to this system, reconstruction of manuscript fragments was primarily performed manually by scholars using static image collections. Researchers would visually inspect fragments, manually compare edges and shapes, and attempt to infer relationships between fragments based on visual similarity and domain knowledge. This process is time-consuming, difficult to reproduce, and does not scale well to large fragment collections.
+
+The \textit{Sanskrit Ciphers} platform improves upon this workflow by integrating computational tools that support fragment analysis and reconstruction. Compared to the traditional approach, the implemented system provides the following improvements:
+
 \begin{itemize}
-  \item Same processor abstraction and lifecycle methods.
-  \item Same auto-discovery mechanism through the processor registry.
-  \item Same orchestrated execution and update flow through the pipeline orchestrator.
-  \item Same configuration-driven enable/disable pattern.
+\item \textbf{Automated fragment enrichment:} Machine learning models automatically analyze fragments and generate metadata such as segmentation masks, script type, line count, circle detection, and scale estimation. This reduces the manual effort required to characterize fragments.
+
+\item \textbf{Search and filtering capabilities:} Users can quickly locate fragments based on metadata attributes, which is not possible in static image collections.
+
+\item \textbf{Interactive reconstruction workspace:} The canvas interface allows fragments to be visually arranged, rotated, and compared during reconstruction sessions, improving usability compared to manual inspection.
+
+\item \textbf{Reproducible computational pipeline:} The ML pipeline processes fragments in a consistent and repeatable manner, allowing results to be reproduced and verified.
+
+\item \textbf{Scalability for large fragment datasets:} Automated analysis enables the system to process large fragment collections more efficiently than manual methods.
 \end{itemize}
 
-Compared to the pre-integration state, the repository now includes dedicated integration documentation and verification scripts for script-type classification, improving traceability and maintainability of this feature.
+Overall, the implemented system extends existing manual reconstruction workflows by providing automated analysis, searchable metadata, and an interactive reconstruction interface. The improvements verified in this report demonstrate that the system successfully supports the reconstruction workflow described in the V\&V Plan.
 
 \section{Unit Testing}
 
@@ -331,13 +373,26 @@ Testing and model evaluation led to targeted improvements in the ML pipeline. Ea
 \begin{table}[H]
 \centering
 \caption{Changes Driven by V\&V}
-\begin{tabularx}{\textwidth}{p{4.6cm}p{5.2cm}p{3.2cm}}
+\begin{tabularx}{\textwidth}{p{4.6cm}p{4.2cm}p{4.2cm}}
 \toprule
 \textbf{Change} & \textbf{Triggering Test} & \textbf{Impact}\\
 \midrule
-Augmented training data and rebalanced class distributions for script-type and line-count models. & test-nfr-ai-1 (initial low accuracy/F1) & Improved accuracy and F1 across classification and line detection.\\
-Adjusted preprocessing and thresholds for edge and scale detection models. & test-nfr-ai-1 (error analysis on false positives/negatives) & Reduced misclassifications and stabilized confidence scores.\\
-Retrained segmentation model with updated data splits and validation checks. & test-nfr-ai-1 (inconsistent mask quality) & Increased segmentation accuracy and F1 (see Table~\ref{tab:ml-metrics}).\\
+Augmented training data and rebalanced class distributions for script-type and line-count models. & 
+test-nfr-ai-1 (initial low accuracy/F1) & 
+Improved accuracy and F1 across classification and line detection.\\
+
+Adjusted preprocessing and thresholds for edge and scale detection models. & 
+test-nfr-ai-1 (error analysis on false positives/negatives) & 
+Reduced misclassifications and stabilized confidence scores.\\
+
+Retrained segmentation model with updated data splits and validation checks. & 
+test-nfr-ai-1 (inconsistent mask quality) & 
+Increased segmentation accuracy and F1 (see Table~\ref{tab:ml-metrics}).\\
+
+Segmentation robustness improvement &
+test-nfr-ai-1 (performance degradation on fragments with unseen background colours) &
+Expanded training dataset with fragments containing varied background colours and retrained the segmentation model to improve robustness and mask quality.\\
+
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -357,7 +412,7 @@ Automated testing was executed using the scripts referenced in the V\&V Plan. Wh
 
 \begin{table}[H]
 \centering
-\caption{Requirement to Verification Trace Matrix}
+\caption{Functional Requirement to Verification Trace Matrix}
 \begin{tabularx}{\textwidth}{p{1.5cm}p{3.8cm}p{6.2cm}p{2cm}}
 \toprule
 \textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Coverage}\\
@@ -368,6 +423,17 @@ S.4.3 & Save/restore projects; edge matching & VnVPlan tests: test-fr-save-1, te
 S.4.4 & View and edit metadata & VnVPlan tests: test-fr-metadata-1, test-fr-metadata-2. & Pass\\
 S.4.5 & Upload new fragments & VnVPlan tests: test-fr-upload-1, test-fr-upload-2. & Pass\\
 S.4.6 & Run ML pipeline for enrichment & VnVPlan tests: test-fr-ml-1, test-fr-ml-2. & Pass\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Nonfunctional Requirement to Verification Trace Matrix}
+\begin{tabularx}{\textwidth}{p{2.2cm}p{4.6cm}p{5.2cm}p{2cm}}
+\toprule
+\textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Coverage}\\
+\midrule
 NFR-Perf & System performance & VnVPlan tests: test-nfr-perf-1, test-nfr-perf-2. & Pass\\
 NFR-AI & ML pipeline output completeness & VnVPlan test: test-nfr-ai-1. & Pass\\
 NFR-Usability & Usability & VnVPlan tests: test-nfr-usability-1, test-nfr-usability-2. & Pass\\
@@ -379,6 +445,7 @@ NFR-Bench & Performance benchmarking & VnVPlan test: test-nfr-bench-1. & Pass\\
 \bottomrule
 \end{tabularx}
 \end{table}
+
 \FloatBarrier
 
 \section{Trace to Modules}
