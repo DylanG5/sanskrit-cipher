@@ -275,7 +275,7 @@ function CanvasPage() {
     setSaveStatus('saving');
     try {
       const canvasState: CanvasStateData = {
-        fragments: fragmentsToSave.map(f => ({
+        fragments: fragmentsToSave.map((f, index) => ({
           fragmentId: f.fragmentId,
           x: f.x,
           y: f.y,
@@ -285,7 +285,7 @@ function CanvasPage() {
           scaleX: f.scaleX,
           scaleY: f.scaleY,
           isLocked: f.isLocked,
-          zIndex: 0,
+          zIndex: index,
           showSegmented: f.showSegmented,
         })),
       };
@@ -775,6 +775,61 @@ function CanvasPage() {
     dropPositionRef.current = null;
   };
 
+  // Handle double-click from sidebar: place fragment at canvas center
+  const handleSidebarFragmentDoubleClick = (fragment: ManuscriptFragment) => {
+    const img = new Image();
+    const imagePath = fragment.imagePath;
+    img.src = imagePath;
+
+    img.onload = () => {
+      const originalWidth = img.naturalWidth;
+      const originalHeight = img.naturalHeight;
+
+      const { width, height } = calculateDisplaySize(
+        fragment,
+        originalWidth,
+        originalHeight
+      );
+
+      const canvasWidth = 1200;
+      const canvasHeight = 800;
+      const { x, y } = calculateCenteredPosition(
+        canvasWidth,
+        canvasHeight,
+        width,
+        height
+      );
+
+      const newCanvasFragment: CanvasFragment = {
+        id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+        fragmentId: fragment.id,
+        name: fragment.name,
+        imagePath: imagePath,
+        segmentationCoords: fragment.segmentationCoords,
+        x,
+        y,
+        width,
+        height,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        isLocked: false,
+        isSelected: true,
+        showSegmented: true,
+        originalWidth: originalWidth,
+        originalHeight: originalHeight,
+        hasBeenResized: false,
+      };
+
+      setCanvasFragments((prev) => [...prev, newCanvasFragment]);
+      setSelectedFragmentIds([newCanvasFragment.id]);
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load fragment image:', fragment.id);
+    };
+  };
+
   // Clear search and reset to normal mode
   const handleClearSearch = useCallback(() => {
     setIsSearchMode(false);
@@ -806,6 +861,59 @@ function CanvasPage() {
       selectedFragmentIds.includes(f.id) ? { ...f, isLocked: false } : f
     );
     setCanvasFragments(updatedFragments);
+  };
+
+  // Bring selected fragments to top of render stack
+  const handleBringToFront = () => {
+    if (selectedFragmentIds.length === 0) return;
+    const selectedSet = new Set(selectedFragmentIds);
+    const selected = canvasFragments.filter((f) => selectedSet.has(f.id));
+    const rest = canvasFragments.filter((f) => !selectedSet.has(f.id));
+    setCanvasFragments([...rest, ...selected]);
+  };
+
+  // Send selected fragments to bottom of render stack
+  const handleSendToBack = () => {
+    if (selectedFragmentIds.length === 0) return;
+    const selectedSet = new Set(selectedFragmentIds);
+    const selected = canvasFragments.filter((f) => selectedSet.has(f.id));
+    const rest = canvasFragments.filter((f) => !selectedSet.has(f.id));
+    setCanvasFragments([...selected, ...rest]);
+  };
+
+  // Assign a shared group ID so fragments can be selected and moved together
+  const handleGroupSelected = () => {
+    if (selectedFragmentIds.length < 2) return;
+    const selectedSet = new Set(selectedFragmentIds);
+    const newGroupId = `group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setCanvasFragments((prev) =>
+      prev.map((fragment) =>
+        selectedSet.has(fragment.id)
+          ? { ...fragment, groupId: newGroupId }
+          : fragment
+      )
+    );
+  };
+
+  // Ungroup any selected groups
+  const handleUngroupSelected = () => {
+    if (selectedFragmentIds.length === 0) return;
+    const selectedSet = new Set(selectedFragmentIds);
+    const selectedGroupIds = new Set(
+      canvasFragments
+        .filter((fragment) => selectedSet.has(fragment.id) && fragment.groupId)
+        .map((fragment) => fragment.groupId as string)
+    );
+
+    if (selectedGroupIds.size === 0) return;
+
+    setCanvasFragments((prev) =>
+      prev.map((fragment) =>
+        fragment.groupId && selectedGroupIds.has(fragment.groupId)
+          ? { ...fragment, groupId: undefined }
+          : fragment
+      )
+    );
   };
 
   // Toggle segmentation for selected fragment
@@ -1098,12 +1206,23 @@ function CanvasPage() {
     ? fragments.find(f => f.id === selectedFragment.fragmentId)
     : undefined;
 
+  const canUngroupSelected = selectedFragmentIds.some((id) => {
+    const fragment = canvasFragments.find((f) => f.id === id);
+    return Boolean(fragment?.groupId);
+  });
+
   return (
     <div className="flex flex-col h-screen">
       <Toolbar
         selectedCount={selectedFragmentIds.length}
         onLockSelected={handleLockSelected}
         onUnlockSelected={handleUnlockSelected}
+        onBringToFront={handleBringToFront}
+        onSendToBack={handleSendToBack}
+        onGroupSelected={handleGroupSelected}
+        onUngroupSelected={handleUngroupSelected}
+        canGroupSelected={selectedFragmentIds.length >= 2}
+        canUngroupSelected={canUngroupSelected}
         onDeleteSelected={handleDeleteSelected}
         onClearCanvas={handleClearCanvas}
         onSave={handleSave}
@@ -1135,6 +1254,7 @@ function CanvasPage() {
         <Sidebar
           fragments={fragments}
           onDragStart={handleDragStart}
+          onFragmentDoubleClick={handleSidebarFragmentDoubleClick}
           width={sidebarWidth}
           onWidthChange={setSidebarWidth}
           isOpen={isSidebarOpen}

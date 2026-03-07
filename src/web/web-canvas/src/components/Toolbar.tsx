@@ -5,6 +5,12 @@ interface ToolbarProps {
   selectedCount: number;
   onLockSelected: () => void;
   onUnlockSelected: () => void;
+  onBringToFront: () => void;
+  onSendToBack: () => void;
+  onGroupSelected: () => void;
+  onUngroupSelected: () => void;
+  canGroupSelected?: boolean;
+  canUngroupSelected?: boolean;
   onDeleteSelected: () => void;
   onClearCanvas: () => void;
   onSave: () => void;
@@ -27,6 +33,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
   selectedCount,
   onLockSelected,
   onUnlockSelected,
+  onBringToFront,
+  onSendToBack,
+  onGroupSelected,
+  onUngroupSelected,
+  canGroupSelected = false,
+  canUngroupSelected = false,
   onDeleteSelected,
   onClearCanvas,
   onSave,
@@ -218,6 +230,52 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 />
               </svg>
               <span className="text-sm font-bold">Unlock</span>
+            </button>
+
+            <button
+              onClick={onBringToFront}
+              className="px-3.5 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+              style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'; }}
+              title="Bring selected fragments to front"
+            >
+              <span className="text-sm font-bold">Front</span>
+            </button>
+
+            <button
+              onClick={onSendToBack}
+              className="px-3.5 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+              style={{ background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, #64748b 0%, #475569 100%)'; }}
+              title="Send selected fragments to back"
+            >
+              <span className="text-sm font-bold">Back</span>
+            </button>
+
+            <button
+              onClick={onGroupSelected}
+              disabled={!canGroupSelected}
+              className="px-3.5 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-body"
+              style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
+              onMouseEnter={(e) => { if (canGroupSelected) e.currentTarget.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'; }}
+              title="Group selected fragments"
+            >
+              <span className="text-sm font-bold">Group</span>
+            </button>
+
+            <button
+              onClick={onUngroupSelected}
+              disabled={!canUngroupSelected}
+              className="px-3.5 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-body"
+              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+              onMouseEnter={(e) => { if (canUngroupSelected) e.currentTarget.style.background = 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; }}
+              title="Ungroup selected fragments"
+            >
+              <span className="text-sm font-bold">Ungroup</span>
             </button>
 
             {/* Segmentation toggle - only show for single selection with segmentation data */}
