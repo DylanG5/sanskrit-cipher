@@ -9,7 +9,7 @@ import { createSegmentedImage, hasValidSegmentation } from './segmentation-rende
 
 const DB_NAME = 'segmentation-cache';
 const STORE_NAME = 'segmented-images';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Bumped to invalidate stale cache: renderer now uses largest contour
 
 interface CacheEntry {
   fragmentId: string;
