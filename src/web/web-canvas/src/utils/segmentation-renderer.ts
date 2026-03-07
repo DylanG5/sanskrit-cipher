@@ -37,8 +37,11 @@ export async function createSegmentedImage(
           return;
         }
 
-        // Use the first (and typically only) contour
-        const contour = coordsData.contours[0];
+        // Use the largest contour (most points = largest area = main fragment body)
+        // YOLO often produces multiple contours where smaller ones are noise artifacts
+        const contour = coordsData.contours.reduce((largest, current) =>
+          current.length > largest.length ? current : largest
+        );
 
         if (!Array.isArray(contour) || contour.length < 3) {
           reject(new Error('Invalid contour data: must have at least 3 points'));
@@ -98,13 +101,14 @@ export function hasValidSegmentation(segmentationCoordsJson: string | null): boo
 
   try {
     const coordsData: SegmentationCoords = JSON.parse(segmentationCoordsJson);
-    return (
-      coordsData.contours &&
-      Array.isArray(coordsData.contours) &&
-      coordsData.contours.length > 0 &&
-      Array.isArray(coordsData.contours[0]) &&
-      coordsData.contours[0].length >= 3
+    if (!coordsData.contours || !Array.isArray(coordsData.contours) || coordsData.contours.length === 0) {
+      return false;
+    }
+    // Check that at least one contour has enough points
+    const largestContour = coordsData.contours.reduce((largest, current) =>
+      current.length > largest.length ? current : largest
     );
+    return Array.isArray(largestContour) && largestContour.length >= 3;
   } catch {
     return false;
   }
