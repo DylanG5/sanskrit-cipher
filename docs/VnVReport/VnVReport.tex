@@ -472,6 +472,8 @@ NFR-Bench & Performance benchmarking & VnVPlan test: test-nfr-bench-1. & Pass\\
 
 \section{Code Coverage Metrics}
 
+\subsection{ML Pipeline (Python)}
+
 A line-coverage report was generated using \texttt{pytest-cov} (coverage.py) for the
 \texttt{ml\_pipeline} module. The test suite comprises \textbf{167 automated tests}
 covering all core modules and every processor.
@@ -480,8 +482,6 @@ covering all core modules and every processor.
 pytest --cov=src/ml_pipeline --cov-report=term-missing
                               --cov-report=html:src/ml_pipeline/coverage_html
 \end{verbatim}
-
-\subsection*{Summary}
 
 \begin{table}[h]
 \centering
@@ -527,6 +527,55 @@ Key observations:
 
 An interactive HTML coverage report is available at
 \texttt{src/ml\_pipeline/coverage\_html/index.html}.
+
+\subsection{Web Application (TypeScript / React)}
+
+A line-coverage report was generated using \texttt{vitest} with
+\texttt{@vitest/coverage-v8} for the web application front-end code
+(\texttt{src/web/web-canvas}).  The test suite comprises \textbf{124 automated
+tests} covering all utility modules, service layers, and type helpers.
+
+\begin{verbatim}
+cd src/web/web-canvas && npm run test:coverage
+\end{verbatim}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l r r r r}
+\hline
+\textbf{Module} & \textbf{\% Stmts} & \textbf{\% Branch} & \textbf{\% Funcs} & \textbf{\% Lines} \\
+\hline
+\texttt{services/custom-filters.ts}        & 100   & 100   & 100   & 100   \\
+\texttt{services/electron-api.ts}          & 100   & 100   & 100   & 100   \\
+\texttt{services/fragment-service.ts}      & 100   & 79.71 & 100   & 100   \\
+\texttt{types/constants.ts}                & 100   & 100   & 100   & 100   \\
+\texttt{utils/filterFragments.ts}          & 100   & 100   & 100   & 100   \\
+\texttt{utils/fragments.ts}               & 96    & 93.75 & 100   & 100   \\
+\texttt{utils/metadataValidation.ts}       & 100   & 100   & 100   & 100   \\
+\texttt{utils/segmentation-cache.ts}       & 48.91 & 16.66 & 51.85 & 51.21 \\
+\texttt{utils/segmentation-renderer.ts}    & 92.68 & 94.73 & 100   & 92.5  \\
+\hline
+\textbf{TOTAL}                             & \textbf{82.77} & \textbf{87.43} & \textbf{80} & \textbf{84.36} \\
+\hline
+\end{tabular}
+\caption{Line coverage per module (web application)}
+\end{table}
+
+Key observations:
+\begin{itemize}
+  \item \textbf{100\% line coverage} on all three service modules, the type
+        constants, filter utilities, and metadata validators.
+  \item \texttt{segmentation-cache.ts} (51\% lines) relies heavily on IndexedDB
+        transactions; the public API entry points are tested via an in-memory
+        IndexedDB mock, but the internal promise-based transaction callbacks are
+        difficult to exercise fully in jsdom.
+  \item \texttt{segmentation-renderer.ts} (93\% lines) is nearly fully covered;
+        the remaining uncovered lines are image-load error paths that require
+        browser-specific \texttt{Image} behaviour.
+  \item React component and page-level modules are excluded from this
+        unit-coverage report; they are validated through the manual system tests
+        described in Section~\ref{sec:system-tests}.
+\end{itemize}
 
 \FloatBarrier
 \bibliographystyle{plainnat}

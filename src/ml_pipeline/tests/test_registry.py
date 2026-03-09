@@ -21,7 +21,7 @@ def test_registry_register_and_get() -> None:
 
 
 def test_registry_get_missing() -> None:
-    """test-ut-registry-2"""
+    """test-ut-registry-2 (detailed assertion in test_registry_extended)"""
     registry = ProcessorRegistry()
     with pytest.raises(KeyError):
         registry.get("missing")

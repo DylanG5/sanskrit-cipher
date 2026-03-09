@@ -291,7 +291,7 @@ class EdgeExtractor:
 
     def _line_angle_deg(self, seg_pts: np.ndarray) -> float:
         pts_f = seg_pts.astype(np.float32)
-        vx, vy, x0, y0 = cv2.fitLine(pts_f, cv2.DIST_L2, 0, 0.01, 0.01)
+        vx, vy, x0, y0 = cv2.fitLine(pts_f, cv2.DIST_L2, 0, 0.01, 0.01).flatten()
         ang = abs(math.degrees(math.atan2(float(vy), float(vx))))
         if ang > 90:
             ang = 180 - ang
@@ -340,7 +340,7 @@ class EdgeExtractor:
         More stable than endpoint straightness ratio when runs are long/curvy.
         """
         pts_f = pts.astype(np.float32)
-        vx, vy, x0, y0 = cv2.fitLine(pts_f, cv2.DIST_L2, 0, 0.01, 0.01)
+        vx, vy, x0, y0 = cv2.fitLine(pts_f, cv2.DIST_L2, 0, 0.01, 0.01).flatten()
         vx, vy, x0, y0 = float(vx), float(vy), float(x0), float(y0)
 
         # orth distance from point p to line through (x0,y0) direction (vx,vy)
