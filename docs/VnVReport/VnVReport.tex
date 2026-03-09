@@ -644,17 +644,17 @@ graduate attribute of Reflection.
 \begin{enumerate}
   \item What went well while writing this deliverable?
 
-  The team had strong trace artifacts in the repository (verification scripts, configuration files, and integration checklists), which made it possible to connect implemented functionality to explicit V\&V evidence quickly.
+  We had artifacts such as verification scripts, configuration files, and integration checklists, which made it possible to connect implemented functionality to explicit V\&V evidence easily.
 
   \item What pain points did you experience during this deliverable, and how
     did you resolve them?
 
-  The largest pain point was uneven availability of quantitative test-result logs across all requirement areas. We addressed this by separating evidence into three categories: executed checks, artifact-based verification, and planned-but-not-yet-measured tests.
+  The largest pain point was uneven availability of test results across all requirement areas. We addressed this by separating evidence into executed checks, verification based on artifacts, and planned tests.
 
   \item Which parts of this document stemmed from speaking to your client(s) or
   a proxy (e.g. your peers)? Which ones were not, and why?
 
-  Requirement priorities around scholarly usability, reconstruction workflows, and transparency of ML outputs reflect advisor and client priorities. Low-level implementation validation (processor registration, schema fields, config correctness) was driven primarily by engineering artifacts rather than direct client interaction.
+  Requirement priorities around usability, reconstruction workflows, and transparency of ML outputs reflect our advisor's priorities. Implementation validation on a lower level such as processor registration and config correctness do not stem from discussion with our advisor.
 
   \item In what ways was the Verification and Validation (VnV) Plan different
   from the activities that were actually conducted for VnV? If there were
@@ -665,7 +665,7 @@ graduate attribute of Reflection.
   evidence that demonstrates the required quality? (It is expected that most
   teams will have had to deviate from their original VnV Plan.)
 
-  The plan defined broad FR and NFR test suites, including load, reliability, and usability studies. In practice, a larger portion of completed evidence became integration-centric for active ML pipeline features, especially script-type classification. This deviation was caused by time and environment constraints typical of ML-heavy projects (dependency setup, compute requirements, and rapidly evolving feature scope). In future projects, we would schedule explicit milestones for producing standardized quantitative result artifacts (performance logs, usability summaries, and coverage reports) earlier, so final reporting has more uniform empirical depth across all requirement categories.
+  The plan defined broad FR and NFR test suites, including load, reliability, and usability studies. In reality, a larger portion of completed evidence became dependent on integration for active ML features. This was caused by time and environment constraints that usually occur in ML projects due to compute requirements and feature scope. In future projects, we will create milestones for producing result artifacts such as performance logs, usability summaries, and coverage reports earlier, so final reporting has more depth across all requirement categories.
 \end{enumerate}
 
 \end{document}
