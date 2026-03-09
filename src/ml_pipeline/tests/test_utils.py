@@ -52,3 +52,14 @@ def test_setup_logging_creates_log_files(tmp_path: Path) -> None:
 
     assert log_file.exists()
     assert (log_file.parent / "errors.log").exists()
+
+
+def test_setup_logging_with_console_enabled(tmp_path: Path) -> None:
+    """Cover utils.py lines 63-67 – console handler branch."""
+    log_file = tmp_path / "logs" / "pipeline.log"
+    config = {"logging": {"file": str(log_file), "console": True}}
+
+    logger = setup_logging(config)
+    # Should have at least 3 handlers: file, error-file, console
+    assert len(logger.handlers) >= 3
+    logger.info("console test")
