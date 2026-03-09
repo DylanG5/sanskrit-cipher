@@ -2,6 +2,7 @@
 
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{longtable}
 \usepackage{float}
 \usepackage{placeins}
 \usepackage{hyperref}
@@ -412,38 +413,44 @@ Automated testing was executed using the scripts referenced in the V\&V Plan. Wh
 
 \begin{table}[H]
 \centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
 \caption{Functional Requirement to Verification Trace Matrix}
-\begin{tabularx}{\textwidth}{p{1.5cm}p{3.8cm}p{6.2cm}p{2cm}}
+\begin{tabularx}{\textwidth}{p{1.2cm}X X p{0.9cm}}
 \toprule
-\textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Coverage}\\
+\textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Status}\\
 \midrule
-S.4.1 & Start a reconstruction session & VnVPlan tests: test-fr-session-1, test-fr-session-2. & Pass\\
-S.4.2 & Browse, filter, and place fragments & VnVPlan tests: test-fr-filter-1, test-fr-canvas-1. & Pass\\
-S.4.3 & Save/restore projects; edge matching & VnVPlan tests: test-fr-save-1, test-fr-edge-match-1. & Pass\\
-S.4.4 & View and edit metadata & VnVPlan tests: test-fr-metadata-1, test-fr-metadata-2. & Pass\\
-S.4.5 & Upload new fragments & VnVPlan tests: test-fr-upload-1, test-fr-upload-2. & Pass\\
-S.4.6 & Run ML pipeline for enrichment & VnVPlan tests: test-fr-ml-1, test-fr-ml-2. & Pass\\
+S.4.1 & Start a reconstruction session & VnVPlan tests: test-fr-session-1, test-fr-session-2. & Verified\\
+S.4.2 & Browse, filter, and place fragments & VnVPlan tests: test-fr-filter-1, test-fr-canvas-1. & Verified\\
+S.4.3 & Save/restore projects; edge matching & VnVPlan tests: test-fr-save-1, test-fr-edge-match-1. & Verified\\
+S.4.4 & View and edit metadata & VnVPlan tests: test-fr-metadata-1, test-fr-metadata-2. & Verified\\
+S.4.5 & Upload new fragments & VnVPlan tests: test-fr-upload-1, test-fr-upload-2. & Verified\\
+S.4.6 & Run ML pipeline for enrichment & VnVPlan tests: test-fr-ml-1, test-fr-ml-2. & Verified\\
 \bottomrule
 \end{tabularx}
+\setlength{\tabcolsep}{6pt}
 \end{table}
 
 \begin{table}[H]
 \centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
 \caption{Nonfunctional Requirement to Verification Trace Matrix}
-\begin{tabularx}{\textwidth}{p{2.2cm}p{4.6cm}p{5.2cm}p{2cm}}
+\begin{tabularx}{\textwidth}{p{1.8cm}X X p{0.9cm}}
 \toprule
-\textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Coverage}\\
+\textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Status}\\
 \midrule
-NFR-Perf & System performance & VnVPlan tests: test-nfr-perf-1, test-nfr-perf-2. & Pass\\
-NFR-AI & ML pipeline output completeness & VnVPlan test: test-nfr-ai-1. & Pass\\
-NFR-Usability & Usability & VnVPlan tests: test-nfr-usability-1, test-nfr-usability-2. & Pass\\
-NFR-Reliability & Reliability and recoverability & VnVPlan tests: test-nfr-reliability-1, test-nfr-reliability-2. & Pass\\
-NFR-Data/Sec & Data integrity and security & VnVPlan tests: test-nfr-data-1, test-nfr-data-2. & Pass\\
-NFR-Scale & Scalability & VnVPlan test: test-nfr-scale-1. & Pass\\
-NFR-Compat & Cross-platform compatibility & VnVPlan test: test-nfr-compat-1. & Pass\\
-NFR-Bench & Performance benchmarking & VnVPlan test: test-nfr-bench-1. & Pass\\
+NFR-Perf & System performance & VnVPlan tests: test-nfr-perf-1, test-nfr-perf-2. & Verified\\
+NFR-AI & ML pipeline output completeness & VnVPlan test: test-nfr-ai-1. & Verified\\
+NFR-Usability & Usability & VnVPlan tests: test-nfr-usability-1, test-nfr-usability-2. & Verified\\
+NFR-Reliability & Reliability and recoverability & VnVPlan tests: test-nfr-reliability-1, test-nfr-reliability-2. & Verified\\
+NFR-Data/Sec & Data integrity and security & VnVPlan tests: test-nfr-data-1, test-nfr-data-2. & Verified\\
+NFR-Scale & Scalability & VnVPlan test: test-nfr-scale-1. & Verified\\
+NFR-Compat & Cross-platform compatibility & VnVPlan test: test-nfr-compat-1. & Verified\\
+NFR-Bench & Performance benchmarking & VnVPlan test: test-nfr-bench-1. & Verified\\
 \bottomrule
 \end{tabularx}
+\setlength{\tabcolsep}{6pt}
 \end{table}
 
 \FloatBarrier
@@ -452,22 +459,63 @@ NFR-Bench & Performance benchmarking & VnVPlan test: test-nfr-bench-1. & Pass\\
 
 \begin{table}[H]
 \centering
-\caption{Module to Verification Artifact Trace}
-\begin{tabularx}{\textwidth}{p{5.8cm}p{5.5cm}p{2.8cm}}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.0}
+\caption{Module to Verification Artifact Trace (Part 1)}
+\begin{tabularx}{\textwidth}{p{3.3cm}X p{1.1cm}}
 \toprule
 \textbf{Module} & \textbf{Verification Evidence} & \textbf{Status}\\
 \midrule
-\path{src/web/web-canvas/src/pages/CanvasPage.tsx} & Session creation, canvas workspace, save/load, and edge-match UI flows verified via FR tests. & Verified\\
-\path{src/web/web-canvas/src/components/FilterPanel.tsx}, \path{src/web/web-canvas/src/components/Sidebar.tsx}, \path{src/web/web-canvas/src/services/fragment-service.ts} & Browse/search/filter workflows verified via FR and performance tests. & Verified\\
-\path{src/web/web-canvas/src/components/UploadDialog.tsx} and \path{src/web/web-canvas/src/services/electron-api.ts} & Upload workflow verified via FR tests. & Verified\\
-\path{src/web/web-canvas/src/components/FragmentMetadata.tsx} & Metadata view/edit verified via FR tests. & Verified\\
-\path{src/ml_pipeline/cli.py}, \path{src/ml_pipeline/core/orchestrator.py}, \path{src/ml_pipeline/processors/*} & Pipeline execution verified via FR ML tests and NFR AI completeness tests. & Verified\\
-\path{src/reconstruction/validate.py} & Edge match validation executed as part of FR edge-match testing. & Verified\\
-\path{src/ml_pipeline/tests/*} & Unit tests executed and passed. & Verified\\
-\path{scripts/vnv/*} & Performance and scalability tests executed and passed. & Verified\\
+HW.ImageStorage & Upload and persistence flow validated via FR upload tests and save/load workflows (e.g., electron-api service path). & Verified\\
+UI.Canvas & Canvas interaction, placement, and reconstruction workspace behavior verified via test-fr-canvas-1 and session tests. & Verified\\
+UI.Search & Search/filter/browse behavior verified via test-fr-filter-1 and associated UI workflows. & Verified\\
+UI.Upload & Upload workflow verified via test-fr-upload-1 and test-fr-upload-2. & Verified\\
+UI.SaveSession & Session save behavior verified via test-fr-save-1 and restart/recovery checks. & Verified\\
+UI.LoadSession & Session restore behavior verified via test-fr-session-2 and test-fr-save-1 reload checks. & Verified\\
+Svc.API & End-to-end UI workflows (search, upload, metadata edit, pipeline trigger) validated through FR/NFR execution. & Verified\\
+Svc.Search & Query/filter service behavior verified through FR search/filter tests and benchmark scripts. & Verified\\
+Svc.Session & Project/session lifecycle behavior (create, save, restore) verified through FR session/save tests and reliability tests. & Verified\\
+Svc.ProcOrch & Pipeline orchestration validated through test-fr-ml-1/test-fr-ml-2 and ML completeness testing. & Verified\\
+Svc.MatchOrch & Matching orchestration and edge-match pipeline validated through test-fr-edge-match-1 and reconstruction validation script. & Verified\\
+Data.FragmentStore & Fragment metadata create/update/read behavior verified via FR metadata tests and DB unit tests. & Verified\\
+Data.Catalog & External link/catalog metadata persistence covered through metadata and search workflows. & Verified\\
+Data.Project & Project/session persistence and reload behavior verified via session and reliability tests. & Verified\\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.0}
+\caption{Module to Verification Artifact Trace (Part 2)}
+\begin{tabularx}{\textwidth}{p{3.3cm}X p{1.1cm}}
+\toprule
+\textbf{Module} & \textbf{Verification Evidence} & \textbf{Status}\\
+\midrule
+ML.EdgeMatch & Edge matching model path validated through edge-match FR testing and reconstruction validation script. & Verified\\
+ML.ScriptClass & Script classification output validated via ML metrics (Table~\ref{tab:ml-metrics}). & Verified\\
+ML.Segmentation & Segmentation output validated via ML metrics (Table~\ref{tab:ml-metrics}). & Verified\\
+ML.CircleRecognition & Circle detection output validated via ML metrics and visual outputs. & Verified\\
+ML.LineCount & Line detection output validated via ML metrics and visual outputs. & Verified\\
+ML.EdgeClassification & Edge detection/classification outputs validated via ML metrics and model visual review. & Verified\\
+Util.Config & Configuration-driven pipeline and application behavior exercised in automated tests and integration runs. & Verified\\
+Util.Error & Error handling paths exercised by unit tests across DB/service utility layers. & Verified\\
+Util.Logging & Logging behavior exercised during scripted benchmark and pipeline runs. & Verified\\
+Util.TestStub & Test doubles/mocks exercised by automated pytest/vitest suites. & Verified\\
+UI.Auth & Explicitly out of scope in V\&V Plan for this cycle. Authentication workflows were not part of the accepted FR/NFR test set. & Out of Scope\\
+Svc.AuthZ & Explicitly out of scope in V\&V Plan for this cycle. Authorization behavior was excluded from verification activities. & Out of Scope\\
+Data.User & Explicitly out of scope in V\&V Plan for this cycle because user accounts were excluded from the verification activities. & Out of Scope\\
+ML.TextSim & OCR/text-assistance-related scope was excluded in the V\&V. & Out of Scope\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\normalsize
 \FloatBarrier
 
 \section{Code Coverage Metrics}
@@ -480,11 +528,12 @@ covering all core modules and every processor.
 
 \begin{verbatim}
 pytest --cov=src/ml_pipeline --cov-report=term-missing
-                              --cov-report=html:src/ml_pipeline/coverage_html
+                              --cov-report=html:coverage_html
 \end{verbatim}
 
 \begin{table}[h]
 \centering
+\scriptsize
 \begin{tabular}{l r r r}
 \hline
 \textbf{Module} & \textbf{Stmts} & \textbf{Miss} & \textbf{Cover} \\
@@ -526,7 +575,7 @@ Key observations:
 \end{itemize}
 
 An interactive HTML coverage report is available at
-\texttt{src/ml\_pipeline/coverage\_html/index.html}.
+\path{src/ml_pipeline/coverage_html/index.html}.
 
 \subsection{Web Application (TypeScript / React)}
 
@@ -541,6 +590,7 @@ cd src/web/web-canvas && npm run test:coverage
 
 \begin{table}[h]
 \centering
+\scriptsize
 \begin{tabular}{l r r r r}
 \hline
 \textbf{Module} & \textbf{\% Stmts} & \textbf{\% Branch} & \textbf{\% Funcs} & \textbf{\% Lines} \\
@@ -574,7 +624,7 @@ Key observations:
         browser-specific \texttt{Image} behaviour.
   \item React component and page-level modules are excluded from this
         unit-coverage report; they are validated through the manual system tests
-        described in Section~\ref{sec:system-tests}.
+        described in the Functional Requirements Evaluation section.
 \end{itemize}
 
 \FloatBarrier
