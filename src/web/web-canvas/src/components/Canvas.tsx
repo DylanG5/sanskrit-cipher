@@ -1,8 +1,14 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Stage, Layer, Image as KonvaImage, Transformer, Line } from 'react-konva';
-import { CanvasFragment } from '../types/fragment';
-import { useFragmentImage } from '../hooks/useFragmentImage';
-import Konva from 'konva';
+import React, { useRef, useState, useEffect } from "react";
+import {
+  Stage,
+  Layer,
+  Image as KonvaImage,
+  Transformer,
+  Line,
+} from "react-konva";
+import { CanvasFragment } from "../types/fragment";
+import { useFragmentImage } from "../hooks/useFragmentImage";
+import Konva from "konva";
 
 interface CanvasProps {
   fragments: CanvasFragment[];
@@ -53,7 +59,7 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
   // Log errors
   useEffect(() => {
     if (error) {
-      console.error('Error loading fragment image:', error);
+      console.error("Error loading fragment image:", error);
     }
   }, [error]);
 
@@ -126,7 +132,7 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
           if (onTransformEnd) onTransformEnd();
         }}
         opacity={fragment.isLocked ? 0.7 : 1}
-        shadowColor={isSelected ? 'blue' : undefined}
+        shadowColor={isSelected ? "blue" : undefined}
         shadowBlur={isSelected ? 10 : 0}
         shadowOpacity={isSelected ? 0.5 : 0}
       />
@@ -144,16 +150,39 @@ const Canvas: React.FC<CanvasProps> = ({
   isGridVisible = false,
   gridScale = 25,
 }) => {
-  console.log('Canvas rendering with fragments:', fragments.length);
+  console.log("Canvas rendering with fragments:", fragments.length);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const layerRef = useRef<Konva.Layer>(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
-  const [edgeMatchButtonPosition, setEdgeMatchButtonPosition] = useState<{ x: number; y: number; fragmentId: string } | null>(null);
+  const [edgeMatchButtonPosition, setEdgeMatchButtonPosition] = useState<{
+    x: number;
+    y: number;
+    fragmentId: string;
+  } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isTransformingRef = useRef(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const splashTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-dismiss splash after 4 seconds
+  useEffect(() => {
+    if (fragments.length === 0 && showSplash) {
+      splashTimerRef.current = setTimeout(() => setShowSplash(false), 4000);
+    }
+    return () => {
+      if (splashTimerRef.current) clearTimeout(splashTimerRef.current);
+    };
+  }, [fragments.length, showSplash]);
+
+  // Reset splash when canvas is cleared
+  useEffect(() => {
+    if (fragments.length === 0) {
+      setShowSplash(true);
+    }
+  }, [fragments.length]);
   const dragContextRef = useRef<{
     anchorId: string;
     anchorStart: { x: number; y: number };
@@ -169,17 +198,17 @@ const Canvas: React.FC<CanvasProps> = ({
           width: container.clientWidth,
           height: container.clientHeight,
         };
-        console.log('Stage size updated:', newSize);
+        console.log("Stage size updated:", newSize);
         setStageSize(newSize);
       }
     };
 
     // Use setTimeout to ensure DOM is ready
     const timer = setTimeout(updateSize, 0);
-    window.addEventListener('resize', updateSize);
+    window.addEventListener("resize", updateSize);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', updateSize);
+      window.removeEventListener("resize", updateSize);
     };
   }, []);
 
@@ -204,7 +233,9 @@ const Canvas: React.FC<CanvasProps> = ({
   // Update edge match button position when a single fragment is selected
   useEffect(() => {
     if (selectedFragmentIds.length === 1) {
-      const selectedFragment = fragments.find((f) => f.id === selectedFragmentIds[0]);
+      const selectedFragment = fragments.find(
+        (f) => f.id === selectedFragmentIds[0],
+      );
       if (selectedFragment) {
         // Position button at the top-right corner of the fragment
         setEdgeMatchButtonPosition({
@@ -218,9 +249,12 @@ const Canvas: React.FC<CanvasProps> = ({
     }
   }, [selectedFragmentIds, fragments]);
 
-  const handleFragmentChange = (id: string, newAttrs: Partial<CanvasFragment>) => {
+  const handleFragmentChange = (
+    id: string,
+    newAttrs: Partial<CanvasFragment>,
+  ) => {
     const updatedFragments = fragments.map((f) =>
-      f.id === id ? { ...f, ...newAttrs } : f
+      f.id === id ? { ...f, ...newAttrs } : f,
     );
     onFragmentsChange(updatedFragments);
   };
@@ -229,22 +263,33 @@ const Canvas: React.FC<CanvasProps> = ({
     const target = fragments.find((f) => f.id === id);
     if (!target) return [id];
     if (!target.groupId) return [id];
-    return fragments.filter((f) => f.groupId === target.groupId).map((f) => f.id);
+    return fragments
+      .filter((f) => f.groupId === target.groupId)
+      .map((f) => f.id);
   };
 
-  const handleSelect = (id: string, e?: React.MouseEvent | React.TouchEvent) => {
+  const handleSelect = (
+    id: string,
+    e?: React.MouseEvent | React.TouchEvent,
+  ) => {
     // Allow selecting locked fragments so they can be unlocked
-    const metaPressed = e && ('ctrlKey' in e ? e.ctrlKey || e.metaKey : false);
-    const shiftPressed = e && ('shiftKey' in e ? e.shiftKey : false);
+    const metaPressed = e && ("ctrlKey" in e ? e.ctrlKey || e.metaKey : false);
+    const shiftPressed = e && ("shiftKey" in e ? e.shiftKey : false);
     const idsToSelect = getSelectionUnit(id);
 
     if (metaPressed || shiftPressed) {
       // Multi-select
-      const allSelected = idsToSelect.every((fid) => selectedFragmentIds.includes(fid));
+      const allSelected = idsToSelect.every((fid) =>
+        selectedFragmentIds.includes(fid),
+      );
       if (allSelected) {
-        onSelectionChange(selectedFragmentIds.filter((fid) => !idsToSelect.includes(fid)));
+        onSelectionChange(
+          selectedFragmentIds.filter((fid) => !idsToSelect.includes(fid)),
+        );
       } else {
-        onSelectionChange(Array.from(new Set([...selectedFragmentIds, ...idsToSelect])));
+        onSelectionChange(
+          Array.from(new Set([...selectedFragmentIds, ...idsToSelect])),
+        );
       }
     } else {
       // Single select
@@ -253,7 +298,9 @@ const Canvas: React.FC<CanvasProps> = ({
   };
 
   const handleFragmentDragStart = (id: string) => {
-    const dragIds = selectedFragmentIds.includes(id) ? selectedFragmentIds : [id];
+    const dragIds = selectedFragmentIds.includes(id)
+      ? selectedFragmentIds
+      : [id];
     if (dragIds.length <= 1) {
       dragContextRef.current = null;
       return;
@@ -285,7 +332,10 @@ const Canvas: React.FC<CanvasProps> = ({
     };
   };
 
-  const handleFragmentDragMove = (id: string, e: Konva.KonvaEventObject<DragEvent>) => {
+  const handleFragmentDragMove = (
+    id: string,
+    e: Konva.KonvaEventObject<DragEvent>,
+  ) => {
     const dragCtx = dragContextRef.current;
     if (!dragCtx || dragCtx.anchorId !== id) return;
 
@@ -335,7 +385,7 @@ const Canvas: React.FC<CanvasProps> = ({
           strokeWidth={x % (gridScale * 5) === 0 ? 1.5 : 0.5}
           opacity={x % (gridScale * 5) === 0 ? 0.4 : 0.25}
           listening={false}
-        />
+        />,
       );
     }
 
@@ -349,18 +399,30 @@ const Canvas: React.FC<CanvasProps> = ({
           strokeWidth={y % (gridScale * 5) === 0 ? 1.5 : 0.5}
           opacity={y % (gridScale * 5) === 0 ? 0.4 : 0.25}
           listening={false}
-        />
+        />,
       );
     }
 
     return lines;
   };
 
-  console.log('Rendering stage with size:', stageSize);
-  console.log('Fragments to render:', fragments.map(f => ({ id: f.id, x: f.x, y: f.y, width: f.width, height: f.height })));
+  console.log("Rendering stage with size:", stageSize);
+  console.log(
+    "Fragments to render:",
+    fragments.map((f) => ({
+      id: f.id,
+      x: f.x,
+      y: f.y,
+      width: f.width,
+      height: f.height,
+    })),
+  );
 
   return (
-    <div ref={containerRef} className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 relative overflow-hidden">
+    <div
+      ref={containerRef}
+      className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 relative overflow-hidden"
+    >
       <Stage
         ref={stageRef}
         width={stageSize.width}
@@ -369,9 +431,7 @@ const Canvas: React.FC<CanvasProps> = ({
         onTap={handleStageClick}
       >
         {/* Grid Layer */}
-        <Layer listening={false}>
-          {generateGridLines()}
-        </Layer>
+        <Layer listening={false}>{generateGridLines()}</Layer>
 
         {/* Fragments Layer */}
         <Layer ref={layerRef}>
@@ -381,7 +441,9 @@ const Canvas: React.FC<CanvasProps> = ({
               fragment={fragment}
               isSelected={selectedFragmentIds.includes(fragment.id)}
               onSelect={(e) => handleSelect(fragment.id, e)}
-              onChange={(newAttrs) => handleFragmentChange(fragment.id, newAttrs)}
+              onChange={(newAttrs) =>
+                handleFragmentChange(fragment.id, newAttrs)
+              }
               onDoubleClick={() => {
                 if (onFragmentDoubleClick) {
                   onFragmentDoubleClick(fragment.fragmentId);
@@ -437,7 +499,7 @@ const Canvas: React.FC<CanvasProps> = ({
           style={{
             left: `${edgeMatchButtonPosition.x}px`,
             top: `${edgeMatchButtonPosition.y}px`,
-            transition: 'background-color 0.2s, transform 0.2s',
+            transition: "background-color 0.2s, transform 0.2s",
           }}
         >
           <svg
@@ -461,11 +523,23 @@ const Canvas: React.FC<CanvasProps> = ({
       {isGridVisible && (
         <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border-2 border-blue-400 p-3 z-20 max-w-sm">
           <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            <svg
+              className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+              />
             </svg>
             <div className="flex-1">
-              <div className="text-xs font-bold text-slate-800 mb-2">Grid Scale Reference</div>
+              <div className="text-xs font-bold text-slate-800 mb-2">
+                Grid Scale Reference
+              </div>
 
               {/* Small square explanation */}
               <div className="flex items-center gap-2 mb-2">
@@ -474,8 +548,13 @@ const Canvas: React.FC<CanvasProps> = ({
                   style={{ width: `${gridScale}px`, height: `${gridScale}px` }}
                 />
                 <div className="text-xs">
-                  <div className="font-semibold text-blue-600">Small square (thin lines)</div>
-                  <div className="text-slate-600">{gridScale}px = <span className="font-bold">1 cm × 1 cm</span></div>
+                  <div className="font-semibold text-blue-600">
+                    Small square (thin lines)
+                  </div>
+                  <div className="text-slate-600">
+                    {gridScale}px ={" "}
+                    <span className="font-bold">1 cm × 1 cm</span>
+                  </div>
                 </div>
               </div>
 
@@ -490,20 +569,25 @@ const Canvas: React.FC<CanvasProps> = ({
                     <div
                       key={`v${i}`}
                       className="absolute top-0 bottom-0 border-l border-slate-300"
-                      style={{ left: `${((i + 1) * 20)}%` }}
+                      style={{ left: `${(i + 1) * 20}%` }}
                     />
                   ))}
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={`h${i}`}
                       className="absolute left-0 right-0 border-t border-slate-300"
-                      style={{ top: `${((i + 1) * 20)}%` }}
+                      style={{ top: `${(i + 1) * 20}%` }}
                     />
                   ))}
                 </div>
                 <div className="text-xs">
-                  <div className="font-semibold text-slate-700">Large square (bold lines)</div>
-                  <div className="text-slate-600">{gridScale * 5}px = <span className="font-bold">5 cm × 5 cm</span></div>
+                  <div className="font-semibold text-slate-700">
+                    Large square (bold lines)
+                  </div>
+                  <div className="text-slate-600">
+                    {gridScale * 5}px ={" "}
+                    <span className="font-bold">5 cm × 5 cm</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -512,46 +596,111 @@ const Canvas: React.FC<CanvasProps> = ({
       )}
 
       {/* Instructions overlay */}
-      {fragments.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-2xl border border-slate-200 text-center max-w-lg">
+      {fragments.length === 0 && showSplash && (
+        <div
+          className="absolute inset-0 flex items-center justify-center cursor-pointer"
+          onClick={() => setShowSplash(false)}
+        >
+          <div className="bg-white/95 backdrop-blur-sm p-10 rounded-2xl shadow-2xl border border-slate-200 text-center max-w-lg pointer-events-none">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-5 shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+              <svg
+                className="w-8 h-8 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
+                />
               </svg>
             </div>
             <h3 className="text-2xl font-semibold text-slate-800 mb-3">
               Welcome to Fragment Canvas
             </h3>
             <p className="text-slate-600 mb-6 text-base">
-              Drag and drop fragments from the sidebar to begin reconstructing manuscripts
+              Drag and drop fragments from the sidebar to begin reconstructing
+              manuscripts
             </p>
             <div className="space-y-2 text-sm text-slate-500">
               <div className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                <svg
+                  className="w-4 h-4 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+                  />
                 </svg>
-                <span className="font-medium">Click to select • Shift/Ctrl+Click for multiple</span>
+                <span className="font-medium">
+                  Click to select • Shift/Ctrl+Click for multiple
+                </span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                <svg
+                  className="w-4 h-4 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                  />
                 </svg>
-                <span className="font-medium">Drag to move • Use corner handles to resize</span>
+                <span className="font-medium">
+                  Drag to move • Use corner handles to resize
+                </span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className="w-4 h-4 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
-                <span className="font-medium">Drag near corners to rotate fragments</span>
+                <span className="font-medium">
+                  Drag near corners to rotate fragments
+                </span>
               </div>
               <div className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <svg
+                  className="w-4 h-4 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
                 </svg>
-                <span className="font-medium">Use Lock button to prevent accidental changes</span>
+                <span className="font-medium">
+                  Use Lock button to prevent accidental changes
+                </span>
               </div>
             </div>
+            <p className="text-xs text-slate-400 mt-6">
+              Click anywhere to dismiss
+            </p>
           </div>
         </div>
       )}

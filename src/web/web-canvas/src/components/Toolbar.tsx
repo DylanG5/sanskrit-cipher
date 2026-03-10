@@ -76,7 +76,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           />
         </svg>
         <h1 className="text-lg font-bold text-white font-body">
-          Fragment Reconstruction
+          Sanskrit Fragment Reconstruction Studio
         </h1>
         {projectName && (
           <>
