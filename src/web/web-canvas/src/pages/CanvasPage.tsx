@@ -1412,7 +1412,6 @@ function CanvasPage() {
         <Sidebar
           fragments={fragments}
           onDragStart={handleDragStart}
-          onFragmentDoubleClick={handleSidebarFragmentDoubleClick}
           width={sidebarWidth}
           onWidthChange={setSidebarWidth}
           isOpen={isSidebarOpen}
