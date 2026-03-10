@@ -179,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     const newWidth = e.clientX;
-    if (newWidth >= 220 && newWidth <= 500) {
+    if (newWidth >= 220 && newWidth <= window.innerWidth * 0.85) {
       onWidthChange(newWidth);
     }
   }, [onWidthChange]);
