@@ -10,6 +10,10 @@ import { CanvasFragment } from "../types/fragment";
 import { useFragmentImage } from "../hooks/useFragmentImage";
 import Konva from "konva";
 
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 5;
+const KEYBOARD_ZOOM_FACTOR = 1.2;
+
 interface CanvasProps {
   fragments: CanvasFragment[];
   onFragmentsChange: (fragments: CanvasFragment[]) => void;
@@ -169,6 +173,8 @@ const Canvas: React.FC<CanvasProps> = ({
   const splashTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showGridReference, setShowGridReference] = useState(false);
   const gridReferenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [stageScale, setStageScale] = useState(1);
+  const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 });
 
   // Auto-dismiss splash after 4 seconds
   useEffect(() => {
@@ -262,17 +268,20 @@ const Canvas: React.FC<CanvasProps> = ({
         (f) => f.id === selectedFragmentIds[0],
       );
       if (selectedFragment) {
-        // Position button at the top-right corner of the fragment
+        // Position button at the top-right corner of the fragment (screen coords)
         setEdgeMatchButtonPosition({
-          x: selectedFragment.x + selectedFragment.width + 10,
-          y: selectedFragment.y,
+          x:
+            (selectedFragment.x + selectedFragment.width) * stageScale +
+            stagePosition.x +
+            10,
+          y: selectedFragment.y * stageScale + stagePosition.y,
           fragmentId: selectedFragment.fragmentId,
         });
       }
     } else {
       setEdgeMatchButtonPosition(null);
     }
-  }, [selectedFragmentIds, fragments]);
+  }, [selectedFragmentIds, fragments, stageScale, stagePosition]);
 
   const handleFragmentChange = (
     id: string,
@@ -391,7 +400,101 @@ const Canvas: React.FC<CanvasProps> = ({
     }
   };
 
-  // Generate grid lines
+  // Zoom toward the center of the viewport
+  const zoomToCenter = (newScale: number) => {
+    const clampedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, newScale));
+    const center = { x: stageSize.width / 2, y: stageSize.height / 2 };
+    const pointTo = {
+      x: (center.x - stagePosition.x) / stageScale,
+      y: (center.y - stagePosition.y) / stageScale,
+    };
+    setStageScale(clampedScale);
+    setStagePosition({
+      x: center.x - pointTo.x * clampedScale,
+      y: center.y - pointTo.y * clampedScale,
+    });
+  };
+
+  // Handle wheel for zoom (pinch) and pan (scroll)
+  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    if (e.evt.ctrlKey || e.evt.metaKey) {
+      // Zoom (trackpad pinch or Ctrl/Cmd+scroll)
+      const oldScale = stageScale;
+      const newScale = Math.min(
+        MAX_SCALE,
+        Math.max(MIN_SCALE, oldScale * Math.exp(-e.evt.deltaY * 0.01)),
+      );
+
+      const mousePointTo = {
+        x: (pointer.x - stagePosition.x) / oldScale,
+        y: (pointer.y - stagePosition.y) / oldScale,
+      };
+
+      setStageScale(newScale);
+      setStagePosition({
+        x: pointer.x - mousePointTo.x * newScale,
+        y: pointer.y - mousePointTo.y * newScale,
+      });
+    } else {
+      // Pan (regular two-finger scroll)
+      setStagePosition((prev) => ({
+        x: prev.x - e.evt.deltaX,
+        y: prev.y - e.evt.deltaY,
+      }));
+    }
+  };
+
+  // Keyboard zoom: Cmd/Ctrl + Plus/Minus/Zero
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+
+      let scaleFactor: number | null = null;
+
+      if (e.key === "=" || e.key === "+") {
+        e.preventDefault();
+        scaleFactor = KEYBOARD_ZOOM_FACTOR;
+      } else if (e.key === "-" || e.key === "_") {
+        e.preventDefault();
+        scaleFactor = 1 / KEYBOARD_ZOOM_FACTOR;
+      } else if (e.key === "0") {
+        e.preventDefault();
+        setStageScale(1);
+        setStagePosition({ x: 0, y: 0 });
+        return;
+      }
+
+      if (scaleFactor === null) return;
+
+      const newScale = Math.min(
+        MAX_SCALE,
+        Math.max(MIN_SCALE, stageScale * scaleFactor),
+      );
+      const center = { x: stageSize.width / 2, y: stageSize.height / 2 };
+      const pointTo = {
+        x: (center.x - stagePosition.x) / stageScale,
+        y: (center.y - stagePosition.y) / stageScale,
+      };
+
+      setStageScale(newScale);
+      setStagePosition({
+        x: center.x - pointTo.x * newScale,
+        y: center.y - pointTo.y * newScale,
+      });
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [stageScale, stagePosition, stageSize]);
+
+  // Generate grid lines covering the visible area at the current zoom level
   const generateGridLines = () => {
     const lines: JSX.Element[] = [];
     const { width, height } = stageSize;
@@ -400,29 +503,42 @@ const Canvas: React.FC<CanvasProps> = ({
       return lines;
     }
 
+    // Calculate visible area in stage coordinates
+    const visibleX = -stagePosition.x / stageScale;
+    const visibleY = -stagePosition.y / stageScale;
+    const visibleWidth = width / stageScale;
+    const visibleHeight = height / stageScale;
+
+    const startX = Math.floor(visibleX / gridScale) * gridScale;
+    const endX = visibleX + visibleWidth + gridScale;
+    const startY = Math.floor(visibleY / gridScale) * gridScale;
+    const endY = visibleY + visibleHeight + gridScale;
+
     // Vertical lines
-    for (let x = 0; x <= width; x += gridScale) {
+    for (let x = startX; x <= endX; x += gridScale) {
+      const gridIndex = Math.round(x / gridScale);
       lines.push(
         <Line
           key={`v-${x}`}
-          points={[x, 0, x, height]}
+          points={[x, startY, x, endY]}
           stroke="#cbd5e1"
-          strokeWidth={x % (gridScale * 5) === 0 ? 1.5 : 0.5}
-          opacity={x % (gridScale * 5) === 0 ? 0.4 : 0.25}
+          strokeWidth={gridIndex % 5 === 0 ? 1.5 : 0.5}
+          opacity={gridIndex % 5 === 0 ? 0.4 : 0.25}
           listening={false}
         />,
       );
     }
 
     // Horizontal lines
-    for (let y = 0; y <= height; y += gridScale) {
+    for (let y = startY; y <= endY; y += gridScale) {
+      const gridIndex = Math.round(y / gridScale);
       lines.push(
         <Line
           key={`h-${y}`}
-          points={[0, y, width, y]}
+          points={[startX, y, endX, y]}
           stroke="#cbd5e1"
-          strokeWidth={y % (gridScale * 5) === 0 ? 1.5 : 0.5}
-          opacity={y % (gridScale * 5) === 0 ? 0.4 : 0.25}
+          strokeWidth={gridIndex % 5 === 0 ? 1.5 : 0.5}
+          opacity={gridIndex % 5 === 0 ? 0.4 : 0.25}
           listening={false}
         />,
       );
@@ -452,8 +568,13 @@ const Canvas: React.FC<CanvasProps> = ({
         ref={stageRef}
         width={stageSize.width}
         height={stageSize.height}
+        scaleX={stageScale}
+        scaleY={stageScale}
+        x={stagePosition.x}
+        y={stagePosition.y}
         onClick={handleStageClick}
         onTap={handleStageClick}
+        onWheel={handleWheel}
       >
         {/* Grid Layer */}
         <Layer listening={false}>{generateGridLines()}</Layer>
@@ -729,6 +850,34 @@ const Canvas: React.FC<CanvasProps> = ({
           </div>
         </div>
       )}
+
+      {/* Zoom Controls */}
+      <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-slate-200 flex items-center gap-1 px-2 py-1.5 z-20 select-none">
+        <button
+          onClick={() => zoomToCenter(stageScale / KEYBOARD_ZOOM_FACTOR)}
+          className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600 font-bold text-lg"
+          title="Zoom out (Ctrl/Cmd + −)"
+        >
+          −
+        </button>
+        <button
+          onClick={() => {
+            setStageScale(1);
+            setStagePosition({ x: 0, y: 0 });
+          }}
+          className="px-2 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-xs font-medium text-slate-700 min-w-[3rem] tabular-nums"
+          title="Reset zoom (Ctrl/Cmd + 0)"
+        >
+          {Math.round(stageScale * 100)}%
+        </button>
+        <button
+          onClick={() => zoomToCenter(stageScale * KEYBOARD_ZOOM_FACTOR)}
+          className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600 font-bold text-lg"
+          title="Zoom in (Ctrl/Cmd + +)"
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 };
