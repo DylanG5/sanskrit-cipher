@@ -8,6 +8,7 @@ import VirtualizedFragmentList from './VirtualizedFragmentList';
 interface SidebarProps {
   fragments: ManuscriptFragment[];
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
+  onFragmentDoubleClick?: (fragment: ManuscriptFragment) => void;
   width: number;
   onWidthChange: (width: number) => void;
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   fragments,
   onDragStart,
+  onFragmentDoubleClick,
   width,
   onWidthChange,
   isOpen,
@@ -61,13 +63,33 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [scrollPosition, setScrollPosition] = useState(0);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleFragmentClick = (fragment: ManuscriptFragment, e: React.MouseEvent) => {
     // Don't show metadata if we're starting a drag
     if ((e.target as HTMLElement).tagName === 'IMG') return;
 
     e.stopPropagation();
-    setSelectedFragment(fragment);
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+
+    // Delay single-click action slightly so a double-click can cancel it
+    if (e.detail > 1) return;
+    clickTimeoutRef.current = setTimeout(() => {
+      setSelectedFragment(fragment);
+      clickTimeoutRef.current = null;
+    }, 220);
+  };
+
+  const handleFragmentDoubleClick = (fragment: ManuscriptFragment, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+    onFragmentDoubleClick?.(fragment);
   };
 
   const handleCloseMetadata = () => {
@@ -138,6 +160,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     };
   }, [localSearchQuery, onSidebarSearch]);
+
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -460,6 +490,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             fragments={fragments}
             onDragStart={onDragStart}
             onFragmentClick={handleFragmentClick}
+            onFragmentDoubleClick={handleFragmentDoubleClick}
             containerHeight={containerHeight}
             onLoadMore={onLoadMore}
             hasMore={hasMore}

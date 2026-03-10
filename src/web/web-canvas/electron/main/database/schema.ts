@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS fragments (
     scale_model_version TEXT,              -- Version of scale detection model used
 
     -- User-editable metadata
+    transcription TEXT,
     notes TEXT,
     
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

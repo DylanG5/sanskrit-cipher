@@ -8,7 +8,7 @@ export interface FragmentFilters {
   hasLeftEdge?: boolean | null; // null = don't care
   hasRightEdge?: boolean | null; // null = don't care
   hasCircle?: boolean | null; // null = don't care
-  search?: string; // Fragment ID search query
+  search?: string; // Keyword search (ID, transcription, notes)
   custom?: Record<string, string | string[] | null | undefined>; // Support both single values and arrays
   edgeMatchMode?: boolean;       // When true, sidebar shows edge match results
   edgeMatchAnchorId?: string;    // Fragment ID that edge matches are relative to
