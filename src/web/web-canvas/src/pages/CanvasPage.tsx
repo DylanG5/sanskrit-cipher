@@ -5,15 +5,35 @@ import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
 import FilterPanel from "../components/FilterPanel";
 import FragmentMetadata from "../components/FragmentMetadata";
+import BulkMetadataEditor from "../components/BulkMetadataEditor";
 import UploadDialog from "../components/UploadDialog";
 import { CanvasFragment, ManuscriptFragment } from "../types/fragment";
 import { FragmentFilters, DEFAULT_FILTERS } from "../types/filters";
-import { getAllFragments, getFragmentCount, enrichWithSegmentationStatus, getFragmentById } from "../services/fragment-service";
-import { isElectron, getElectronAPISafe, CanvasFragmentData, CanvasStateData, EdgeMatchRecord } from "../services/electron-api";
-import { sortBySearchRelevance, calculateCenteredPosition } from "../utils/fragments";
+import {
+  getAllFragments,
+  getFragmentCount,
+  enrichWithSegmentationStatus,
+  getFragmentById,
+} from "../services/fragment-service";
+import {
+  isElectron,
+  getElectronAPISafe,
+  CanvasFragmentData,
+  CanvasStateData,
+  EdgeMatchRecord,
+} from "../services/electron-api";
+import {
+  sortBySearchRelevance,
+  calculateCenteredPosition,
+} from "../utils/fragments";
 import { SCRIPT_TYPES, getScriptTypeDB } from "../types/constants";
 import { CustomFilterDefinition } from "../types/customFilters";
-import { getCustomFilters, createCustomFilter, deleteCustomFilter, updateCustomFilterOptions } from "../services/custom-filters";
+import {
+  getCustomFilters,
+  createCustomFilter,
+  deleteCustomFilter,
+  updateCustomFilterOptions,
+} from "../services/custom-filters";
 
 // Default page size for pagination
 const PAGE_SIZE = 100;
@@ -32,9 +52,12 @@ function CanvasPage() {
 
   const [canvasFragments, setCanvasFragments] = useState<CanvasFragment[]>([]);
   const [selectedFragmentIds, setSelectedFragmentIds] = useState<string[]>([]);
-  const [selectedMetadataFragment, setSelectedMetadataFragment] = useState<ManuscriptFragment | null>(null);
+  const [selectedMetadataFragment, setSelectedMetadataFragment] =
+    useState<ManuscriptFragment | null>(null);
   const [filters, setFilters] = useState<FragmentFilters>(DEFAULT_FILTERS);
-  const [customFilters, setCustomFilters] = useState<CustomFilterDefinition[]>([]);
+  const [customFilters, setCustomFilters] = useState<CustomFilterDefinition[]>(
+    [],
+  );
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -43,29 +66,43 @@ function CanvasPage() {
   const [gridScale, setGridScale] = useState(25); // pixels per cm
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const draggedSelectionRef = useRef<ManuscriptFragment[] | null>(null);
 
   // Edge match state
   const [edgeMatchMode, setEdgeMatchMode] = useState(false);
-  const [edgeMatchAnchorId, setEdgeMatchAnchorId] = useState<string | null>(null);
+  const [edgeMatchAnchorId, setEdgeMatchAnchorId] = useState<string | null>(
+    null,
+  );
   const [edgeMatches, setEdgeMatches] = useState<EdgeMatchRecord[]>([]);
 
   // Search state
-  const [initialSearchQuery, setInitialSearchQuery] = useState<string | null>(null);
-  const [selectedFragmentId, setSelectedFragmentId] = useState<string | null>(null);
+  const [initialSearchQuery, setInitialSearchQuery] = useState<string | null>(
+    null,
+  );
+  const [selectedFragmentId, setSelectedFragmentId] = useState<string | null>(
+    null,
+  );
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [hasAutoPlaced, setHasAutoPlaced] = useState(false);
-  const [sidebarSearchQuery, setSidebarSearchQuery] = useState<string>('');
+  const [sidebarSearchQuery, setSidebarSearchQuery] = useState<string>("");
 
   // Project state
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
-  const [currentProjectName, setCurrentProjectName] = useState<string>('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [currentProjectName, setCurrentProjectName] = useState<string>("");
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">(
+    "saved",
+  );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRestoringRef = useRef(false);
 
   // Upload dialog state
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
+  // Bulk metadata editor state — holds fragment IDs to edit, or null when closed
+  const [bulkEditFragmentIds, setBulkEditFragmentIds] = useState<
+    string[] | null
+  >(null);
 
   // Load fragments from database (initial load)
   const loadFragments = useCallback(async () => {
@@ -107,7 +144,9 @@ function CanvasPage() {
       }
       if (filters.scripts.length > 0) {
         // Convert display values to database values
-        apiFilters.scripts = filters.scripts.map(s => getScriptTypeDB(s) || s);
+        apiFilters.scripts = filters.scripts.map(
+          (s) => getScriptTypeDB(s) || s,
+        );
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
@@ -129,18 +168,17 @@ function CanvasPage() {
       }
       if (filters.search) {
         apiFilters.search = filters.search;
-        console.log('Loading fragments with search filter:', filters.search);
+        console.log("Loading fragments with search filter:", filters.search);
       }
       if (filters.custom) {
-        const custom = Object.entries(filters.custom).reduce<Record<string, string | null | undefined>>(
-          (acc, [key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-              acc[key] = value;
-            }
-            return acc;
-          },
-          {}
-        );
+        const custom = Object.entries(filters.custom).reduce<
+          Record<string, string | null | undefined>
+        >((acc, [key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            acc[key] = value;
+          }
+          return acc;
+        }, {});
         if (Object.keys(custom).length > 0) {
           apiFilters.custom = custom;
         }
@@ -153,7 +191,8 @@ function CanvasPage() {
       ]);
 
       // Enrich fragments with segmentation status
-      const enrichedFragments = await enrichWithSegmentationStatus(fragmentsResult);
+      const enrichedFragments =
+        await enrichWithSegmentationStatus(fragmentsResult);
 
       setFragments(enrichedFragments);
       setTotalCount(countResult);
@@ -202,7 +241,9 @@ function CanvasPage() {
       }
       if (filters.scripts.length > 0) {
         // Convert display values to database values
-        apiFilters.scripts = filters.scripts.map(s => getScriptTypeDB(s) || s);
+        apiFilters.scripts = filters.scripts.map(
+          (s) => getScriptTypeDB(s) || s,
+        );
       }
       if (filters.isEdgePiece !== null) {
         apiFilters.isEdgePiece = filters.isEdgePiece;
@@ -226,15 +267,14 @@ function CanvasPage() {
         apiFilters.search = filters.search;
       }
       if (filters.custom) {
-        const custom = Object.entries(filters.custom).reduce<Record<string, string | null | undefined>>(
-          (acc, [key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-              acc[key] = value;
-            }
-            return acc;
-          },
-          {}
-        );
+        const custom = Object.entries(filters.custom).reduce<
+          Record<string, string | null | undefined>
+        >((acc, [key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            acc[key] = value;
+          }
+          return acc;
+        }, {});
         if (Object.keys(custom).length > 0) {
           apiFilters.custom = custom;
         }
@@ -252,7 +292,14 @@ function CanvasPage() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, fragments.length, totalCount, currentOffset, filters, customFilters]);
+  }, [
+    isLoadingMore,
+    fragments.length,
+    totalCount,
+    currentOffset,
+    filters,
+    customFilters,
+  ]);
 
   // Refs to track current values for auto-save without re-creating callback
   const canvasFragmentsRef = useRef(canvasFragments);
@@ -268,48 +315,51 @@ function CanvasPage() {
   }, [currentProjectId]);
 
   // Auto-save function
-  const saveProject = useCallback(async (projectId: number, fragmentsToSave: CanvasFragment[]) => {
-    const api = getElectronAPISafe();
-    if (!api) return;
+  const saveProject = useCallback(
+    async (projectId: number, fragmentsToSave: CanvasFragment[]) => {
+      const api = getElectronAPISafe();
+      if (!api) return;
 
-    setSaveStatus('saving');
-    try {
-      const canvasState: CanvasStateData = {
-        fragments: fragmentsToSave.map((f, index) => ({
-          fragmentId: f.fragmentId,
-          x: f.x,
-          y: f.y,
-          width: f.width,
-          height: f.height,
-          rotation: f.rotation,
-          scaleX: f.scaleX,
-          scaleY: f.scaleY,
-          isLocked: f.isLocked,
-          zIndex: index,
-          showSegmented: f.showSegmented,
-        })),
-      };
+      setSaveStatus("saving");
+      try {
+        const canvasState: CanvasStateData = {
+          fragments: fragmentsToSave.map((f, index) => ({
+            fragmentId: f.fragmentId,
+            x: f.x,
+            y: f.y,
+            width: f.width,
+            height: f.height,
+            rotation: f.rotation,
+            scaleX: f.scaleX,
+            scaleY: f.scaleY,
+            isLocked: f.isLocked,
+            zIndex: index,
+            showSegmented: f.showSegmented,
+          })),
+        };
 
-      const response = await api.projects.save(projectId, canvasState, '');
-      if (response.success) {
-        setSaveStatus('saved');
-        setHasUnsavedChanges(false);
-      } else {
-        console.error('Failed to save project:', response.error);
-        setSaveStatus('unsaved');
+        const response = await api.projects.save(projectId, canvasState, "");
+        if (response.success) {
+          setSaveStatus("saved");
+          setHasUnsavedChanges(false);
+        } else {
+          console.error("Failed to save project:", response.error);
+          setSaveStatus("unsaved");
+        }
+      } catch (error) {
+        console.error("Failed to save project:", error);
+        setSaveStatus("unsaved");
       }
-    } catch (error) {
-      console.error('Failed to save project:', error);
-      setSaveStatus('unsaved');
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Debounced auto-save - uses refs to avoid recreating on every state change
   const triggerAutoSave = useCallback(async () => {
     if (isRestoringRef.current) return;
 
     setHasUnsavedChanges(true);
-    setSaveStatus('unsaved');
+    setSaveStatus("unsaved");
 
     // Clear existing timeout
     if (autoSaveTimeoutRef.current) {
@@ -329,7 +379,7 @@ function CanvasPage() {
           const timestamp = new Date().toLocaleString();
           const response = await api.projects.create(
             `Untitled - ${timestamp}`,
-            'Manuscript reconstruction'
+            "Manuscript reconstruction",
           );
 
           if (response.success && response.projectId) {
@@ -339,7 +389,7 @@ function CanvasPage() {
             currentProjectIdRef.current = projectId;
           }
         } catch (error) {
-          console.error('Failed to auto-create project:', error);
+          console.error("Failed to auto-create project:", error);
           return;
         }
       }
@@ -361,7 +411,7 @@ function CanvasPage() {
       const timestamp = new Date().toLocaleString();
       const response = await api.projects.create(
         `Untitled - ${timestamp}`,
-        'Manuscript reconstruction'
+        "Manuscript reconstruction",
       );
 
       if (response.success && response.projectId) {
@@ -370,96 +420,100 @@ function CanvasPage() {
         return response.projectId;
       }
     } catch (error) {
-      console.error('Failed to create project:', error);
+      console.error("Failed to create project:", error);
     }
     return null;
   }, [currentProjectId]);
 
   // Restore project from loaded data
-  const restoreProject = useCallback(async (loadedProject: {
-    project: { id: number; project_name: string };
-    canvasState: { fragments: CanvasFragmentData[] };
-    notes: string;
-  }) => {
-    isRestoringRef.current = true;
+  const restoreProject = useCallback(
+    async (loadedProject: {
+      project: { id: number; project_name: string };
+      canvasState: { fragments: CanvasFragmentData[] };
+      notes: string;
+    }) => {
+      isRestoringRef.current = true;
 
-    setCurrentProjectId(loadedProject.project.id);
-    setCurrentProjectName(loadedProject.project.project_name);
+      setCurrentProjectId(loadedProject.project.id);
+      setCurrentProjectName(loadedProject.project.project_name);
 
-    // Restore canvas fragments - need to load image paths
-    const api = getElectronAPISafe();
-    if (!api || !loadedProject.canvasState.fragments.length) {
-      isRestoringRef.current = false;
-      return;
-    }
-
-    const restoredFragments: CanvasFragment[] = [];
-
-    for (const frag of loadedProject.canvasState.fragments) {
-      try {
-        // Get fragment details from database
-        const fragmentResponse = await api.fragments.getById(frag.fragmentId);
-        if (fragmentResponse.success && fragmentResponse.data) {
-          const record = fragmentResponse.data;
-
-          // Determine showSegmented value - default to true if not specified
-          const showSegmented = frag.showSegmented !== undefined ? frag.showSegmented : true;
-
-          // Always use original image path - segmentation is handled on-demand by the hook
-          const imagePath = `electron-image://${record.image_path}`;
-
-          restoredFragments.push({
-            id: `canvas-fragment-${Date.now()}-${Math.random()}`,
-            fragmentId: frag.fragmentId,
-            name: record.fragment_id,
-            imagePath: imagePath,
-            segmentationCoords: record.segmentation_coords ?? undefined,
-            x: frag.x,
-            y: frag.y,
-            width: frag.width || 200,
-            height: frag.height || 200,
-            rotation: frag.rotation,
-            scaleX: frag.scaleX,
-            scaleY: frag.scaleY,
-            isLocked: frag.isLocked,
-            isSelected: false,
-            showSegmented: showSegmented,
-            originalWidth: undefined, // Will be loaded when image loads
-            originalHeight: undefined,
-            hasBeenResized: false, // Reset on restore
-          });
-        }
-      } catch (error) {
-        console.error('Failed to restore fragment:', frag.fragmentId, error);
+      // Restore canvas fragments - need to load image paths
+      const api = getElectronAPISafe();
+      if (!api || !loadedProject.canvasState.fragments.length) {
+        isRestoringRef.current = false;
+        return;
       }
-    }
 
-    setCanvasFragments(restoredFragments);
-    setSaveStatus('saved');
-    setHasUnsavedChanges(false);
+      const restoredFragments: CanvasFragment[] = [];
 
-    // Load original image dimensions for restored fragments
-    // This is needed for the "Set Scale from Resize" feature to work
-    for (const frag of restoredFragments) {
-      const img = new Image();
-      img.src = frag.imagePath;
-      img.onload = () => {
-        const originalWidth = img.naturalWidth;
-        const originalHeight = img.naturalHeight;
+      for (const frag of loadedProject.canvasState.fragments) {
+        try {
+          // Get fragment details from database
+          const fragmentResponse = await api.fragments.getById(frag.fragmentId);
+          if (fragmentResponse.success && fragmentResponse.data) {
+            const record = fragmentResponse.data;
 
-        setCanvasFragments(prev => prev.map(f =>
-          f.id === frag.id
-            ? { ...f, originalWidth, originalHeight }
-            : f
-        ));
-      };
-    }
+            // Determine showSegmented value - default to true if not specified
+            const showSegmented =
+              frag.showSegmented !== undefined ? frag.showSegmented : true;
 
-    // Small delay before allowing auto-save
-    setTimeout(() => {
-      isRestoringRef.current = false;
-    }, 500);
-  }, []);
+            // Always use original image path - segmentation is handled on-demand by the hook
+            const imagePath = `electron-image://${record.image_path}`;
+
+            restoredFragments.push({
+              id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+              fragmentId: frag.fragmentId,
+              name: record.fragment_id,
+              imagePath: imagePath,
+              segmentationCoords: record.segmentation_coords ?? undefined,
+              x: frag.x,
+              y: frag.y,
+              width: frag.width || 200,
+              height: frag.height || 200,
+              rotation: frag.rotation,
+              scaleX: frag.scaleX,
+              scaleY: frag.scaleY,
+              isLocked: frag.isLocked,
+              isSelected: false,
+              showSegmented: showSegmented,
+              originalWidth: undefined, // Will be loaded when image loads
+              originalHeight: undefined,
+              hasBeenResized: false, // Reset on restore
+            });
+          }
+        } catch (error) {
+          console.error("Failed to restore fragment:", frag.fragmentId, error);
+        }
+      }
+
+      setCanvasFragments(restoredFragments);
+      setSaveStatus("saved");
+      setHasUnsavedChanges(false);
+
+      // Load original image dimensions for restored fragments
+      // This is needed for the "Set Scale from Resize" feature to work
+      for (const frag of restoredFragments) {
+        const img = new Image();
+        img.src = frag.imagePath;
+        img.onload = () => {
+          const originalWidth = img.naturalWidth;
+          const originalHeight = img.naturalHeight;
+
+          setCanvasFragments((prev) =>
+            prev.map((f) =>
+              f.id === frag.id ? { ...f, originalWidth, originalHeight } : f,
+            ),
+          );
+        };
+      }
+
+      // Small delay before allowing auto-save
+      setTimeout(() => {
+        isRestoringRef.current = false;
+      }, 500);
+    },
+    [],
+  );
 
   // Initialize project from location state
   useEffect(() => {
@@ -471,7 +525,11 @@ function CanvasPage() {
     } else if (projectIdFromLocation && !loadedProjectFromLocation) {
       setCurrentProjectId(projectIdFromLocation);
     }
-  }, [location.state?.projectId, location.state?.loadedProject, restoreProject]);
+  }, [
+    location.state?.projectId,
+    location.state?.loadedProject,
+    restoreProject,
+  ]);
 
   // Trigger auto-save when canvas fragments change
   useEffect(() => {
@@ -495,16 +553,16 @@ function CanvasPage() {
     const searchQueryFromLocation = location.state?.searchQuery;
     const selectedFragmentIdFromLocation = location.state?.selectedFragmentId;
 
-    console.log('Location state received:', {
+    console.log("Location state received:", {
       searchQuery: searchQueryFromLocation,
-      selectedFragmentId: selectedFragmentIdFromLocation
+      selectedFragmentId: selectedFragmentIdFromLocation,
     });
 
     // Always apply the search filter to ensure the selected fragment is loaded
     if (searchQueryFromLocation) {
       setInitialSearchQuery(searchQueryFromLocation);
       setIsSearchMode(true);
-      setFilters(prev => ({ ...prev, search: searchQueryFromLocation }));
+      setFilters((prev) => ({ ...prev, search: searchQueryFromLocation }));
     }
 
     if (selectedFragmentIdFromLocation) {
@@ -532,11 +590,19 @@ function CanvasPage() {
   // Handle drag start from sidebar
   const handleDragStart = (
     fragment: ManuscriptFragment,
-    e: React.DragEvent
+    e: React.DragEvent,
   ) => {
     draggedFragmentRef.current = fragment;
     e.dataTransfer.effectAllowed = "copy";
   };
+
+  // When sidebar drag starts with a selection, store all selected fragments
+  const handleDragStartSelected = useCallback(
+    (selectedFragments: ManuscriptFragment[]) => {
+      draggedSelectionRef.current = selectedFragments;
+    },
+    [],
+  );
 
   // Handle drag over canvas
   const handleDragOver = (e: React.DragEvent) => {
@@ -552,290 +618,335 @@ function CanvasPage() {
 
   // Handle drop on canvas
   // Helper function to calculate display size based on scale data
-  const calculateDisplaySize = (
-    fragment: ManuscriptFragment,
-    originalWidth: number,
-    originalHeight: number
-  ): { width: number; height: number } => {
-    // If no scale data, use default sizing (max 300px)
-    if (!fragment.metadata?.scale) {
-      const maxSize = 300;
-      let width = originalWidth;
-      let height = originalHeight;
+  const calculateDisplaySize = useCallback(
+    (
+      fragment: ManuscriptFragment,
+      originalWidth: number,
+      originalHeight: number,
+    ): { width: number; height: number } => {
+      // If no scale data, use default sizing (max 300px)
+      if (!fragment.metadata?.scale) {
+        const maxSize = 300;
+        let width = originalWidth;
+        let height = originalHeight;
 
-      if (width > height) {
-        if (width > maxSize) {
-          height = (height * maxSize) / width;
-          width = maxSize;
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
         }
-      } else {
-        if (height > maxSize) {
-          width = (width * maxSize) / height;
-          height = maxSize;
-        }
+
+        return { width, height };
       }
 
-      return { width, height };
-    }
+      // Use scale data to calculate "actual size" based on grid scale
+      const { unit, pixelsPerUnit } = fragment.metadata.scale;
+      const MM_TO_CM = 0.1;
 
-    // Use scale data to calculate "actual size" based on grid scale
-    const { unit, pixelsPerUnit } = fragment.metadata.scale;
-    const MM_TO_CM = 0.1;
+      // Calculate physical size in cm
+      let widthInCm: number;
+      let heightInCm: number;
 
-    // Calculate physical size in cm
-    let widthInCm: number;
-    let heightInCm: number;
+      if (unit === "mm") {
+        // Convert from mm to cm
+        widthInCm = (originalWidth / pixelsPerUnit) * MM_TO_CM;
+        heightInCm = (originalHeight / pixelsPerUnit) * MM_TO_CM;
+      } else {
+        // Already in cm
+        widthInCm = originalWidth / pixelsPerUnit;
+        heightInCm = originalHeight / pixelsPerUnit;
+      }
 
-    if (unit === 'mm') {
-      // Convert from mm to cm
-      widthInCm = (originalWidth / pixelsPerUnit) * MM_TO_CM;
-      heightInCm = (originalHeight / pixelsPerUnit) * MM_TO_CM;
-    } else {
-      // Already in cm
-      widthInCm = originalWidth / pixelsPerUnit;
-      heightInCm = originalHeight / pixelsPerUnit;
-    }
+      // Convert physical size to screen pixels using grid scale
+      // gridScale is pixels per cm (default 25)
+      const displayWidth = widthInCm * gridScale;
+      const displayHeight = heightInCm * gridScale;
 
-    // Convert physical size to screen pixels using grid scale
-    // gridScale is pixels per cm (default 25)
-    const displayWidth = widthInCm * gridScale;
-    const displayHeight = heightInCm * gridScale;
+      // Apply reasonable limits (min 50px, max 2000px)
+      const clampedWidth = Math.max(
+        50,
+        Math.min(2000, Math.round(displayWidth)),
+      );
+      const clampedHeight = Math.max(
+        50,
+        Math.min(2000, Math.round(displayHeight)),
+      );
 
-    // Apply reasonable limits (min 50px, max 2000px)
-    const clampedWidth = Math.max(50, Math.min(2000, Math.round(displayWidth)));
-    const clampedHeight = Math.max(50, Math.min(2000, Math.round(displayHeight)));
-
-    return {
-      width: clampedWidth,
-      height: clampedHeight,
-    };
-  };
+      return {
+        width: clampedWidth,
+        height: clampedHeight,
+      };
+    },
+    [gridScale],
+  );
 
   // Auto-place fragment in center of canvas (for search results)
-  const autoPlaceFragment = useCallback(async (fragment: ManuscriptFragment) => {
-    const img = new Image();
-    // Always use original image path - segmentation handled on-demand
-    const imagePath = fragment.imagePath;
-    img.src = imagePath;
+  const autoPlaceFragment = useCallback(
+    async (fragment: ManuscriptFragment) => {
+      const img = new Image();
+      // Always use original image path - segmentation handled on-demand
+      const imagePath = fragment.imagePath;
+      img.src = imagePath;
 
-    img.onload = () => {
-      const originalWidth = img.naturalWidth;
-      const originalHeight = img.naturalHeight;
+      img.onload = () => {
+        const originalWidth = img.naturalWidth;
+        const originalHeight = img.naturalHeight;
 
-      // Calculate display size (auto-scaled if scale data available)
-      const { width, height } = calculateDisplaySize(
-        fragment,
-        originalWidth,
-        originalHeight
-      );
+        // Calculate display size (auto-scaled if scale data available)
+        const { width, height } = calculateDisplaySize(
+          fragment,
+          originalWidth,
+          originalHeight,
+        );
 
-      // Center on canvas (approximate canvas dimensions)
-      const canvasWidth = 1200;
-      const canvasHeight = 800;
-      const { x, y } = calculateCenteredPosition(
-        canvasWidth,
-        canvasHeight,
-        width,
-        height
-      );
+        // Center on canvas (approximate canvas dimensions)
+        const canvasWidth = 1200;
+        const canvasHeight = 800;
+        const { x, y } = calculateCenteredPosition(
+          canvasWidth,
+          canvasHeight,
+          width,
+          height,
+        );
 
-      const newCanvasFragment: CanvasFragment = {
-        id: `canvas-fragment-${Date.now()}-${Math.random()}`,
-        fragmentId: fragment.id,
-        name: fragment.name,
-        imagePath: imagePath,
-        segmentationCoords: fragment.segmentationCoords,
-        x,
-        y,
-        width,
-        height,
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        isLocked: false,
-        isSelected: true, // Select the auto-placed fragment
-        showSegmented: true, // Default to showing segmented version
-        originalWidth: originalWidth,
-        originalHeight: originalHeight,
-        hasBeenResized: false,
+        const newCanvasFragment: CanvasFragment = {
+          id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+          fragmentId: fragment.id,
+          name: fragment.name,
+          imagePath: imagePath,
+          segmentationCoords: fragment.segmentationCoords,
+          x,
+          y,
+          width,
+          height,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          isLocked: false,
+          isSelected: true, // Select the auto-placed fragment
+          showSegmented: true, // Default to showing segmented version
+          originalWidth: originalWidth,
+          originalHeight: originalHeight,
+          hasBeenResized: false,
+        };
+
+        setCanvasFragments([newCanvasFragment]);
+        setSelectedFragmentIds([newCanvasFragment.id]);
+        setHasAutoPlaced(true);
       };
 
-      setCanvasFragments([newCanvasFragment]);
-      setSelectedFragmentIds([newCanvasFragment.id]);
-      setHasAutoPlaced(true);
-    };
-
-    img.onerror = () => {
-      console.error('Failed to load fragment image:', fragment.id);
-      setHasAutoPlaced(true); // Mark as attempted even on error
-    };
-  }, []);
+      img.onerror = () => {
+        console.error("Failed to load fragment image:", fragment.id);
+        setHasAutoPlaced(true); // Mark as attempted even on error
+      };
+    },
+    [],
+  );
 
   // Auto-place first matching fragment when search results load
   useEffect(() => {
     if (isSearchMode && fragments.length > 0 && !hasAutoPlaced) {
       let fragmentToPlace: ManuscriptFragment | null = null;
 
-      console.log('Auto-placement triggered:', {
+      console.log("Auto-placement triggered:", {
         selectedFragmentId,
         initialSearchQuery,
         fragmentCount: fragments.length,
-        fragmentIds: fragments.slice(0, 10).map(f => f.id)
+        fragmentIds: fragments.slice(0, 10).map((f) => f.id),
       });
 
       // If user selected a specific fragment from autocomplete, use that
       if (selectedFragmentId) {
-        fragmentToPlace = fragments.find(f => f.id === selectedFragmentId) || null;
-        console.log('Looking for selected fragment:', selectedFragmentId);
-        console.log('Found fragment:', fragmentToPlace?.id);
+        fragmentToPlace =
+          fragments.find((f) => f.id === selectedFragmentId) || null;
+        console.log("Looking for selected fragment:", selectedFragmentId);
+        console.log("Found fragment:", fragmentToPlace?.id);
 
         if (!fragmentToPlace) {
           // Check if it's a partial match issue
-          const partialMatch = fragments.find(f =>
-            f.id.includes(selectedFragmentId) || selectedFragmentId.includes(f.id)
+          const partialMatch = fragments.find(
+            (f) =>
+              f.id.includes(selectedFragmentId) ||
+              selectedFragmentId.includes(f.id),
           );
-          console.log('Partial match found:', partialMatch?.id);
+          console.log("Partial match found:", partialMatch?.id);
 
           // Also check the exact IDs in the array
-          const hasExactMatch = fragments.some(f => f.id === selectedFragmentId);
-          console.log('Has exact match in array:', hasExactMatch);
-          console.log('Fragment IDs containing search term:',
-            fragments.filter(f => f.id.toLowerCase().includes('or11878')).map(f => f.id)
+          const hasExactMatch = fragments.some(
+            (f) => f.id === selectedFragmentId,
+          );
+          console.log("Has exact match in array:", hasExactMatch);
+          console.log(
+            "Fragment IDs containing search term:",
+            fragments
+              .filter((f) => f.id.toLowerCase().includes("or11878"))
+              .map((f) => f.id),
           );
         }
       }
 
       // Otherwise, use the first result sorted by relevance
       if (!fragmentToPlace && initialSearchQuery) {
-        const sortedFragments = sortBySearchRelevance(fragments, initialSearchQuery);
+        const sortedFragments = sortBySearchRelevance(
+          fragments,
+          initialSearchQuery,
+        );
         fragmentToPlace = sortedFragments[0] || null;
-        console.log('Using first sorted fragment:', fragmentToPlace?.id);
+        console.log("Using first sorted fragment:", fragmentToPlace?.id);
       }
 
       if (fragmentToPlace) {
-        console.log('Auto-placing fragment:', fragmentToPlace.id, 'imagePath:', fragmentToPlace.imagePath);
+        console.log(
+          "Auto-placing fragment:",
+          fragmentToPlace.id,
+          "imagePath:",
+          fragmentToPlace.imagePath,
+        );
         autoPlaceFragment(fragmentToPlace);
       } else {
-        console.log('No fragment to place');
+        console.log("No fragment to place");
       }
     }
-  }, [isSearchMode, fragments, hasAutoPlaced, initialSearchQuery, selectedFragmentId, autoPlaceFragment]);
+  }, [
+    isSearchMode,
+    fragments,
+    hasAutoPlaced,
+    initialSearchQuery,
+    selectedFragmentId,
+    autoPlaceFragment,
+  ]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
     const fragment = draggedFragmentRef.current;
     const position = dropPositionRef.current;
+    const selectedFragments = draggedSelectionRef.current;
 
     if (!fragment || !position) {
       return;
     }
 
-    // Load the image to get its natural dimensions
-    const img = new Image();
-    // Always use original image path - segmentation handled on-demand
-    const imagePath = fragment.imagePath;
-    img.src = imagePath;
-    img.onload = () => {
-      const originalWidth = img.naturalWidth;
-      const originalHeight = img.naturalHeight;
+    // If we have a multi-selection, drop all selected fragments with staggered offsets
+    const fragmentsToDrop =
+      selectedFragments && selectedFragments.length > 1
+        ? selectedFragments
+        : [fragment];
 
-      // Calculate display size (auto-scaled if scale data available)
-      const { width, height } = calculateDisplaySize(
-        fragment,
-        originalWidth,
-        originalHeight
-      );
+    const OFFSET = 50;
+    let loadedCount = 0;
+    const newFragments: CanvasFragment[] = [];
 
-      const newCanvasFragment: CanvasFragment = {
-        id: `canvas-fragment-${Date.now()}-${Math.random()}`,
-        fragmentId: fragment.id,
-        name: fragment.name,
-        imagePath: imagePath,
-        segmentationCoords: fragment.segmentationCoords,
-        x: position.x - width / 2,
-        y: position.y - height / 2,
-        width: width,
-        height: height,
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        isLocked: false,
-        isSelected: false,
-        showSegmented: true, // Default to showing segmented version
-        originalWidth: originalWidth,
-        originalHeight: originalHeight,
-        hasBeenResized: false,
+    fragmentsToDrop.forEach((frag, idx) => {
+      const img = new Image();
+      img.src = frag.imagePath;
+      img.onload = () => {
+        const { width, height } = calculateDisplaySize(
+          frag,
+          img.naturalWidth,
+          img.naturalHeight,
+        );
+
+        const newCanvasFragment: CanvasFragment = {
+          id: `canvas-fragment-${Date.now()}-${idx}-${Math.random()}`,
+          fragmentId: frag.id,
+          name: frag.name,
+          imagePath: frag.imagePath,
+          segmentationCoords: frag.segmentationCoords,
+          x: position.x - width / 2 + idx * OFFSET,
+          y: position.y - height / 2 + idx * OFFSET,
+          width,
+          height,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          isLocked: false,
+          isSelected: false,
+          showSegmented: true,
+          originalWidth: img.naturalWidth,
+          originalHeight: img.naturalHeight,
+          hasBeenResized: false,
+        };
+
+        newFragments.push(newCanvasFragment);
+        loadedCount++;
+        if (loadedCount === fragmentsToDrop.length) {
+          setCanvasFragments((prev) => [...prev, ...newFragments]);
+        }
       };
-
-      setCanvasFragments([...canvasFragments, newCanvasFragment]);
-    };
+    });
 
     draggedFragmentRef.current = null;
     dropPositionRef.current = null;
+    draggedSelectionRef.current = null;
   };
 
-  // Handle double-click from sidebar: place fragment at canvas center
-  const handleSidebarFragmentDoubleClick = (fragment: ManuscriptFragment) => {
-    const img = new Image();
-    const imagePath = fragment.imagePath;
-    img.src = imagePath;
+  // Handle bulk add to canvas from sidebar multiselect
+  const handleBulkAddToCanvas = useCallback(
+    (selectedFragments: ManuscriptFragment[]) => {
+      const OFFSET = 50; // px offset between staggered fragments
+      let loadedCount = 0;
+      const newFragments: CanvasFragment[] = [];
 
-    img.onload = () => {
-      const originalWidth = img.naturalWidth;
-      const originalHeight = img.naturalHeight;
+      selectedFragments.forEach((fragment, idx) => {
+        const img = new Image();
+        img.src = fragment.imagePath;
+        img.onload = () => {
+          const { width, height } = calculateDisplaySize(
+            fragment,
+            img.naturalWidth,
+            img.naturalHeight,
+          );
+          const newFrag: CanvasFragment = {
+            id: `canvas-fragment-${Date.now()}-${idx}-${Math.random()}`,
+            fragmentId: fragment.id,
+            name: fragment.name,
+            imagePath: fragment.imagePath,
+            segmentationCoords: fragment.segmentationCoords,
+            x: 100 + idx * OFFSET,
+            y: 100 + idx * OFFSET,
+            width,
+            height,
+            rotation: 0,
+            scaleX: 1,
+            scaleY: 1,
+            isLocked: false,
+            isSelected: false,
+            showSegmented: true,
+            originalWidth: img.naturalWidth,
+            originalHeight: img.naturalHeight,
+            hasBeenResized: false,
+          };
+          newFragments.push(newFrag);
+          loadedCount++;
+          if (loadedCount === selectedFragments.length) {
+            setCanvasFragments((prev) => [...prev, ...newFragments]);
+          }
+        };
+      });
+    },
+    [calculateDisplaySize, gridScale],
+  );
 
-      const { width, height } = calculateDisplaySize(
-        fragment,
-        originalWidth,
-        originalHeight
-      );
-
-      const canvasWidth = 1200;
-      const canvasHeight = 800;
-      const { x, y } = calculateCenteredPosition(
-        canvasWidth,
-        canvasHeight,
-        width,
-        height
-      );
-
-      const newCanvasFragment: CanvasFragment = {
-        id: `canvas-fragment-${Date.now()}-${Math.random()}`,
-        fragmentId: fragment.id,
-        name: fragment.name,
-        imagePath: imagePath,
-        segmentationCoords: fragment.segmentationCoords,
-        x,
-        y,
-        width,
-        height,
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        isLocked: false,
-        isSelected: true,
-        showSegmented: true,
-        originalWidth: originalWidth,
-        originalHeight: originalHeight,
-        hasBeenResized: false,
-      };
-
-      setCanvasFragments((prev) => [...prev, newCanvasFragment]);
-      setSelectedFragmentIds([newCanvasFragment.id]);
-    };
-
-    img.onerror = () => {
-      console.error('Failed to load fragment image:', fragment.id);
-    };
-  };
+  // Handle bulk edit metadata from sidebar multiselect
+  const handleBulkEditSidebarMetadata = useCallback((fragmentIds: string[]) => {
+    if (fragmentIds.length >= 2) {
+      setBulkEditFragmentIds(fragmentIds);
+    }
+  }, []);
 
   // Clear search and reset to normal mode
   const handleClearSearch = useCallback(() => {
     setIsSearchMode(false);
     setInitialSearchQuery(null);
     setSelectedFragmentId(null);
-    setFilters(prev => ({ ...prev, search: undefined }));
+    setFilters((prev) => ({ ...prev, search: undefined }));
     setHasAutoPlaced(false);
   }, []);
 
@@ -843,14 +954,14 @@ function CanvasPage() {
   const handleSidebarSearch = useCallback((query: string) => {
     setSidebarSearchQuery(query);
     // Update filters to trigger database search
-    setFilters(prev => ({ ...prev, search: query || undefined }));
+    setFilters((prev) => ({ ...prev, search: query || undefined }));
     setCurrentOffset(0); // Reset pagination
   }, []);
 
   // Lock selected fragments
   const handleLockSelected = () => {
     const updatedFragments = canvasFragments.map((f) =>
-      selectedFragmentIds.includes(f.id) ? { ...f, isLocked: true } : f
+      selectedFragmentIds.includes(f.id) ? { ...f, isLocked: true } : f,
     );
     setCanvasFragments(updatedFragments);
   };
@@ -858,7 +969,7 @@ function CanvasPage() {
   // Unlock selected fragments
   const handleUnlockSelected = () => {
     const updatedFragments = canvasFragments.map((f) =>
-      selectedFragmentIds.includes(f.id) ? { ...f, isLocked: false } : f
+      selectedFragmentIds.includes(f.id) ? { ...f, isLocked: false } : f,
     );
     setCanvasFragments(updatedFragments);
   };
@@ -890,8 +1001,8 @@ function CanvasPage() {
       prev.map((fragment) =>
         selectedSet.has(fragment.id)
           ? { ...fragment, groupId: newGroupId }
-          : fragment
-      )
+          : fragment,
+      ),
     );
   };
 
@@ -902,7 +1013,7 @@ function CanvasPage() {
     const selectedGroupIds = new Set(
       canvasFragments
         .filter((fragment) => selectedSet.has(fragment.id) && fragment.groupId)
-        .map((fragment) => fragment.groupId as string)
+        .map((fragment) => fragment.groupId as string),
     );
 
     if (selectedGroupIds.size === 0) return;
@@ -911,8 +1022,8 @@ function CanvasPage() {
       prev.map((fragment) =>
         fragment.groupId && selectedGroupIds.has(fragment.groupId)
           ? { ...fragment, groupId: undefined }
-          : fragment
-      )
+          : fragment,
+      ),
     );
   };
 
@@ -921,11 +1032,13 @@ function CanvasPage() {
     if (selectedFragmentIds.length !== 1) return;
 
     const selectedId = selectedFragmentIds[0];
-    const canvasFragment = canvasFragments.find(f => f.id === selectedId);
+    const canvasFragment = canvasFragments.find((f) => f.id === selectedId);
     if (!canvasFragment) return;
 
     // Find the manuscript fragment to check if segmentation is available
-    const manuscriptFragment = fragments.find(f => f.id === canvasFragment.fragmentId);
+    const manuscriptFragment = fragments.find(
+      (f) => f.id === canvasFragment.fragmentId,
+    );
     if (!manuscriptFragment) return;
 
     const newShowSegmented = !canvasFragment.showSegmented;
@@ -938,7 +1051,7 @@ function CanvasPage() {
             ...f,
             showSegmented: newShowSegmented,
           }
-        : f
+        : f,
     );
     setCanvasFragments(updatedFragments);
     setHasUnsavedChanges(true);
@@ -947,7 +1060,7 @@ function CanvasPage() {
   // Delete selected fragments
   const handleDeleteSelected = () => {
     const updatedFragments = canvasFragments.filter(
-      (f) => !selectedFragmentIds.includes(f.id)
+      (f) => !selectedFragmentIds.includes(f.id),
     );
     setCanvasFragments(updatedFragments);
     setSelectedFragmentIds([]);
@@ -959,14 +1072,13 @@ function CanvasPage() {
 
     if (
       window.confirm(
-        "Are you sure you want to clear all fragments from the canvas?"
+        "Are you sure you want to clear all fragments from the canvas?",
       )
     ) {
       setCanvasFragments([]);
       setSelectedFragmentIds([]);
     }
   };
-
 
   // Save canvas progress to database
   const handleSave = async () => {
@@ -978,7 +1090,7 @@ function CanvasPage() {
     // Ensure we have a project
     const projectId = await ensureProject();
     if (!projectId) {
-      console.error('Failed to create or get project');
+      console.error("Failed to create or get project");
       return;
     }
 
@@ -1000,59 +1112,72 @@ function CanvasPage() {
     loadFragments();
   };
 
-  const handleCreateCustomFilter = useCallback(async (payload: {
-    label: string;
-    type: 'dropdown' | 'text';
-    options?: string[];
-  }) => {
-    const created = await createCustomFilter(payload);
-    if (created) {
-      setCustomFilters((prev) => [...prev, created]);
-    }
-    return created;
-  }, []);
+  const handleCreateCustomFilter = useCallback(
+    async (payload: {
+      label: string;
+      type: "dropdown" | "text";
+      options?: string[];
+    }) => {
+      const created = await createCustomFilter(payload);
+      if (created) {
+        setCustomFilters((prev) => [...prev, created]);
+      }
+      return created;
+    },
+    [],
+  );
 
-  const handleDeleteCustomFilter = useCallback(async (id: number) => {
-    const target = customFilters.find((filter) => filter.id === id);
-    if (!target) {
-      return false;
-    }
+  const handleDeleteCustomFilter = useCallback(
+    async (id: number) => {
+      const target = customFilters.find((filter) => filter.id === id);
+      if (!target) {
+        return false;
+      }
 
-    const success = await deleteCustomFilter(id);
-    if (success) {
-      setCustomFilters((prev) => prev.filter((filter) => filter.id !== id));
-      setFilters((prev) => {
-        if (!prev.custom || !(target.filterKey in prev.custom)) {
-          return prev;
-        }
-        const nextCustom = { ...prev.custom };
-        delete nextCustom[target.filterKey];
-        return { ...prev, custom: nextCustom };
-      });
-    }
-    return success;
-  }, [customFilters]);
+      const success = await deleteCustomFilter(id);
+      if (success) {
+        setCustomFilters((prev) => prev.filter((filter) => filter.id !== id));
+        setFilters((prev) => {
+          if (!prev.custom || !(target.filterKey in prev.custom)) {
+            return prev;
+          }
+          const nextCustom = { ...prev.custom };
+          delete nextCustom[target.filterKey];
+          return { ...prev, custom: nextCustom };
+        });
+      }
+      return success;
+    },
+    [customFilters],
+  );
 
-  const handleUpdateCustomFilterOptions = useCallback(async (id: number, options: string[]) => {
-    const updated = await updateCustomFilterOptions(id, options);
-    if (updated) {
-      setCustomFilters((prev) => prev.map((filter) => (filter.id === id ? updated : filter)));
-    }
-    return updated;
-  }, []);
+  const handleUpdateCustomFilterOptions = useCallback(
+    async (id: number, options: string[]) => {
+      const updated = await updateCustomFilterOptions(id, options);
+      if (updated) {
+        setCustomFilters((prev) =>
+          prev.map((filter) => (filter.id === id ? updated : filter)),
+        );
+      }
+      return updated;
+    },
+    [],
+  );
 
   // Handle edge match request: query DB for matches and switch sidebar to match view
   const handleEdgeMatch = async (fragmentId: string) => {
     const api = getElectronAPISafe();
     if (!api?.edgeMatches) {
-      console.warn('Edge match API not available');
+      console.warn("Edge match API not available");
       return;
     }
 
     // Check if edge match data exists
     const check = await api.edgeMatches.hasData();
     if (!check.hasData) {
-      console.log('No edge match data in database. Run the reconstruction pipeline first.');
+      console.log(
+        "No edge match data in database. Run the reconstruction pipeline first.",
+      );
       return;
     }
 
@@ -1074,9 +1199,11 @@ function CanvasPage() {
     if (!edgeMatchAnchorId) return;
 
     // Find the anchor fragment's position on canvas
-    const anchor = canvasFragments.find(cf => cf.fragmentId === edgeMatchAnchorId);
+    const anchor = canvasFragments.find(
+      (cf) => cf.fragmentId === edgeMatchAnchorId,
+    );
     if (!anchor) {
-      console.warn('Anchor fragment not on canvas');
+      console.warn("Anchor fragment not on canvas");
       return;
     }
 
@@ -1096,15 +1223,17 @@ function CanvasPage() {
     const rotation = (match.rotation_deg ?? 0) + (anchor.rotation ?? 0);
 
     // Check if already on canvas
-    const existing = canvasFragments.find(cf => cf.fragmentId === match.fragment_b_id);
+    const existing = canvasFragments.find(
+      (cf) => cf.fragmentId === match.fragment_b_id,
+    );
     if (existing) {
       // Update position of existing fragment
-      setCanvasFragments(prev =>
-        prev.map(cf =>
+      setCanvasFragments((prev) =>
+        prev.map((cf) =>
           cf.fragmentId === match.fragment_b_id
             ? { ...cf, x: newX, y: newY, rotation, showSegmented: true }
-            : cf
-        )
+            : cf,
+        ),
       );
       return;
     }
@@ -1129,16 +1258,25 @@ function CanvasPage() {
 
     // Build a ManuscriptFragment-like object for calculateDisplaySize
     const scaleInfo = fragData.pixels_per_unit
-      ? { unit: (fragData.scale_unit ?? 'cm') as 'cm' | 'mm', pixelsPerUnit: fragData.pixels_per_unit }
+      ? {
+          unit: (fragData.scale_unit ?? "cm") as "cm" | "mm",
+          pixelsPerUnit: fragData.pixels_per_unit,
+        }
       : undefined;
     const mockFragment: ManuscriptFragment = {
       id: match.fragment_b_id,
       name: match.fragment_b_id,
       imagePath: imagePath,
       thumbnailPath: imagePath,
-      metadata: scaleInfo ? { scale: { ...scaleInfo, detectionStatus: 'success' as const } } : undefined,
+      metadata: scaleInfo
+        ? { scale: { ...scaleInfo, detectionStatus: "success" as const } }
+        : undefined,
     };
-    const { width, height } = calculateDisplaySize(mockFragment, img.naturalWidth || 300, img.naturalHeight || 300);
+    const { width, height } = calculateDisplaySize(
+      mockFragment,
+      img.naturalWidth || 300,
+      img.naturalHeight || 300,
+    );
 
     const newFragment: CanvasFragment = {
       id: `canvas-fragment-${Date.now()}-${Math.random()}`,
@@ -1158,7 +1296,7 @@ function CanvasPage() {
       showSegmented: true,
     };
 
-    setCanvasFragments(prev => [...prev, newFragment]);
+    setCanvasFragments((prev) => [...prev, newFragment]);
   };
 
   // Exit edge match mode
@@ -1169,15 +1307,20 @@ function CanvasPage() {
   };
 
   // State to track the canvas fragment for metadata display
-  const [selectedCanvasFragmentForMetadata, setSelectedCanvasFragmentForMetadata] = useState<CanvasFragment | null>(null);
+  const [
+    selectedCanvasFragmentForMetadata,
+    setSelectedCanvasFragmentForMetadata,
+  ] = useState<CanvasFragment | null>(null);
 
   // Handle double-click on canvas fragment to show metadata
   const handleCanvasFragmentDoubleClick = async (fragmentId: string) => {
     // Find the canvas fragment
-    const canvasFragment = canvasFragments.find(cf => cf.fragmentId === fragmentId);
+    const canvasFragment = canvasFragments.find(
+      (cf) => cf.fragmentId === fragmentId,
+    );
 
     // First try to find in already loaded fragments
-    let manuscriptFragment = fragments.find(f => f.id === fragmentId);
+    let manuscriptFragment = fragments.find((f) => f.id === fragmentId);
 
     // If not found in loaded fragments, fetch from database
     if (!manuscriptFragment) {
@@ -1197,13 +1340,14 @@ function CanvasPage() {
   };
 
   // Get selected fragment info for segmentation toggle
-  const selectedFragment = selectedFragmentIds.length === 1
-    ? canvasFragments.find(f => f.id === selectedFragmentIds[0])
-    : undefined;
+  const selectedFragment =
+    selectedFragmentIds.length === 1
+      ? canvasFragments.find((f) => f.id === selectedFragmentIds[0])
+      : undefined;
 
   // Find the corresponding ManuscriptFragment to check if it has segmentation data
   const selectedManuscriptFragment = selectedFragment
-    ? fragments.find(f => f.id === selectedFragment.fragmentId)
+    ? fragments.find((f) => f.id === selectedFragment.fragmentId)
     : undefined;
 
   const canUngroupSelected = selectedFragmentIds.some((id) => {
@@ -1242,11 +1386,24 @@ function CanvasPage() {
           filters.hasRightEdge !== null ||
           filters.hasCircle !== null ||
           (filters.search !== undefined && filters.search.trim().length > 0) ||
-          Object.values(filters.custom || {}).some((value) => value !== undefined && value !== null && value !== '')
+          Object.values(filters.custom || {}).some(
+            (value) => value !== undefined && value !== null && value !== "",
+          )
         }
-        selectedFragmentHasSegmentation={selectedManuscriptFragment?.hasSegmentation}
+        selectedFragmentHasSegmentation={
+          selectedManuscriptFragment?.hasSegmentation
+        }
         selectedFragmentShowSegmented={selectedFragment?.showSegmented}
-        onToggleSelectedFragmentSegmentation={handleToggleSelectedFragmentSegmentation}
+        onToggleSelectedFragmentSegmentation={
+          handleToggleSelectedFragmentSegmentation
+        }
+        onBulkEditMetadata={() => {
+          const ids = selectedFragmentIds.map(
+            (id) =>
+              canvasFragments.find((cf) => cf.id === id)?.fragmentId ?? id,
+          );
+          setBulkEditFragmentIds(ids);
+        }}
         projectName={currentProjectName}
         saveStatus={saveStatus}
       />
@@ -1255,7 +1412,6 @@ function CanvasPage() {
         <Sidebar
           fragments={fragments}
           onDragStart={handleDragStart}
-          onFragmentDoubleClick={handleSidebarFragmentDoubleClick}
           width={sidebarWidth}
           onWidthChange={setSidebarWidth}
           isOpen={isSidebarOpen}
@@ -1276,6 +1432,10 @@ function CanvasPage() {
           edgeMatches={edgeMatches}
           onPlaceEdgeMatch={handlePlaceEdgeMatch}
           onExitEdgeMatch={handleExitEdgeMatch}
+          onBulkAddToCanvas={handleBulkAddToCanvas}
+          onBulkEditSidebarMetadata={handleBulkEditSidebarMetadata}
+          onDragStartSelected={handleDragStartSelected}
+          onFragmentsDeleted={loadFragments}
         />
 
         <div
@@ -1310,7 +1470,6 @@ function CanvasPage() {
           onDeleteCustomFilter={handleDeleteCustomFilter}
           onUpdateCustomFilterOptions={handleUpdateCustomFilterOptions}
         />
-
       </div>
 
       {/* Fragment Metadata Modal */}
@@ -1321,6 +1480,16 @@ function CanvasPage() {
           onUpdate={loadFragments}
           canvasFragment={selectedCanvasFragmentForMetadata}
           gridScale={gridScale}
+          customFilters={customFilters}
+        />
+      )}
+
+      {/* Bulk Metadata Editor Modal */}
+      {bulkEditFragmentIds && bulkEditFragmentIds.length >= 2 && (
+        <BulkMetadataEditor
+          fragmentIds={bulkEditFragmentIds}
+          onClose={() => setBulkEditFragmentIds(null)}
+          onUpdate={loadFragments}
           customFilters={customFilters}
         />
       )}

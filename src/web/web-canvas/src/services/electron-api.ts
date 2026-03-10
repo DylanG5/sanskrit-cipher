@@ -138,6 +138,8 @@ declare global {
         getCount: (filters?: FragmentFilters) => Promise<ApiResponse<null> & { count?: number }>;
         getById: (id: string) => Promise<ApiResponse<FragmentRecord | null>>;
         updateMetadata: (id: string, metadata: Record<string, unknown>) => Promise<ApiResponse<null>>;
+        bulkUpdateMetadata: (ids: string[], metadata: Record<string, unknown>) => Promise<ApiResponse<null>>;
+        bulkDelete: (ids: string[]) => Promise<ApiResponse<null>>;
         uploadFiles: (filePaths: string[]) => Promise<UploadResponse>;
       };
       images: {

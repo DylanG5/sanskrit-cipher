@@ -1,18 +1,23 @@
-import React, { useCallback, useRef, useEffect, useMemo } from 'react';
-import { FixedSizeList, ListChildComponentProps } from 'react-window';
-import { ManuscriptFragment } from '../types/fragment';
+import React, { useCallback, useRef, useEffect, useMemo } from "react";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
+import { ManuscriptFragment } from "../types/fragment";
 
 interface VirtualizedFragmentListProps {
   fragments: ManuscriptFragment[];
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
-  onFragmentDoubleClick?: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
+  onFragmentDoubleClick?: (
+    fragment: ManuscriptFragment,
+    e: React.MouseEvent,
+  ) => void;
   containerHeight: number;
   onLoadMore?: () => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
   scrollPosition?: number;
   onScrollPositionChange?: (position: number) => void;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string, multi: boolean) => void;
 }
 
 const ITEM_HEIGHT = 180; // Height of each fragment card (image height + padding + text)
@@ -21,26 +26,84 @@ interface FragmentRowData {
   fragments: ManuscriptFragment[];
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
-  onFragmentDoubleClick?: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
+  selectedIds: Set<string>;
+  onToggleSelect?: (id: string, multi: boolean) => void;
+  onFragmentDoubleClick?: (
+    fragment: ManuscriptFragment,
+    e: React.MouseEvent,
+  ) => void;
 }
 
-const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRowData>) => {
+const FragmentRow = ({
+  index,
+  style,
+  data,
+}: ListChildComponentProps<FragmentRowData>) => {
   if (!data) return null;
 
-  const { fragments, onDragStart, onFragmentClick, onFragmentDoubleClick } = data;
+  const {
+    fragments,
+    onDragStart,
+    onFragmentClick,
+    selectedIds,
+    onToggleSelect,
+  } = data;
   const fragment = fragments[index];
 
   if (!fragment) return null;
+
+  const isSelected = selectedIds.has(fragment.id);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if ((e.metaKey || e.ctrlKey) && onToggleSelect) {
+      e.stopPropagation();
+      onToggleSelect(fragment.id, true);
+    } else {
+      onFragmentClick(fragment, e);
+    }
+  };
 
   return (
     <div style={style} className="px-4 pb-3">
       <div
         draggable
         onDragStart={(e) => onDragStart(fragment, e)}
-        onClick={(e) => onFragmentClick(fragment, e)}
-        onDoubleClick={(e) => onFragmentDoubleClick?.(fragment, e)}
-        className="cursor-move bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 p-3 border border-slate-200 relative group hover:border-blue-300 h-full"
+        onClick={handleClick}
+        className={`cursor-move bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 p-3 border-2 relative group h-full ${
+          isSelected
+            ? "border-orange-500 ring-2 ring-orange-200"
+            : "border-slate-200 hover:border-blue-300"
+        }`}
       >
+        {/* Selection checkbox — always visible on hover, filled when selected */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect?.(fragment.id, true);
+          }}
+          className={`absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center shadow-sm transition-all ${
+            isSelected
+              ? "bg-orange-500 border-orange-500"
+              : "bg-white/80 border-slate-300 opacity-0 group-hover:opacity-100 hover:border-orange-400"
+          }`}
+          title={isSelected ? "Deselect" : "Select"}
+        >
+          {isSelected && (
+            <svg
+              className="w-3 h-3 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={3}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          )}
+        </button>
         <img
           src={fragment.thumbnailPath}
           alt={fragment.name}
@@ -48,7 +111,10 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
           draggable={false}
         />
         <div className="flex justify-between items-center gap-2">
-          <p className="text-xs text-slate-700 truncate flex-1 font-medium" title={fragment.name}>
+          <p
+            className="text-xs text-slate-700 truncate flex-1 font-medium"
+            title={fragment.name}
+          >
             {fragment.name}
           </p>
           {/* Info button */}
@@ -60,8 +126,18 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
             className="flex-shrink-0 text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
             title="View metadata"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </button>
         </div>
@@ -70,11 +146,21 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
           {/* Metadata indicator badge */}
           {fragment.metadata && (
             <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-md px-2 py-1 flex items-center gap-1.5 shadow-md ring-2 ring-white">
-              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/>
+              <svg
+                className="w-3.5 h-3.5 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path
+                  fillRule="evenodd"
+                  d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                  clipRule="evenodd"
+                />
               </svg>
-              <span className="text-[10px] font-semibold uppercase tracking-wide">Metadata</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide">
+                Metadata
+              </span>
             </div>
           )}
         </div>
@@ -94,6 +180,8 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   isLoadingMore = false,
   scrollPosition = 0,
   onScrollPositionChange,
+  selectedIds = new Set(),
+  onToggleSelect,
 }) => {
   const listRef = useRef<FixedSizeList>(null);
 
@@ -108,11 +196,15 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   const handleItemsRendered = useCallback(
     ({ visibleStopIndex }: { visibleStopIndex: number }) => {
       // Load more when we're within 5 items of the end
-      if (hasMore && !isLoadingMore && visibleStopIndex >= fragments.length - 5) {
+      if (
+        hasMore &&
+        !isLoadingMore &&
+        visibleStopIndex >= fragments.length - 5
+      ) {
         onLoadMore?.();
       }
     },
-    [hasMore, isLoadingMore, fragments.length, onLoadMore]
+    [hasMore, isLoadingMore, fragments.length, onLoadMore],
   );
 
   // Handle scroll position changes
@@ -120,7 +212,7 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
     ({ scrollOffset }: { scrollOffset: number }) => {
       onScrollPositionChange?.(scrollOffset);
     },
-    [onScrollPositionChange]
+    [onScrollPositionChange],
   );
 
   // Memoize itemData to prevent unnecessary re-renders
@@ -129,9 +221,10 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
       fragments,
       onDragStart,
       onFragmentClick,
-      onFragmentDoubleClick,
+      selectedIds,
+      onToggleSelect,
     }),
-    [fragments, onDragStart, onFragmentClick, onFragmentDoubleClick]
+    [fragments, onDragStart, onFragmentClick, selectedIds, onToggleSelect],
   );
 
   // Calculate total item count
@@ -153,15 +246,32 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
           {FragmentRow}
         </FixedSizeList>
       ) : (
-        <div className="text-center text-slate-500 py-8">No fragments to display</div>
+        <div className="text-center text-slate-500 py-8">
+          No fragments to display
+        </div>
       )}
       {isLoadingMore && (
         <div className="px-4 py-3">
           <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 text-center">
             <div className="flex items-center justify-center gap-2">
-              <svg className="w-5 h-5 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="w-5 h-5 text-slate-400 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               <p className="text-slate-600 text-sm">Loading more...</p>
             </div>

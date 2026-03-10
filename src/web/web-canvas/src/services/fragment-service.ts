@@ -147,6 +147,37 @@ export async function updateFragmentMetadata(
 }
 
 /**
+ * Bulk update metadata for multiple fragments
+ */
+export async function bulkUpdateFragmentMetadata(
+  fragmentIds: string[],
+  metadata: Record<string, unknown>
+): Promise<{ success: boolean; error?: string }> {
+  if (!isElectron()) {
+    return { success: false, error: 'Not in Electron environment' };
+  }
+
+  const api = getElectronAPI();
+  const response = await api.fragments.bulkUpdateMetadata(fragmentIds, metadata);
+  return response;
+}
+
+/**
+ * Bulk delete fragments from the database
+ */
+export async function bulkDeleteFragments(
+  fragmentIds: string[]
+): Promise<{ success: boolean; changes?: number; error?: string }> {
+  if (!isElectron()) {
+    return { success: false, error: 'Not in Electron environment' };
+  }
+
+  const api = getElectronAPI();
+  const response = await api.fragments.bulkDelete(fragmentIds);
+  return response;
+}
+
+/**
  * Get unique script types from database
  * For now returns empty array - would need a dedicated IPC handler
  * or fetch all and dedupe client-side
