@@ -175,6 +175,8 @@ const Canvas: React.FC<CanvasProps> = ({
   const gridReferenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [stageScale, setStageScale] = useState(1);
   const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Auto-dismiss splash after 4 seconds
   useEffect(() => {
@@ -400,6 +402,51 @@ const Canvas: React.FC<CanvasProps> = ({
     }
   };
 
+  // Click-drag panning
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    // Only pan when clicking on the stage background (not on fragments)
+    if (e.target !== e.target.getStage()) return;
+    setIsPanning(true);
+    panStartRef.current = { x: e.evt.clientX, y: e.evt.clientY };
+  };
+
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!isPanning || !panStartRef.current) return;
+    const dx = e.evt.clientX - panStartRef.current.x;
+    const dy = e.evt.clientY - panStartRef.current.y;
+    panStartRef.current = { x: e.evt.clientX, y: e.evt.clientY };
+    setStagePosition((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+    panStartRef.current = null;
+  };
+
+  // Recenter view to the center of all fragments (keeps current zoom)
+  const recenterToFragments = () => {
+    if (fragments.length === 0) {
+      setStagePosition({ x: 0, y: 0 });
+      return;
+    }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const f of fragments) {
+      minX = Math.min(minX, f.x);
+      minY = Math.min(minY, f.y);
+      maxX = Math.max(maxX, f.x + f.width * (f.scaleX ?? 1));
+      maxY = Math.max(maxY, f.y + f.height * (f.scaleY ?? 1));
+    }
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    setStagePosition({
+      x: stageSize.width / 2 - centerX * stageScale,
+      y: stageSize.height / 2 - centerY * stageScale,
+    });
+  };
+
   // Zoom toward the center of the viewport
   const zoomToCenter = (newScale: number) => {
     const clampedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, newScale));
@@ -424,31 +471,23 @@ const Canvas: React.FC<CanvasProps> = ({
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
 
-    if (e.evt.ctrlKey || e.evt.metaKey) {
-      // Zoom (trackpad pinch or Ctrl/Cmd+scroll)
-      const oldScale = stageScale;
-      const newScale = Math.min(
-        MAX_SCALE,
-        Math.max(MIN_SCALE, oldScale * Math.exp(-e.evt.deltaY * 0.01)),
-      );
+    // Always zoom on wheel (scroll wheel, trackpad pinch, Ctrl/Cmd+scroll)
+    const oldScale = stageScale;
+    const newScale = Math.min(
+      MAX_SCALE,
+      Math.max(MIN_SCALE, oldScale * Math.exp(-e.evt.deltaY * 0.01)),
+    );
 
-      const mousePointTo = {
-        x: (pointer.x - stagePosition.x) / oldScale,
-        y: (pointer.y - stagePosition.y) / oldScale,
-      };
+    const mousePointTo = {
+      x: (pointer.x - stagePosition.x) / oldScale,
+      y: (pointer.y - stagePosition.y) / oldScale,
+    };
 
-      setStageScale(newScale);
-      setStagePosition({
-        x: pointer.x - mousePointTo.x * newScale,
-        y: pointer.y - mousePointTo.y * newScale,
-      });
-    } else {
-      // Pan (regular two-finger scroll)
-      setStagePosition((prev) => ({
-        x: prev.x - e.evt.deltaX,
-        y: prev.y - e.evt.deltaY,
-      }));
-    }
+    setStageScale(newScale);
+    setStagePosition({
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    });
   };
 
   // Keyboard zoom: Cmd/Ctrl + Plus/Minus/Zero
@@ -575,6 +614,11 @@ const Canvas: React.FC<CanvasProps> = ({
         onClick={handleStageClick}
         onTap={handleStageClick}
         onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ cursor: isPanning ? 'grabbing' : 'default' }}
       >
         {/* Grid Layer */}
         <Layer listening={false}>{generateGridLines()}</Layer>
@@ -852,31 +896,39 @@ const Canvas: React.FC<CanvasProps> = ({
       )}
 
       {/* Zoom Controls */}
-      <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-slate-200 flex items-center gap-1 px-2 py-1.5 z-20 select-none">
+      <div className="absolute bottom-4 right-4 flex flex-col items-stretch gap-1.5 z-20 select-none">
         <button
-          onClick={() => zoomToCenter(stageScale / KEYBOARD_ZOOM_FACTOR)}
-          className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600 font-bold text-lg"
-          title="Zoom out (Ctrl/Cmd + −)"
+          onClick={recenterToFragments}
+          className="bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
         >
-          −
+          Recenter
         </button>
-        <button
-          onClick={() => {
-            setStageScale(1);
-            setStagePosition({ x: 0, y: 0 });
-          }}
-          className="px-2 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-xs font-medium text-slate-700 min-w-[3rem] tabular-nums"
-          title="Reset zoom (Ctrl/Cmd + 0)"
-        >
-          {Math.round(stageScale * 100)}%
-        </button>
-        <button
-          onClick={() => zoomToCenter(stageScale * KEYBOARD_ZOOM_FACTOR)}
-          className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600 font-bold text-lg"
-          title="Zoom in (Ctrl/Cmd + +)"
-        >
-          +
-        </button>
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-slate-200 flex items-center gap-1 px-2 py-1.5">
+          <button
+            onClick={() => zoomToCenter(stageScale / KEYBOARD_ZOOM_FACTOR)}
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600 font-bold text-lg"
+            title="Zoom out (Ctrl/Cmd + −)"
+          >
+            −
+          </button>
+          <button
+            onClick={() => {
+              setStageScale(1);
+              setStagePosition({ x: 0, y: 0 });
+            }}
+            className="px-2 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-xs font-medium text-slate-700 min-w-[3rem] tabular-nums"
+            title="Reset zoom (Ctrl/Cmd + 0)"
+          >
+            {Math.round(stageScale * 100)}%
+          </button>
+          <button
+            onClick={() => zoomToCenter(stageScale * KEYBOARD_ZOOM_FACTOR)}
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-600 font-bold text-lg"
+            title="Zoom in (Ctrl/Cmd + +)"
+          >
+            +
+          </button>
+        </div>
       </div>
     </div>
   );
