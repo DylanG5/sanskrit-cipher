@@ -167,6 +167,8 @@ const Canvas: React.FC<CanvasProps> = ({
   const isTransformingRef = useRef(false);
   const [showSplash, setShowSplash] = useState(true);
   const splashTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showGridReference, setShowGridReference] = useState(false);
+  const gridReferenceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-dismiss splash after 4 seconds
   useEffect(() => {
@@ -177,6 +179,28 @@ const Canvas: React.FC<CanvasProps> = ({
       if (splashTimerRef.current) clearTimeout(splashTimerRef.current);
     };
   }, [fragments.length, showSplash]);
+
+  // Auto-hide grid reference after 5 seconds
+  useEffect(() => {
+    if (gridReferenceTimerRef.current) {
+      clearTimeout(gridReferenceTimerRef.current);
+      gridReferenceTimerRef.current = null;
+    }
+    if (isGridVisible) {
+      setShowGridReference(true);
+      gridReferenceTimerRef.current = setTimeout(() => {
+        setShowGridReference(false);
+        gridReferenceTimerRef.current = null;
+      }, 5000);
+    } else {
+      setShowGridReference(false);
+    }
+    return () => {
+      if (gridReferenceTimerRef.current) {
+        clearTimeout(gridReferenceTimerRef.current);
+      }
+    };
+  }, [isGridVisible]);
 
   // Reset splash when canvas is cleared
   useEffect(() => {
@@ -521,7 +545,7 @@ const Canvas: React.FC<CanvasProps> = ({
       )}
 
       {/* Grid Scale Indicator */}
-      {isGridVisible && (
+      {isGridVisible && showGridReference && (
         <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border-2 border-blue-400 p-3 z-20 max-w-sm">
           <div className="flex items-start gap-3">
             <svg

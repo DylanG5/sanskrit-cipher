@@ -121,12 +121,6 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
           )}
         </div>
 
-        {/* Shift-click hint */}
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none">
-          {!isSelected && (
-            <span className="text-[9px] text-slate-300 font-medium">shift+click or right-click to select</span>
-          )}
-        </div>
       </div>
     </div>
   );
