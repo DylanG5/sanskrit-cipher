@@ -10,6 +10,7 @@ export interface UseFragmentImageOptions {
   imagePath: string;
   segmentationCoords?: string;
   showSegmented: boolean;
+  isMirrored?: boolean;
 }
 
 /**
@@ -23,12 +24,13 @@ export function useFragmentImage({
   imagePath,
   segmentationCoords,
   showSegmented,
+  isMirrored = false,
 }: UseFragmentImageOptions): {
-  image: HTMLImageElement | null;
+  image: HTMLImageElement | HTMLCanvasElement | null;
   isLoading: boolean;
   error: string | null;
 } {
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [image, setImage] = useState<HTMLImageElement | HTMLCanvasElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +65,23 @@ export function useFragmentImage({
 
         img.onload = () => {
           if (!isCancelled) {
-            setImage(img);
+            if (isMirrored) {
+              // Draw the image flipped onto an offscreen canvas so the Konva node
+              // always has a positive scaleX — this avoids Transformer glitches
+              // when rotating/resizing a negative-scale node.
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth;
+              canvas.height = img.naturalHeight;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.translate(img.naturalWidth, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(img, 0, 0);
+              }
+              setImage(canvas);
+            } else {
+              setImage(img);
+            }
             setIsLoading(false);
           }
         };
@@ -92,7 +110,7 @@ export function useFragmentImage({
     return () => {
       isCancelled = true;
     };
-  }, [fragmentId, imagePath, segmentationCoords, showSegmented]);
+  }, [fragmentId, imagePath, segmentationCoords, showSegmented, isMirrored]);
 
   return { image, isLoading, error };
 }

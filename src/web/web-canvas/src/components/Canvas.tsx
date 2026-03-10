@@ -54,6 +54,7 @@ const FragmentImage: React.FC<FragmentImageProps> = ({
     imagePath: fragment.imagePath,
     segmentationCoords: fragment.segmentationCoords,
     showSegmented: fragment.showSegmented,
+    isMirrored: fragment.isMirrored,
   });
 
   // Log errors
