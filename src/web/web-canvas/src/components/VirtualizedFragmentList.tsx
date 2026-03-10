@@ -1,5 +1,12 @@
-import React, { useCallback, useRef, useEffect, useMemo } from 'react';
+import React, { useCallback, useRef, useEffect, useMemo, forwardRef } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
+
+// Adds bottom padding inside the scroll container so the last item isn't clipped
+const InnerElement = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ style, ...rest }, ref) => (
+    <div ref={ref} style={{ ...style, paddingBottom: 12 }} {...rest} />
+  )
+);
 import { ManuscriptFragment } from '../types/fragment';
 
 interface VirtualizedFragmentListProps {
@@ -185,6 +192,7 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
           itemCount={itemCount}
           itemSize={ITEM_HEIGHT}
           width="100%"
+          innerElementType={InnerElement}
           onItemsRendered={handleItemsRendered}
           onScroll={handleScroll}
           itemData={itemData}
