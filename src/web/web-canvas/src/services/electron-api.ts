@@ -61,6 +61,7 @@ export interface CanvasFragmentData {
   isLocked: boolean;
   zIndex?: number;
   showSegmented?: boolean;
+  isMirrored?: boolean;
 }
 
 export interface CanvasStateData {

@@ -65,6 +65,7 @@ function CanvasPage() {
   const [isGridVisible, setIsGridVisible] = useState(false);
   const [gridScale, setGridScale] = useState(25); // pixels per cm
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
+  const draggedFragmentsRef = useRef<ManuscriptFragment[]>([]);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
   const draggedSelectionRef = useRef<ManuscriptFragment[] | null>(null);
 
@@ -335,6 +336,7 @@ function CanvasPage() {
             isLocked: f.isLocked,
             zIndex: index,
             showSegmented: f.showSegmented,
+            isMirrored: f.isMirrored,
           })),
         };
 
@@ -476,6 +478,7 @@ function CanvasPage() {
               isLocked: frag.isLocked,
               isSelected: false,
               showSegmented: showSegmented,
+              isMirrored: frag.isMirrored ?? false,
               originalWidth: undefined, // Will be loaded when image loads
               originalHeight: undefined,
               hasBeenResized: false, // Reset on restore
@@ -587,12 +590,23 @@ function CanvasPage() {
   // Available scripts - use the defined script types
   const availableScripts = useMemo(() => [...SCRIPT_TYPES], []);
 
-  // Handle drag start from sidebar
+  // Handle drag start from sidebar (single fragment)
   const handleDragStart = (
     fragment: ManuscriptFragment,
     e: React.DragEvent,
   ) => {
     draggedFragmentRef.current = fragment;
+    draggedFragmentsRef.current = [];
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
+  // Handle multi-drag start from sidebar
+  const handleMultiDragStart = (
+    selectedFragments: ManuscriptFragment[],
+    e: React.DragEvent
+  ) => {
+    draggedFragmentRef.current = selectedFragments[0];
+    draggedFragmentsRef.current = selectedFragments;
     e.dataTransfer.effectAllowed = "copy";
   };
 
@@ -825,66 +839,70 @@ function CanvasPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
-    const fragment = draggedFragmentRef.current;
     const position = dropPositionRef.current;
+    if (!position) return;
+
+    const multiFragments = draggedFragmentsRef.current;
     const selectedFragments = draggedSelectionRef.current;
+    const singleFragment = draggedFragmentRef.current;
 
-    if (!fragment || !position) {
-      return;
-    }
-
-    // If we have a multi-selection, drop all selected fragments with staggered offsets
+    // Prefer multi-drag (from onMultiDragStart), fall back to selection drag, then single
     const fragmentsToDrop =
-      selectedFragments && selectedFragments.length > 1
-        ? selectedFragments
-        : [fragment];
+      multiFragments.length > 1
+        ? multiFragments
+        : selectedFragments && selectedFragments.length > 1
+          ? selectedFragments
+          : singleFragment
+            ? [singleFragment]
+            : [];
 
-    const OFFSET = 50;
-    let loadedCount = 0;
-    const newFragments: CanvasFragment[] = [];
-
-    fragmentsToDrop.forEach((frag, idx) => {
-      const img = new Image();
-      img.src = frag.imagePath;
-      img.onload = () => {
-        const { width, height } = calculateDisplaySize(
-          frag,
-          img.naturalWidth,
-          img.naturalHeight,
-        );
-
-        const newCanvasFragment: CanvasFragment = {
-          id: `canvas-fragment-${Date.now()}-${idx}-${Math.random()}`,
-          fragmentId: frag.id,
-          name: frag.name,
-          imagePath: frag.imagePath,
-          segmentationCoords: frag.segmentationCoords,
-          x: position.x - width / 2 + idx * OFFSET,
-          y: position.y - height / 2 + idx * OFFSET,
-          width,
-          height,
-          rotation: 0,
-          scaleX: 1,
-          scaleY: 1,
-          isLocked: false,
-          isSelected: false,
-          showSegmented: true,
-          originalWidth: img.naturalWidth,
-          originalHeight: img.naturalHeight,
-          hasBeenResized: false,
-        };
-
-        newFragments.push(newCanvasFragment);
-        loadedCount++;
-        if (loadedCount === fragmentsToDrop.length) {
-          setCanvasFragments((prev) => [...prev, ...newFragments]);
-        }
-      };
-    });
+    if (fragmentsToDrop.length === 0) return;
 
     draggedFragmentRef.current = null;
-    dropPositionRef.current = null;
+    draggedFragmentsRef.current = [];
     draggedSelectionRef.current = null;
+    dropPositionRef.current = null;
+
+    // Load all images in parallel, then place them
+    const loadOne = (fragment: ManuscriptFragment, offsetX: number, offsetY: number): Promise<CanvasFragment | null> => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = fragment.imagePath;
+        img.onload = () => {
+          const { width, height } = calculateDisplaySize(fragment, img.naturalWidth, img.naturalHeight);
+          resolve({
+            id: `canvas-fragment-${Date.now()}-${Math.random()}`,
+            fragmentId: fragment.id,
+            name: fragment.name,
+            imagePath: fragment.imagePath,
+            segmentationCoords: fragment.segmentationCoords,
+            x: position.x + offsetX - width / 2,
+            y: position.y + offsetY - height / 2,
+            width,
+            height,
+            rotation: 0,
+            scaleX: 1,
+            scaleY: 1,
+            isLocked: false,
+            isSelected: false,
+            showSegmented: true,
+            originalWidth: img.naturalWidth,
+            originalHeight: img.naturalHeight,
+            hasBeenResized: false,
+          });
+        };
+        img.onerror = () => resolve(null);
+      });
+    };
+
+    // Stagger fragments so they don't land on top of each other
+    const SPREAD = 30; // px offset per fragment
+    Promise.all(
+      fragmentsToDrop.map((frag, i) => loadOne(frag, i * SPREAD, i * SPREAD))
+    ).then((results) => {
+      const newFragments = results.filter((f): f is CanvasFragment => f !== null);
+      setCanvasFragments(prev => [...prev, ...newFragments]);
+    });
   };
 
   // Handle bulk add to canvas from sidebar multiselect
@@ -958,6 +976,7 @@ function CanvasPage() {
     setCurrentOffset(0); // Reset pagination
   }, []);
 
+
   // Lock selected fragments
   const handleLockSelected = () => {
     const updatedFragments = canvasFragments.map((f) =>
@@ -1027,6 +1046,18 @@ function CanvasPage() {
     );
   };
 
+  // Mirror/flip selected fragment horizontally
+  const handleMirrorSelected = () => {
+    if (selectedFragmentIds.length !== 1) return;
+    const selectedId = selectedFragmentIds[0];
+    setCanvasFragments(prev =>
+      prev.map(f =>
+        f.id === selectedId ? { ...f, isMirrored: !f.isMirrored } : f
+      )
+    );
+    setHasUnsavedChanges(true);
+  };
+
   // Toggle segmentation for selected fragment
   const handleToggleSelectedFragmentSegmentation = async () => {
     if (selectedFragmentIds.length !== 1) return;
@@ -1034,12 +1065,6 @@ function CanvasPage() {
     const selectedId = selectedFragmentIds[0];
     const canvasFragment = canvasFragments.find((f) => f.id === selectedId);
     if (!canvasFragment) return;
-
-    // Find the manuscript fragment to check if segmentation is available
-    const manuscriptFragment = fragments.find(
-      (f) => f.id === canvasFragment.fragmentId,
-    );
-    if (!manuscriptFragment) return;
 
     const newShowSegmented = !canvasFragment.showSegmented;
 
@@ -1345,10 +1370,16 @@ function CanvasPage() {
       ? canvasFragments.find((f) => f.id === selectedFragmentIds[0])
       : undefined;
 
-  // Find the corresponding ManuscriptFragment to check if it has segmentation data
+  // Find the corresponding ManuscriptFragment (used for metadata modal, scale info, etc.)
   const selectedManuscriptFragment = selectedFragment
     ? fragments.find((f) => f.id === selectedFragment.fragmentId)
     : undefined;
+
+  // Derive hasSegmentation directly from the canvas fragment's stored coords so it
+  // works even when the fragment isn't in the current sidebar page.
+  const selectedFragmentHasSegmentation = selectedFragment
+    ? Boolean(selectedFragment.segmentationCoords)
+    : false;
 
   const canUngroupSelected = selectedFragmentIds.some((id) => {
     const fragment = canvasFragments.find((f) => f.id === id);
@@ -1390,9 +1421,7 @@ function CanvasPage() {
             (value) => value !== undefined && value !== null && value !== "",
           )
         }
-        selectedFragmentHasSegmentation={
-          selectedManuscriptFragment?.hasSegmentation
-        }
+        selectedFragmentHasSegmentation={selectedFragmentHasSegmentation}
         selectedFragmentShowSegmented={selectedFragment?.showSegmented}
         onToggleSelectedFragmentSegmentation={
           handleToggleSelectedFragmentSegmentation
@@ -1404,6 +1433,8 @@ function CanvasPage() {
           );
           setBulkEditFragmentIds(ids);
         }}
+        selectedFragmentIsMirrored={selectedFragment?.isMirrored}
+        onMirrorSelected={handleMirrorSelected}
         projectName={currentProjectName}
         saveStatus={saveStatus}
       />
@@ -1412,6 +1443,7 @@ function CanvasPage() {
         <Sidebar
           fragments={fragments}
           onDragStart={handleDragStart}
+          onMultiDragStart={handleMultiDragStart}
           width={sidebarWidth}
           onWidthChange={setSidebarWidth}
           isOpen={isSidebarOpen}

@@ -77,6 +77,56 @@ export function sortBySearchRelevance(
 }
 
 /**
+ * Given a fragment ID, return the expected ID of its reverse side (recto/verso partner).
+ *
+ * Handles two naming patterns:
+ *   1. Side as a standalone segment:  OR15000_555_2_A_L [BLL388] → OR15000_555_2_B_L [BLL388]
+ *   2. Side letter appended to a number: OR15013_381A_L [BLL250] → OR15013_381B_L [BLL250]
+ *
+ * Supported pairs: A↔B, R↔V (case-insensitive, preserving original case).
+ * Returns null if no side indicator is found.
+ */
+export function getReverseSideId(fragmentId: string): string | null {
+  const PAIRS: Record<string, string> = { A: 'B', B: 'A', R: 'V', V: 'R' };
+
+  // Strip trailing bracketed suffix for analysis, but keep it for reconstruction
+  const bracketMatch = fragmentId.match(/^(.*?)(\s*\[.*\])?$/);
+  const core = bracketMatch?.[1] ?? fragmentId;
+  const suffix = bracketMatch?.[2] ?? '';
+
+  const parts = core.split('_');
+
+  for (let i = 0; i < parts.length; i++) {
+    const seg = parts[i];
+    const upper = seg.toUpperCase();
+
+    // Pattern 1: segment is exactly a side letter (e.g. "A", "B", "R", "V")
+    if (PAIRS[upper] && seg.length === 1) {
+      const newParts = [...parts];
+      const replacement = seg === seg.toLowerCase() ? PAIRS[upper].toLowerCase() : PAIRS[upper];
+      newParts[i] = replacement;
+      return newParts.join('_') + suffix;
+    }
+
+    // Pattern 2: segment ends with a side letter appended to digits (e.g. "381A", "555B")
+    const trailingMatch = seg.match(/^(\d+)([A-Za-z])$/);
+    if (trailingMatch) {
+      const letter = trailingMatch[2].toUpperCase();
+      if (PAIRS[letter]) {
+        const newParts = [...parts];
+        const replacement = trailingMatch[2] === trailingMatch[2].toLowerCase()
+          ? PAIRS[letter].toLowerCase()
+          : PAIRS[letter];
+        newParts[i] = trailingMatch[1] + replacement;
+        return newParts.join('_') + suffix;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Calculate centered position on canvas
  */
 export function calculateCenteredPosition(

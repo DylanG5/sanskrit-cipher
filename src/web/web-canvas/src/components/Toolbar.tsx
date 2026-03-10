@@ -24,6 +24,9 @@ interface ToolbarProps {
   selectedFragmentHasSegmentation?: boolean;
   selectedFragmentShowSegmented?: boolean;
   onToggleSelectedFragmentSegmentation?: () => void;
+  // Mirror/flip toggle (only shows for single selection)
+  selectedFragmentIsMirrored?: boolean;
+  onMirrorSelected?: () => void;
   onBulkEditMetadata?: () => void;
   // Session management props
   projectName?: string;
@@ -52,6 +55,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   selectedFragmentHasSegmentation,
   selectedFragmentShowSegmented,
   onToggleSelectedFragmentSegmentation,
+  selectedFragmentIsMirrored,
+  onMirrorSelected,
   onBulkEditMetadata,
   projectName,
   saveStatus = 'saved',
@@ -279,6 +284,44 @@ const Toolbar: React.FC<ToolbarProps> = ({
             >
               <span className="text-sm font-bold">Ungroup</span>
             </button>
+
+            {/* Mirror/flip toggle - only show for single selection */}
+            {selectedCount === 1 && onMirrorSelected && (
+              <button
+                onClick={onMirrorSelected}
+                className="px-4 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+                style={{
+                  background: selectedFragmentIsMirrored
+                    ? 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)'
+                    : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedFragmentIsMirrored) {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #22d3ee 0%, #0891b2 100%)';
+                  } else {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = selectedFragmentIsMirrored
+                    ? 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)'
+                    : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+                }}
+                title={selectedFragmentIsMirrored ? "Remove horizontal flip" : "Flip image horizontally (mirror)"}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 12h8M8 17h8M4 4v16M20 4v16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16" strokeDasharray="2 2" />
+                </svg>
+                <span className="text-sm font-bold">Mirror</span>
+              </button>
+            )}
 
             {/* Segmentation toggle - only show for single selection with segmentation data */}
             {selectedCount === 1 && selectedFragmentHasSegmentation && onToggleSelectedFragmentSegmentation && (
