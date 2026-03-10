@@ -59,6 +59,8 @@ export function mapToManuscriptFragment(
         pixelsPerUnit: record.pixels_per_unit,
         detectionStatus: record.scale_detection_status === 'success' ? 'success' : 'error',
       } : undefined,
+      transcription: record.transcription ?? undefined,
+      notes: record.notes ?? undefined,
       custom: customFilters.length > 0 ? custom : undefined,
     },
   };

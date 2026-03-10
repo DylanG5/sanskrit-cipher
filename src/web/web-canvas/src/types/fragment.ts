@@ -25,6 +25,8 @@ export interface ManuscriptFragment {
       detectionStatus: 'success' | 'error';  // Detection result
     };
     segmentationStatus?: string; // For displaying segmentation processing status
+    transcription?: string; // User-entered transcription text
+    notes?: string; // User-entered notes
   };
 }
 
@@ -32,6 +34,7 @@ export interface CanvasFragment {
   id: string;
   fragmentId: string;
   name: string;
+  groupId?: string;
   imagePath: string;
   segmentationCoords?: string; // JSON string with polygon contour coordinates
   x: number;

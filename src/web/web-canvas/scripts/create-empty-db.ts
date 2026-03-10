@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS fragments (
     segmentation_coords TEXT,
 
     -- User metadata
+    transcription TEXT,
     notes TEXT,
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
