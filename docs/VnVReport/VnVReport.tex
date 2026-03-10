@@ -272,6 +272,23 @@ The segmentation model isolates manuscript fragments from the background. This s
 \label{fig:segmentation-results}
 \end{figure}
 
+\subsubsection{Line Detection}
+
+The line detection model identifies individual text lines within manuscript fragments. Accurate line detection is essential for downstream tasks such as script classification and transcription analysis.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{results/Line-Detection/results.png}
+\caption{Line detection model output showing predicted line boundaries on fragments.}
+\label{fig:line-detection}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{results/Line-Detection/confusion_matrix_lines.png}
+\caption{Confusion matrix for line detection model showing classification performance.}
+\label{fig:line-detection-confusion}
+\end{figure}
 
 \subsection{Performance Benchmark Results}
 
