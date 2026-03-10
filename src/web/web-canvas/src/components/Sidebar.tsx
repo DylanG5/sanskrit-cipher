@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { getReverseSideId } from "../utils/fragments";
 import { ManuscriptFragment, CanvasFragment } from "../types/fragment";
 import { CustomFilterDefinition } from "../types/customFilters";
@@ -74,6 +74,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   const autoSelectReverseRef = useRef(false);
   const fragmentsRef = useRef(fragments);
 
+  // Sort order
+  const [sortOrder, setSortOrder] = useState<'az' | 'za'>('az');
+
+  const sortedFragments = useMemo(() => {
+    const copy = [...fragments];
+    copy.sort((a, b) =>
+      sortOrder === 'az'
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
+    );
+    return copy;
+  }, [fragments, sortOrder]);
+
+  // Last-used amber highlight
+  const [lastUsedId, setLastUsedId] = useState<string | null>(null);
+
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(window.innerHeight - 120);
@@ -89,6 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Clear sidebar selection when fragments list changes (filter/search)
   useEffect(() => {
     setSelectedSidebarIds(new Set());
+    setLastUsedId(null);
   }, [fragments]);
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -120,6 +137,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Toggle select with auto-pair support
   const handleToggleSelect = useCallback((fragment: ManuscriptFragment) => {
+    // Track last-used before the async state update
+    if (!selectedSidebarIdsRef.current.has(fragment.id)) {
+      setLastUsedId(fragment.id);
+    }
     setSelectedSidebarIds(prev => {
       const next = new Set(prev);
       if (next.has(fragment.id)) {
@@ -142,8 +163,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   const selectedSidebarIdsRef = useRef(selectedSidebarIds);
   useEffect(() => { selectedSidebarIdsRef.current = selectedSidebarIds; }, [selectedSidebarIds]);
 
+  // Select all / deselect all
+  const allSelected = sortedFragments.length > 0 &&
+    sortedFragments.every(f => selectedSidebarIds.has(f.id));
+
+  const handleSelectAll = useCallback(() => {
+    if (allSelected) {
+      setSelectedSidebarIds(new Set());
+    } else {
+      setSelectedSidebarIds(new Set(sortedFragments.map(f => f.id)));
+    }
+  }, [allSelected, sortedFragments]);
+
   // Drag: if multiple selected and dragged fragment is in selection, use onMultiDragStart
   const handleDragStartInternal = useCallback((fragment: ManuscriptFragment, e: React.DragEvent) => {
+    setLastUsedId(fragment.id);
     const ids = selectedSidebarIdsRef.current;
     if (ids.size > 1 && ids.has(fragment.id)) {
       const selected = fragmentsRef.current.filter(f => ids.has(f.id));
@@ -291,8 +325,34 @@ const Sidebar: React.FC<SidebarProps> = ({
               </button>
             </div>
 
-            {/* Multi-select controls: auto-pair toggle */}
+            {/* Multi-select controls: sort, select-all, auto-pair toggle */}
             <div className="mb-3 flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setSortOrder(v => v === 'az' ? 'za' : 'az')}
+                title={sortOrder === 'az' ? 'Sorted A→Z — click for Z→A' : 'Sorted Z→A — click for A→Z'}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all font-body border"
+                style={{
+                  background: 'rgba(231,229,228,0.5)',
+                  borderColor: 'rgba(214,211,209,0.5)',
+                  color: '#78716c',
+                }}
+              >
+                {sortOrder === 'az' ? 'A→Z' : 'Z→A'}
+              </button>
+
+              <button
+                onClick={handleSelectAll}
+                title={allSelected ? 'Deselect all' : 'Select all visible fragments'}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all font-body border"
+                style={{
+                  background: allSelected ? 'rgba(59,130,246,0.12)' : 'rgba(231,229,228,0.5)',
+                  borderColor: allSelected ? 'rgba(59,130,246,0.4)' : 'rgba(214,211,209,0.5)',
+                  color: allSelected ? '#1d4ed8' : '#78716c',
+                }}
+              >
+                {allSelected ? 'Deselect all' : 'Select all'}
+              </button>
+
               <button
                 onClick={() => setAutoSelectReverse(v => !v)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all font-body border"
@@ -496,7 +556,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             ) : (
               <VirtualizedFragmentList
-                fragments={fragments}
+                fragments={sortedFragments}
                 selectedIds={selectedSidebarIds}
                 onDragStart={handleDragStartInternal}
                 onFragmentClick={handleFragmentClick}
@@ -507,6 +567,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 isLoadingMore={isLoadingMore}
                 scrollPosition={scrollPosition}
                 onScrollPositionChange={setScrollPosition}
+                lastUsedId={lastUsedId}
               />
             )}
           </div>
