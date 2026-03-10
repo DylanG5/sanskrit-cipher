@@ -92,6 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const listContainerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(window.innerHeight - 120);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [localSearchQuery, setLocalSearchQuery] = useState("");
@@ -234,11 +235,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   React.useEffect(() => {
-    const handleResize = () => {
-      setContainerHeight(window.innerHeight - 120);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const el = listContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      const entry = entries[0];
+      if (entry) setContainerHeight(entry.contentRect.height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -301,9 +305,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             background: "linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%)",
             borderRight: "1px solid rgba(120, 113, 108, 0.2)",
           }}
-          className="relative shadow-lg flex-shrink-0 overflow-hidden"
+          className="relative shadow-lg flex-shrink-0 overflow-hidden flex flex-col h-full"
         >
-          <div className="p-4">
+          <div className="p-4 flex flex-col flex-1 min-h-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold flex items-center gap-2.5 font-body" style={{ color: "#292524" }}>
                 <svg className="w-5 h-5" style={{ color: "#ea580c" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -490,7 +494,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <p className="text-xs font-body" style={{ color: "#a8a29e" }}>No compatible edges detected for this fragment</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 overflow-y-auto" style={{ maxHeight: containerHeight - 120 }}>
+                  <div className="space-y-2 overflow-y-auto" style={{ maxHeight: containerHeight }}>
                     {edgeMatches.map((match, idx) => {
                       const confidence = match.confidence ?? 1 / (1 + match.score);
                       const confidencePct = Math.round(confidence * 100);
@@ -555,20 +559,22 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </p>
               </div>
             ) : (
-              <VirtualizedFragmentList
-                fragments={sortedFragments}
-                selectedIds={selectedSidebarIds}
-                onDragStart={handleDragStartInternal}
-                onFragmentClick={handleFragmentClick}
-                onToggleSelect={handleToggleSelect}
-                containerHeight={selectedSidebarIds.size > 0 ? containerHeight - 80 : containerHeight}
-                onLoadMore={onLoadMore}
-                hasMore={hasMore}
-                isLoadingMore={isLoadingMore}
-                scrollPosition={scrollPosition}
-                onScrollPositionChange={setScrollPosition}
-                lastUsedId={lastUsedId}
-              />
+              <div ref={listContainerRef} className="flex-1 min-h-0">
+                <VirtualizedFragmentList
+                  fragments={sortedFragments}
+                  selectedIds={selectedSidebarIds}
+                  onDragStart={handleDragStartInternal}
+                  onFragmentClick={handleFragmentClick}
+                  onToggleSelect={handleToggleSelect}
+                  containerHeight={containerHeight - (selectedSidebarIds.size > 0 ? 80 : 0)}
+                  onLoadMore={onLoadMore}
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  scrollPosition={scrollPosition}
+                  onScrollPositionChange={setScrollPosition}
+                  lastUsedId={lastUsedId}
+                />
+              </div>
             )}
           </div>
 
