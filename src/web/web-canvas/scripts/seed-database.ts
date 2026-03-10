@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS fragments (
     line_count INTEGER,
     script_type TEXT,
     segmentation_coords TEXT,
+    transcription TEXT,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
