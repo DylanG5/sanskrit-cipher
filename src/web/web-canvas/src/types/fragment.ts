@@ -34,6 +34,7 @@ export interface CanvasFragment {
   id: string;
   fragmentId: string;
   name: string;
+  groupId?: string;
   imagePath: string;
   segmentationCoords?: string; // JSON string with polygon contour coordinates
   x: number;
