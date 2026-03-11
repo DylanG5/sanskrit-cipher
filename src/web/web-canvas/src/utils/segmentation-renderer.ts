@@ -37,14 +37,13 @@ export async function createSegmentedImage(
           return;
         }
 
-        // Use the largest contour (most points = largest area = main fragment body)
-        // YOLO often produces multiple contours where smaller ones are noise artifacts
-        const contour = coordsData.contours.reduce((largest, current) =>
-          current.length > largest.length ? current : largest
+        // Use all valid contours (≥3 points) so every visible fragment piece is shown
+        const validContours = coordsData.contours.filter(
+          (c) => Array.isArray(c) && c.length >= 3
         );
 
-        if (!Array.isArray(contour) || contour.length < 3) {
-          reject(new Error('Invalid contour data: must have at least 3 points'));
+        if (validContours.length === 0) {
+          reject(new Error('Invalid contour data: no contours with at least 3 points'));
           return;
         }
 
@@ -59,19 +58,23 @@ export async function createSegmentedImage(
           return;
         }
 
-        // Create clipping path from contour coordinates
+        // Build a compound clipping path — one subpath per contour.
+        // Multiple closed subpaths with the default "nonzero" winding rule
+        // unions the regions: everything inside any contour is rendered.
         ctx.beginPath();
-        contour.forEach((point: number[], index: number) => {
-          const [x, y] = point;
-          if (index === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
+        validContours.forEach((contour) => {
+          contour.forEach((point: number[], index: number) => {
+            const [x, y] = point;
+            if (index === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          });
+          ctx.closePath();
         });
-        ctx.closePath();
 
-        // Apply clipping path and draw image
+        // Apply compound clipping path and draw image
         ctx.clip();
         ctx.drawImage(img, 0, 0);
 
@@ -105,10 +108,9 @@ export function hasValidSegmentation(segmentationCoordsJson: string | null): boo
       return false;
     }
     // Check that at least one contour has enough points
-    const largestContour = coordsData.contours.reduce((largest, current) =>
-      current.length > largest.length ? current : largest
+    return coordsData.contours.some(
+      (c) => Array.isArray(c) && c.length >= 3
     );
-    return Array.isArray(largestContour) && largestContour.length >= 3;
   } catch {
     return false;
   }
