@@ -83,6 +83,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     return [...BUILTIN_FILTER_IDS];
   });
   const draggedFilterId = useRef<string | null>(null);
+  const scrollAnimationRef = useRef<number | null>(null);
+  const scrollStateRef = useRef<{ direction: "up" | "down"; speed: number } | null>(null);
   const [dragOverFilterId, setDragOverFilterId] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<"before" | "after" | null>(
     null,
@@ -117,6 +119,28 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     localStorage.setItem(FILTER_ORDER_KEY, JSON.stringify(filterOrder));
   }, [filterOrder]);
 
+  const startAutoScroll = (direction: "up" | "down", speed: number) => {
+    // Always update the desired state so the running loop picks up new values
+    scrollStateRef.current = { direction, speed };
+    if (scrollAnimationRef.current !== null) return; // loop already running
+    const step = () => {
+      const panel = panelRef.current;
+      const state = scrollStateRef.current;
+      if (!panel || !state) return;
+      panel.scrollTop += state.direction === "down" ? state.speed : -state.speed;
+      scrollAnimationRef.current = requestAnimationFrame(step);
+    };
+    scrollAnimationRef.current = requestAnimationFrame(step);
+  };
+
+  const stopAutoScroll = () => {
+    scrollStateRef.current = null;
+    if (scrollAnimationRef.current !== null) {
+      cancelAnimationFrame(scrollAnimationRef.current);
+      scrollAnimationRef.current = null;
+    }
+  };
+
   // Drag-and-drop handlers
   const handleFilterDragStart = (e: React.DragEvent, filterId: string) => {
     draggedFilterId.current = filterId;
@@ -137,6 +161,24 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     const midY = rect.top + rect.height / 2;
     setDragOverFilterId(filterId);
     setDropPosition(e.clientY < midY ? "before" : "after");
+
+    const panelRect = panelRef.current?.getBoundingClientRect();
+    if (panelRect) {
+      const SCROLL_ZONE = 60;
+      const MAX_SPEED = 8;
+      const distFromTop = e.clientY - panelRect.top;
+      const distFromBottom = panelRect.bottom - e.clientY;
+
+      if (distFromTop < SCROLL_ZONE) {
+        const speed = Math.ceil(MAX_SPEED * (1 - distFromTop / SCROLL_ZONE));
+        startAutoScroll("up", speed);
+      } else if (distFromBottom < SCROLL_ZONE) {
+        const speed = Math.ceil(MAX_SPEED * (1 - distFromBottom / SCROLL_ZONE));
+        startAutoScroll("down", speed);
+      } else {
+        stopAutoScroll();
+      }
+    }
   };
 
   const handleFilterDragLeave = () => {
@@ -171,6 +213,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   const cleanupDrag = () => {
+    stopAutoScroll();
     draggedFilterId.current = null;
     setDragOverFilterId(null);
     setDropPosition(null);
@@ -498,6 +541,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             borderLeft: "1px solid rgba(120, 113, 108, 0.2)",
           }}
           className="overflow-y-auto shadow-lg flex flex-col flex-shrink-0 relative"
+          onDragLeave={(e) => {
+            // Only stop when pointer leaves the panel entirely, not when
+            // transitioning between child elements (which also bubble dragleave)
+            if (!panelRef.current?.contains(e.relatedTarget as Node)) {
+              stopAutoScroll();
+            }
+          }}
         >
           {/* Header */}
           <div
@@ -1600,7 +1650,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
           {/* Action Buttons */}
           <div
-            className="p-4 bg-white sticky bottom-0 space-y-2.5"
+            className="p-4 bg-white sticky bottom-0 z-10 space-y-2.5"
             style={{
               borderTop: "1px solid rgba(214, 211, 209, 0.4)",
             }}
