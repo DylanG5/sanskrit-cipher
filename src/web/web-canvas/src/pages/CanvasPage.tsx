@@ -67,6 +67,7 @@ function CanvasPage() {
   const draggedFragmentRef = useRef<ManuscriptFragment | null>(null);
   const draggedFragmentsRef = useRef<ManuscriptFragment[]>([]);
   const dropPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const viewportRef = useRef<{ scale: number; position: { x: number; y: number } }>({ scale: 1, position: { x: 0, y: 0 } });
   const draggedSelectionRef = useRef<ManuscriptFragment[] | null>(null);
 
   // Edge match state
@@ -842,6 +843,13 @@ function CanvasPage() {
     const position = dropPositionRef.current;
     if (!position) return;
 
+    // Convert screen-space drop coordinates to canvas coordinate space
+    const { scale, position: stagePos } = viewportRef.current;
+    const canvasPosition = {
+      x: (position.x - stagePos.x) / scale,
+      y: (position.y - stagePos.y) / scale,
+    };
+
     const multiFragments = draggedFragmentsRef.current;
     const selectedFragments = draggedSelectionRef.current;
     const singleFragment = draggedFragmentRef.current;
@@ -876,8 +884,8 @@ function CanvasPage() {
             name: fragment.name,
             imagePath: fragment.imagePath,
             segmentationCoords: fragment.segmentationCoords,
-            x: position.x + offsetX - width / 2,
-            y: position.y + offsetY - height / 2,
+            x: canvasPosition.x + offsetX - width / 2,
+            y: canvasPosition.y + offsetY - height / 2,
             width,
             height,
             rotation: 0,
@@ -1484,6 +1492,9 @@ function CanvasPage() {
             onFragmentDoubleClick={handleCanvasFragmentDoubleClick}
             isGridVisible={isGridVisible}
             gridScale={gridScale}
+            onViewportChange={(scale, position) => {
+              viewportRef.current = { scale, position };
+            }}
           />
         </div>
 

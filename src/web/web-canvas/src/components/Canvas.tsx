@@ -23,6 +23,7 @@ interface CanvasProps {
   onFragmentDoubleClick?: (fragmentId: string) => void;
   isGridVisible?: boolean;
   gridScale?: number; // pixels per cm
+  onViewportChange?: (scale: number, position: { x: number; y: number }) => void;
 }
 
 interface FragmentImageProps {
@@ -154,6 +155,7 @@ const Canvas: React.FC<CanvasProps> = ({
   onFragmentDoubleClick,
   isGridVisible = false,
   gridScale = 25,
+  onViewportChange,
 }) => {
   console.log("Canvas rendering with fragments:", fragments.length);
 
@@ -216,6 +218,13 @@ const Canvas: React.FC<CanvasProps> = ({
       setShowSplash(true);
     }
   }, [fragments.length]);
+  // Notify parent of viewport changes so it can convert drop coordinates
+  useEffect(() => {
+    if (onViewportChange) {
+      onViewportChange(stageScale, stagePosition);
+    }
+  }, [stageScale, stagePosition, onViewportChange]);
+
   const dragContextRef = useRef<{
     anchorId: string;
     anchorStart: { x: number; y: number };
