@@ -17,6 +17,7 @@ interface FragmentMetadataProps {
   canvasFragment?: CanvasFragment | null; // Canvas fragment data for resize-based scale calculation
   gridScale?: number; // Grid scale in pixels per cm
   customFilters: CustomFilterDefinition[];
+  inline?: boolean; // When true, renders as in-flow content (no fixed positioning)
 }
 
 const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
@@ -26,6 +27,7 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
   canvasFragment,
   gridScale = 25,
   customFilters,
+  inline = false,
 }) => {
   const [fragment, setFragment] = useState(initialFragment);
   const { metadata } = fragment;
@@ -872,7 +874,7 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
   };
 
   return (
-    <div className="fixed left-1/2 top-20 -translate-x-1/2 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+    <div className={inline ? "w-full h-full flex flex-col bg-white overflow-hidden" : "fixed left-1/2 top-20 -translate-x-1/2 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200"}>
       {/* Header */}
       <div className="bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 text-white p-5 flex justify-between items-start">
         <div className="flex-1 flex items-start gap-3">
@@ -901,7 +903,7 @@ const FragmentMetadata: React.FC<FragmentMetadataProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-5 max-h-[calc(100vh-16rem)] overflow-y-auto">
+      <div className={inline ? "p-5 flex-1 overflow-y-auto" : "p-5 max-h-[calc(100vh-16rem)] overflow-y-auto"}>
         <div className="space-y-3">
           {/* Line Count */}
           {renderEditableField(
