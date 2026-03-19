@@ -64,12 +64,31 @@ const Toolbar: React.FC<ToolbarProps> = ({
   saveStatus = 'saved',
 }) => {
   const navigate = useNavigate();
+  const toolbarScrollRef = React.useRef<HTMLDivElement>(null);
+
+  const handleToolbarWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+
+    // Map vertical wheel movement to horizontal toolbar scrolling.
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  };
+
   return (
-    <div className="h-16 border-b flex items-center px-6 gap-3 shadow-lg" style={{
-      background: 'linear-gradient(90deg, #1c1917 0%, #292524 100%)',
-      borderColor: 'rgba(120, 113, 108, 0.3)'
-    }}>
-      <div className="flex items-center gap-2.5">
+    <div
+      ref={toolbarScrollRef}
+      onWheel={handleToolbarWheel}
+      className="h-16 border-b shadow-lg w-full max-w-full overflow-x-auto overflow-y-hidden"
+      style={{
+        background: 'linear-gradient(90deg, #1c1917 0%, #292524 100%)',
+        borderColor: 'rgba(120, 113, 108, 0.3)'
+      }}
+    >
+      <div className="h-full min-w-max flex items-center px-6 gap-3 whitespace-nowrap">
+      <div className="flex items-center gap-2.5 shrink-0">
         <svg
           className="w-6 h-6"
           style={{ color: '#ea580c' }}
@@ -124,7 +143,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </div>
       <button
         onClick={() => navigate("/")}
-        className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg ml-4 font-body"
+        className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg ml-4 font-body shrink-0"
         style={{
           background: 'rgba(68, 64, 60, 0.8)',
           color: '#d6d3d1'
@@ -155,7 +174,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <span className="text-sm font-semibold">Home</span>
       </button>
 
-      <div className="flex gap-2 ml-auto items-center">
+      <div className="flex gap-2 ml-auto items-center shrink-0">
         {selectedCount > 0 && (
           <>
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg border mr-1.5 font-body" style={{
@@ -638,6 +657,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <span className="text-sm font-semibold">Upload</span>
         </button>
 
+      </div>
       </div>
     </div>
   );

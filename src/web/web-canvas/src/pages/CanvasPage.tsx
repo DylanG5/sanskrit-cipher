@@ -1453,7 +1453,7 @@ function CanvasPage() {
   });
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen w-full overflow-hidden">
       <Toolbar
         selectedCount={selectedFragmentIds.length}
         onLockSelected={handleLockSelected}
