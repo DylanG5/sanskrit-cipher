@@ -5,6 +5,7 @@ interface ToolbarProps {
   selectedCount: number;
   onLockSelected: () => void;
   onUnlockSelected: () => void;
+  onRotate180Selected: () => void;
   onBringToFront: () => void;
   onSendToBack: () => void;
   onGroupSelected: () => void;
@@ -37,6 +38,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   selectedCount,
   onLockSelected,
   onUnlockSelected,
+  onRotate180Selected,
   onBringToFront,
   onSendToBack,
   onGroupSelected,
@@ -237,6 +239,35 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 />
               </svg>
               <span className="text-sm font-bold">Unlock</span>
+            </button>
+
+            <button
+              onClick={onRotate180Selected}
+              className="px-4 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)';
+              }}
+              title="Rotate selected fragments by 180°"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v6h6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 20v-6h-6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 9a8 8 0 00-13.66-5.66L4 6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 15a8 8 0 0013.66 5.66L20 18" />
+              </svg>
+              <span className="text-sm font-bold">Rotate 180°</span>
             </button>
 
             <button

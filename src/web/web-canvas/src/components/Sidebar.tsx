@@ -87,6 +87,16 @@ const Sidebar: React.FC<SidebarProps> = ({
     return copy;
   }, [fragments, sortOrder]);
 
+  const rotationByFragmentId = useMemo<Record<string, number>>(() => {
+    const byId: Record<string, number> = {};
+
+    for (const fragment of fragments) {
+      byId[fragment.id] = fragment.rotation ?? 0;
+    }
+
+    return byId;
+  }, [fragments]);
+
   // Last-used amber highlight
   const [lastUsedId, setLastUsedId] = useState<string | null>(null);
 
@@ -563,6 +573,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <VirtualizedFragmentList
                   fragments={sortedFragments}
                   selectedIds={selectedSidebarIds}
+                  rotationByFragmentId={rotationByFragmentId}
                   onDragStart={handleDragStartInternal}
                   onFragmentClick={handleFragmentClick}
                   onToggleSelect={handleToggleSelect}

@@ -3,6 +3,7 @@ export interface ManuscriptFragment {
   name: string;
   imagePath: string;
   thumbnailPath: string;
+  rotation?: number;
   // Segmentation info
   segmentedImagePath?: string;  // Path to segmented image if available
   hasSegmentation?: boolean;     // Quick flag for UI

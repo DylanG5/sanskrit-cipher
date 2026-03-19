@@ -27,6 +27,7 @@ export interface FragmentRecord {
   id: number;
   fragment_id: string;
   image_path: string;
+  ui_rotation?: number | null;
   edge_piece: number;
   has_top_edge: number;
   has_bottom_edge: number;
@@ -140,6 +141,7 @@ declare global {
         getById: (id: string) => Promise<ApiResponse<FragmentRecord | null>>;
         updateMetadata: (id: string, metadata: Record<string, unknown>) => Promise<ApiResponse<null>>;
         bulkUpdateMetadata: (ids: string[], metadata: Record<string, unknown>) => Promise<ApiResponse<null>>;
+        bulkUpdateRotation: (rotations: Record<string, number>) => Promise<ApiResponse<null>>;
         bulkDelete: (ids: string[]) => Promise<ApiResponse<null>>;
         uploadFiles: (filePaths: string[]) => Promise<UploadResponse>;
       };

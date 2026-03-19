@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS fragments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fragment_id TEXT UNIQUE NOT NULL,
     image_path TEXT NOT NULL,              -- Relative path from data/ folder
+    ui_rotation REAL DEFAULT 0,            -- Persisted UI rotation (degrees)
     
     -- Classification metadata (populated by ML models later)
     edge_piece BOOLEAN DEFAULT 0,
