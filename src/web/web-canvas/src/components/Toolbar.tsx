@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 interface ToolbarProps {
   selectedCount: number;
+  sidebarSelectedCount?: number;
   onLockSelected: () => void;
   onUnlockSelected: () => void;
   onRotate180Selected: () => void;
@@ -36,6 +37,7 @@ interface ToolbarProps {
 
 const Toolbar: React.FC<ToolbarProps> = ({
   selectedCount,
+  sidebarSelectedCount = 0,
   onLockSelected,
   onUnlockSelected,
   onRotate180Selected,
@@ -65,6 +67,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
 }) => {
   const navigate = useNavigate();
   const toolbarScrollRef = React.useRef<HTMLDivElement>(null);
+  const hasCanvasSelection = selectedCount > 0;
+  const hasRotateSelection = selectedCount > 0 || sidebarSelectedCount > 0;
+  const selectionCountForRotate = selectedCount > 0 ? selectedCount : sidebarSelectedCount;
 
   const handleToolbarWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const el = toolbarScrollRef.current;
@@ -175,7 +180,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </button>
 
       <div className="flex gap-2 ml-auto items-center shrink-0">
-        {selectedCount > 0 && (
+        {hasRotateSelection && (
           <>
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg border mr-1.5 font-body" style={{
               background: 'rgba(234, 88, 12, 0.15)',
@@ -196,9 +201,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 />
               </svg>
               <span className="text-sm font-semibold">
-                {selectedCount} {selectedCount === 1 ? "item" : "items"}
+                {selectionCountForRotate} {selectionCountForRotate === 1 ? "item" : "items"}
               </span>
             </div>
+
+            {hasCanvasSelection && (
+              <>
 
             <button
               onClick={onLockSelected}
@@ -260,6 +268,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <span className="text-sm font-bold">Unlock</span>
             </button>
 
+              </>
+            )}
+
             <button
               onClick={onRotate180Selected}
               className="px-4 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
@@ -288,6 +299,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </svg>
               <span className="text-sm font-bold">Rotate 180°</span>
             </button>
+
+            {hasCanvasSelection && (
+              <>
 
             <button
               onClick={onBringToFront}
@@ -479,6 +493,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </button>
 
             <div className="w-px h-8 mx-1.5" style={{ background: 'rgba(120, 113, 108, 0.4)' }}></div>
+
+              </>
+            )}
           </>
         )}
 

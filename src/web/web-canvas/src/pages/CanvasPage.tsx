@@ -52,6 +52,8 @@ function CanvasPage() {
 
   const [canvasFragments, setCanvasFragments] = useState<CanvasFragment[]>([]);
   const [selectedFragmentIds, setSelectedFragmentIds] = useState<string[]>([]);
+  const [selectedSidebarFragmentIds, setSelectedSidebarFragmentIds] =
+    useState<string[]>([]);
   const [selectedMetadataFragment, setSelectedMetadataFragment] =
     useState<ManuscriptFragment | null>(null);
   const [filters, setFilters] = useState<FragmentFilters>(DEFAULT_FILTERS);
@@ -1003,12 +1005,19 @@ function CanvasPage() {
 
   // Rotate selected fragments by 180 degrees
   const handleRotate180Selected = () => {
-    if (selectedFragmentIds.length === 0) return;
+    if (selectedFragmentIds.length === 0 && selectedSidebarFragmentIds.length === 0) {
+      return;
+    }
 
-    const selectedSet = new Set(selectedFragmentIds);
+    const selectedCanvasSet = new Set(selectedFragmentIds);
+    const selectedSidebarSet = new Set(selectedSidebarFragmentIds);
     setCanvasFragments((prev) => {
       const nextCanvas = prev.map((fragment) => {
-        if (!selectedSet.has(fragment.id)) return fragment;
+        const shouldRotate =
+          selectedCanvasSet.has(fragment.id) ||
+          selectedSidebarSet.has(fragment.fragmentId);
+
+        if (!shouldRotate) return fragment;
 
         const currentRotationDeg = fragment.rotation ?? 0;
         const currentRotationRad = (currentRotationDeg * Math.PI) / 180;
@@ -1034,9 +1043,22 @@ function CanvasPage() {
 
       const rotationByFragmentId: Record<string, number> = {};
       for (const fragment of nextCanvas) {
-        if (selectedSet.has(fragment.id)) {
+        if (
+          selectedCanvasSet.has(fragment.id) ||
+          selectedSidebarSet.has(fragment.fragmentId)
+        ) {
           rotationByFragmentId[fragment.fragmentId] = fragment.rotation ?? 0;
         }
+      }
+
+      // Also rotate selected sidebar fragments that are not currently on canvas.
+      for (const fragmentId of selectedSidebarSet) {
+        if (rotationByFragmentId[fragmentId] !== undefined) continue;
+
+        const fragment = fragments.find((f) => f.id === fragmentId);
+        if (!fragment) continue;
+
+        rotationByFragmentId[fragmentId] = ((fragment.rotation ?? 0) + 180) % 360;
       }
 
       setFragments((prevFragments) =>
@@ -1456,6 +1478,7 @@ function CanvasPage() {
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Toolbar
         selectedCount={selectedFragmentIds.length}
+        sidebarSelectedCount={selectedSidebarFragmentIds.length}
         onLockSelected={handleLockSelected}
         onUnlockSelected={handleUnlockSelected}
         onRotate180Selected={handleRotate180Selected}
@@ -1535,6 +1558,7 @@ function CanvasPage() {
           onBulkEditSidebarMetadata={handleBulkEditSidebarMetadata}
           onDragStartSelected={handleDragStartSelected}
           onFragmentsDeleted={loadFragments}
+          onSelectionChange={setSelectedSidebarFragmentIds}
         />
 
         <div
