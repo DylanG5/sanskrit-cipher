@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 interface ToolbarProps {
   selectedCount: number;
+  sidebarSelectedCount?: number;
   onLockSelected: () => void;
   onUnlockSelected: () => void;
+  onRotate180Selected: () => void;
   onBringToFront: () => void;
   onSendToBack: () => void;
   onGroupSelected: () => void;
@@ -35,8 +37,10 @@ interface ToolbarProps {
 
 const Toolbar: React.FC<ToolbarProps> = ({
   selectedCount,
+  sidebarSelectedCount = 0,
   onLockSelected,
   onUnlockSelected,
+  onRotate180Selected,
   onBringToFront,
   onSendToBack,
   onGroupSelected,
@@ -62,12 +66,34 @@ const Toolbar: React.FC<ToolbarProps> = ({
   saveStatus = 'saved',
 }) => {
   const navigate = useNavigate();
+  const toolbarScrollRef = React.useRef<HTMLDivElement>(null);
+  const hasCanvasSelection = selectedCount > 0;
+  const hasRotateSelection = selectedCount > 0 || sidebarSelectedCount > 0;
+  const selectionCountForRotate = selectedCount > 0 ? selectedCount : sidebarSelectedCount;
+
+  const handleToolbarWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+
+    // Map vertical wheel movement to horizontal toolbar scrolling.
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  };
+
   return (
-    <div className="h-16 border-b flex items-center px-6 gap-3 shadow-lg" style={{
-      background: 'linear-gradient(90deg, #1c1917 0%, #292524 100%)',
-      borderColor: 'rgba(120, 113, 108, 0.3)'
-    }}>
-      <div className="flex items-center gap-2.5">
+    <div
+      ref={toolbarScrollRef}
+      onWheel={handleToolbarWheel}
+      className="h-16 border-b shadow-lg w-full max-w-full overflow-x-auto overflow-y-hidden"
+      style={{
+        background: 'linear-gradient(90deg, #1c1917 0%, #292524 100%)',
+        borderColor: 'rgba(120, 113, 108, 0.3)'
+      }}
+    >
+      <div className="h-full min-w-max flex items-center px-6 gap-3 whitespace-nowrap">
+      <div className="flex items-center gap-2.5 shrink-0">
         <svg
           className="w-6 h-6"
           style={{ color: '#ea580c' }}
@@ -122,7 +148,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </div>
       <button
         onClick={() => navigate("/")}
-        className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg ml-4 font-body"
+        className="px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg ml-4 font-body shrink-0"
         style={{
           background: 'rgba(68, 64, 60, 0.8)',
           color: '#d6d3d1'
@@ -153,8 +179,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <span className="text-sm font-semibold">Home</span>
       </button>
 
-      <div className="flex gap-2 ml-auto items-center">
-        {selectedCount > 0 && (
+      <div className="flex gap-2 ml-auto items-center shrink-0">
+        {hasRotateSelection && (
           <>
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg border mr-1.5 font-body" style={{
               background: 'rgba(234, 88, 12, 0.15)',
@@ -175,9 +201,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 />
               </svg>
               <span className="text-sm font-semibold">
-                {selectedCount} {selectedCount === 1 ? "item" : "items"}
+                {selectionCountForRotate} {selectionCountForRotate === 1 ? "item" : "items"}
               </span>
             </div>
+
+            {hasCanvasSelection && (
+              <>
 
             <button
               onClick={onLockSelected}
@@ -238,6 +267,41 @@ const Toolbar: React.FC<ToolbarProps> = ({
               </svg>
               <span className="text-sm font-bold">Unlock</span>
             </button>
+
+              </>
+            )}
+
+            <button
+              onClick={onRotate180Selected}
+              className="px-4 py-2.5 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 font-body"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)';
+              }}
+              title="Rotate selected fragments by 180°"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v6h6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 20v-6h-6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 9a8 8 0 00-13.66-5.66L4 6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 15a8 8 0 0013.66 5.66L20 18" />
+              </svg>
+              <span className="text-sm font-bold">Rotate 180°</span>
+            </button>
+
+            {hasCanvasSelection && (
+              <>
 
             <button
               onClick={onBringToFront}
@@ -429,6 +493,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </button>
 
             <div className="w-px h-8 mx-1.5" style={{ background: 'rgba(120, 113, 108, 0.4)' }}></div>
+
+              </>
+            )}
           </>
         )}
 
@@ -607,6 +674,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <span className="text-sm font-semibold">Upload</span>
         </button>
 
+      </div>
       </div>
     </div>
   );

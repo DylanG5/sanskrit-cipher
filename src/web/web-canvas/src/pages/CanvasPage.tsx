@@ -52,6 +52,8 @@ function CanvasPage() {
 
   const [canvasFragments, setCanvasFragments] = useState<CanvasFragment[]>([]);
   const [selectedFragmentIds, setSelectedFragmentIds] = useState<string[]>([]);
+  const [selectedSidebarFragmentIds, setSelectedSidebarFragmentIds] =
+    useState<string[]>([]);
   const [selectedMetadataFragment, setSelectedMetadataFragment] =
     useState<ManuscriptFragment | null>(null);
   const [filters, setFilters] = useState<FragmentFilters>(DEFAULT_FILTERS);
@@ -473,7 +475,7 @@ function CanvasPage() {
               y: frag.y,
               width: frag.width || 200,
               height: frag.height || 200,
-              rotation: frag.rotation,
+              rotation: frag.rotation ?? record.ui_rotation ?? 0,
               scaleX: frag.scaleX,
               scaleY: frag.scaleY,
               isLocked: frag.isLocked,
@@ -740,7 +742,7 @@ function CanvasPage() {
           y,
           width,
           height,
-          rotation: 0,
+          rotation: fragment.rotation ?? 0,
           scaleX: 1,
           scaleY: 1,
           isLocked: false,
@@ -888,7 +890,7 @@ function CanvasPage() {
             y: canvasPosition.y + offsetY - height / 2,
             width,
             height,
-            rotation: 0,
+            rotation: fragment.rotation ?? 0,
             scaleX: 1,
             scaleY: 1,
             isLocked: false,
@@ -939,7 +941,7 @@ function CanvasPage() {
             y: 100 + idx * OFFSET,
             width,
             height,
-            rotation: 0,
+            rotation: fragment.rotation ?? 0,
             scaleX: 1,
             scaleY: 1,
             isLocked: false,
@@ -999,6 +1001,84 @@ function CanvasPage() {
       selectedFragmentIds.includes(f.id) ? { ...f, isLocked: false } : f,
     );
     setCanvasFragments(updatedFragments);
+  };
+
+  // Rotate selected fragments by 180 degrees
+  const handleRotate180Selected = () => {
+    if (selectedFragmentIds.length === 0 && selectedSidebarFragmentIds.length === 0) {
+      return;
+    }
+
+    const selectedCanvasSet = new Set(selectedFragmentIds);
+    const selectedSidebarSet = new Set(selectedSidebarFragmentIds);
+    setCanvasFragments((prev) => {
+      const nextCanvas = prev.map((fragment) => {
+        const shouldRotate =
+          selectedCanvasSet.has(fragment.id) ||
+          selectedSidebarSet.has(fragment.fragmentId);
+
+        if (!shouldRotate) return fragment;
+
+        const currentRotationDeg = fragment.rotation ?? 0;
+        const currentRotationRad = (currentRotationDeg * Math.PI) / 180;
+        const cos = Math.cos(currentRotationRad);
+        const sin = Math.sin(currentRotationRad);
+
+        // Rotate around visual center (not top-left anchor).
+        // Konva rotates around the node origin, so shifting origin by R(theta) * (w, h)
+        // before adding 180° preserves center position.
+        const effectiveWidth = (fragment.width ?? 0) * (fragment.scaleX ?? 1);
+        const effectiveHeight = (fragment.height ?? 0) * (fragment.scaleY ?? 1);
+        const dx = effectiveWidth * cos - effectiveHeight * sin;
+        const dy = effectiveWidth * sin + effectiveHeight * cos;
+
+        const nextRotation = ((fragment.rotation ?? 0) + 180) % 360;
+        return {
+          ...fragment,
+          x: fragment.x + dx,
+          y: fragment.y + dy,
+          rotation: nextRotation,
+        };
+      });
+
+      const rotationByFragmentId: Record<string, number> = {};
+      for (const fragment of nextCanvas) {
+        if (
+          selectedCanvasSet.has(fragment.id) ||
+          selectedSidebarSet.has(fragment.fragmentId)
+        ) {
+          rotationByFragmentId[fragment.fragmentId] = fragment.rotation ?? 0;
+        }
+      }
+
+      // Also rotate selected sidebar fragments that are not currently on canvas.
+      for (const fragmentId of selectedSidebarSet) {
+        if (rotationByFragmentId[fragmentId] !== undefined) continue;
+
+        const fragment = fragments.find((f) => f.id === fragmentId);
+        if (!fragment) continue;
+
+        rotationByFragmentId[fragmentId] = ((fragment.rotation ?? 0) + 180) % 360;
+      }
+
+      setFragments((prevFragments) =>
+        prevFragments.map((fragment) => {
+          const updated = rotationByFragmentId[fragment.id];
+          return updated === undefined
+            ? fragment
+            : { ...fragment, rotation: updated };
+        }),
+      );
+
+      const api = getElectronAPISafe();
+      if (api && Object.keys(rotationByFragmentId).length > 0) {
+        api.fragments.bulkUpdateRotation(rotationByFragmentId).catch((error) => {
+          console.error('Failed to persist fragment rotation:', error);
+        });
+      }
+
+      return nextCanvas;
+    });
   };
 
   // Bring selected fragments to top of render stack
@@ -1395,11 +1475,13 @@ function CanvasPage() {
   });
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen w-full overflow-hidden">
       <Toolbar
         selectedCount={selectedFragmentIds.length}
+        sidebarSelectedCount={selectedSidebarFragmentIds.length}
         onLockSelected={handleLockSelected}
         onUnlockSelected={handleUnlockSelected}
+        onRotate180Selected={handleRotate180Selected}
         onBringToFront={handleBringToFront}
         onSendToBack={handleSendToBack}
         onGroupSelected={handleGroupSelected}
@@ -1476,6 +1558,7 @@ function CanvasPage() {
           onBulkEditSidebarMetadata={handleBulkEditSidebarMetadata}
           onDragStartSelected={handleDragStartSelected}
           onFragmentsDeleted={loadFragments}
+          onSelectionChange={setSelectedSidebarFragmentIds}
         />
 
         <div
