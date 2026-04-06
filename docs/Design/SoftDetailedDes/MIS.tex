@@ -457,7 +457,7 @@ This module allows users to select, preview, and submit manuscript fragment imag
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{Svc.API} – for upload endpoints.
+    \item \texttt{Svc.API} – specifically \texttt{POST /fragments/upload} for submitting image files and receiving fragment identifiers, and \texttt{GET /fragments/\{id\}/status} for polling processing status after upload.
     \item \texttt{HW.ImageStorage} – indirectly, via backend, for persistent image storage.
 \end{itemize}
 
@@ -1785,6 +1785,7 @@ This module provides model-based similarity estimates based on fragment edge con
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – to retrieve normalized images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1857,7 +1858,8 @@ This module classifies the script type of a fragment (for example, Gupta Brāhm�
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{HW.ImageStorage}.
+    \item \texttt{HW.ImageStorage} – for retrieving fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1924,6 +1926,7 @@ This module computes semantic similarity between text segments derived from tran
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{Data.FragmentStore} – for accessing fragment text content.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1997,6 +2000,7 @@ This module performs image segmentation to identify and isolate individual fragm
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for retrieving images to segment.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2074,6 +2078,7 @@ This module detects circular marks, holes, or decorative elements in manuscript 
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2150,6 +2155,7 @@ This module analyzes manuscript fragments to count the number of text lines pres
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2226,6 +2232,7 @@ This module classifies fragment edges into categories such as torn, cut, origina
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
     \item \texttt{ML.EdgeMatch} – edge signatures may be shared for classification.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
