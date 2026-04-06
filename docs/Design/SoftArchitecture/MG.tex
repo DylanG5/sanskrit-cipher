@@ -51,6 +51,7 @@
 January 20 & 1.0 & Added sections 2-5\\
 January 20 & 1.1 & Added sections 6-8\\
 January 20 & 1.2 & Added sections 9-12\\
+April 6 & 1.3 & Added low-fidelity user interface wireframes to support workflow planning and frontend implementation\\
 \bottomrule
 \end{tabularx}
 
@@ -212,21 +213,21 @@ decisions will be changed.
 
 \begin{description}
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: Image files via web upload, Output: Screen display and file export).
+  (Input: Image files via web upload, Output: Screen display and file export). This is unlikely to change because the system is designed specifically for standard web-based input/output devices, and supporting alternative hardware would require a fundamental redesign.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucWebApp}:] The system will be
-  deployed as a web-based application accessible through standard browsers.
+  deployed as a web-based application accessible through standard browsers. This is unlikely to change because the system is intended to be accessed through browsers, and changing the deployment model would significantly alter the architecture.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucImageProc}:] The system will
-  process 2D images of manuscript fragments.
+  process 2D images of manuscript fragments. This is unlikely to change because the system is specifically designed for 2D manuscript fragment analysis, and extending to other formats would require major redesign.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucCollaborate}:] The system will
-  support collaborative work through shared projects and annotations.
+  support collaborative work through shared projects and annotations. This is unlikely to change because collaboration is a core requirement of the system and removing it would contradict the primary use case.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucMLCore}:] Machine learning will
-  be a core component for fragment matching and analysis.
+  be a core component for fragment matching and analysis. This is unlikely to change because the system fundamentally relies on machine learning techniques for reconstruction and analysis, and removing or replacing this would require a complete redesign of the system’s core functionality.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
 
 This section provides an overview of the module design. Modules are summarized
-in a hierarchy decomposed by secrets in Table \ref{TblMH}. The modules listed
+in a hierarchy decomposed by secrets, shown in Table~\ref{TblMH}. The modules listed
 below, which are leaves in the hierarchy tree, are the modules that will
 actually be implemented.
 
@@ -264,29 +265,25 @@ actually be implemented.
 
 \begin{table}[h!]
 \centering
-\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
+\caption{Module Hierarchy}
+\label{TblMH}
+\begin{tabularx}{\textwidth}{p{0.24\textwidth} X}
 \toprule
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
 
-{Hardware-Hiding} & Image Storage Interface \\
+Hardware-Hiding & HW.ImageStorage \\
 \midrule
 
-\multirow{15}{0.3\textwidth}{Behaviour-Hiding} & User Interface: UI.Canvas, UI.Search, UI.Auth, UI.Upload,\\
-& \quad\quad\quad\quad\quad\quad UI.SaveSession, UI.LoadSession\\
-& Service Layer: Svc.API, Svc.Search, Svc.AuthZ, Svc.Session,\\
-& \quad\quad\quad\quad\quad\quad Svc.ProcOrch, Svc.MatchOrch\\
-& Data Management: Data.FragmentStore, Data.Catalog,\\
-& \quad\quad\quad\quad\quad\quad Data.User, Data.Project\\
-& Machine Learning Modules: ML.EdgeMatch, ML.ScriptClass,\\
-& \quad\quad\quad\quad\quad\quad ML.TextSim, ML.Segmentation, ML.CircleRecognition,\\
-& \quad\quad\quad\quad\quad\quad ML.LineCount, ML.EdgeClassification\\
+Behaviour-Hiding & User Interface: UI.Canvas, UI.Search, UI.Auth, UI.Upload, UI.SaveSession, UI.LoadSession \\
+Behaviour-Hiding & Service Layer: Svc.API, Svc.Search, Svc.AuthZ, Svc.Session, Svc.ProcOrch, Svc.MatchOrch \\
+Behaviour-Hiding & Data Management: Data.FragmentStore, Data.Catalog, Data.User, Data.Project \\
+Behaviour-Hiding & Machine Learning Modules: ML.EdgeMatch, ML.ScriptClass, ML.TextSim, ML.Segmentation, ML.CircleRecognition, ML.LineCount, ML.EdgeClassification \\
 \midrule
 
-\multirow{3}{0.3\textwidth}{Software Decision} & Utility and Support Modules (Error Handling, Logging,\\
-& Configuration Management, Test Stubs)\\
+Software Decision & Utility and Support Modules: Error Handling, Logging, Configuration Management, Test Stubs \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
@@ -317,6 +314,7 @@ implementing software is given under the \emph{Implemented By} title. If the
 entry is \emph{OS}, this means that the module is provided by the operating
 system or by standard programming language libraries.  \emph{\progname{}} means the
 module will be implemented by the \progname{} software.
+The \emph{Type of Module} field is used to explain why each module is shaped the way it is: \emph{Abstract Object} is used for stateful services, UI components, and ML components with hidden behaviour; \emph{Abstract Data Type} is used where operations must protect internal data representations; \emph{Record} is used for modules that primarily model structured stored entities; and \emph{Library} is used for shared, largely stateless helper functionality.
 
 Only the leaf modules in the hierarchy have to be implemented. If a dash
 (\emph{--}) is shown, this means that the module is not a leaf and will not have
@@ -970,7 +968,6 @@ The Sanskrit Manuscript Reconstruction Platform provides a web-based interface d
 
 \subsubsection{Transcription Assistance}
 \begin{itemize}
-    \item \textbf{OCR Output Display:} Extracted text with character-level confidence indicators
     \item \textbf{Script Classification:} Display of identified script type (e.g., Gupta, Tibetan, Chinese) with confidence $\geq$ 70\%
     \item \textbf{Manual Correction:} Editable text fields for scholarly review and correction
 \end{itemize}
