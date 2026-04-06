@@ -605,6 +605,11 @@ An interactive HTML coverage report is available at
 
 \subsection{Web Application (TypeScript / React)}
 
+Although the V\&V Plan originally specified Jest for front-end testing, the team
+adopted \texttt{vitest} during development because it offers native ES-module
+support and seamless integration with the Vite build toolchain already used by
+the project, eliminating the need for additional transpilation configuration.
+
 A line-coverage report was generated using \texttt{vitest} with
 \texttt{@vitest/coverage-v8} for the web application front-end code
 (\texttt{src/web/web-canvas}).  The test suite comprises \textbf{124 automated
