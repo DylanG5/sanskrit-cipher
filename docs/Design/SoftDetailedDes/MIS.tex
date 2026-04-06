@@ -64,6 +64,7 @@ Jan.\ 18, 2025 & 1.3 & Added Section 5: Module Decomposition.\\
 Jan.\ 18, 2025 & 1.4 & Added Sections 6--29: Module Interface Specifications for all modules.\\
 Nov.\ 13, 2025 & 1.5 & Added Reflection and References\\
 Apr.\ 6, 2026 & 1.6 & Expanded the Section 2 exception glossary for consistency with the module specifications.\\
+Apr.\ 6, 2026 & 1.7 & Removed the unimplemented \texttt{ML.TextSim} module from the MIS to align the document with the codebase.\\
 
 \bottomrule
 \end{tabularx}
@@ -257,7 +258,7 @@ Behaviour-Hiding &
 \textbf{User Interface (UI):} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload}, \texttt{UI.SaveSession}, \texttt{UI.LoadSession}\\
 \textbf{Service Layer (Svc):} \texttt{Svc.API}, \texttt{Svc.Search}, \texttt{Svc.AuthZ}, \texttt{Svc.Session}, \texttt{Svc.ProcOrch}, \texttt{Svc.MatchOrch}\\
 \textbf{Data Management (Data):} \texttt{Data.FragmentStore}, \texttt{Data.Catalog}, \texttt{Data.User}, \texttt{Data.Project}\\
-\textbf{Machine Learning Modules (ML):} \texttt{ML.EdgeMatch}, \texttt{ML.ScriptClass}, \texttt{ML.TextSim}, \texttt{ML.Segmentation}, \texttt{ML.CircleRecognition}, \texttt{ML.LineCount}, \texttt{ML.EdgeClassification}
+\textbf{Machine Learning Modules (ML):} \texttt{ML.EdgeMatch}, \texttt{ML.ScriptClass}, \texttt{ML.Segmentation}, \texttt{ML.CircleRecognition}, \texttt{ML.LineCount}, \texttt{ML.EdgeClassification}
 \end{minipage} \\
 \addlinespace
 Software Decision & 
@@ -1292,7 +1293,7 @@ This module coordinates AI models for fragment matching, aggregates model output
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{ML.EdgeMatch}, \texttt{ML.Damage}, \texttt{ML.TextSim}.
+    \item \texttt{ML.EdgeMatch}, \texttt{ML.Damage}.
     \item \texttt{Data.FragmentStore} – for retrieving fragment metadata.
 \end{itemize}
 
@@ -1927,79 +1928,6 @@ This module classifies the script type of a fragment (for example, Gupta Brāhm�
 \subsubsection{Local Functions}
 \begin{itemize}
     \item \texttt{preprocessForScript(img)} – applies script-specific preprocessing pipeline.
-\end{itemize}
-
-
-
-\section{MIS of ML.TextSim} \label{ML.TextSim}
-
-\subsection{Module}
-\textbf{ML.TextSim} \; (Textual Content Similarity Model)
-
-This module computes semantic similarity between text segments derived from transcribed text or manual annotations.
-
-\subsection{Uses}
-\begin{itemize}
-    \item \texttt{Data.FragmentStore} – for accessing fragment text content.
-\end{itemize}
-
-\subsection{Syntax}
-
-\subsubsection{Exported Constants}
-\begin{itemize}
-    \item \texttt{EMBEDDING\_DIM}
-\end{itemize}
-
-\subsubsection{Exported Access Programs}
-
-\begin{table}[H]
-\centering
-\small
-\caption{ML.TextSim - Exported Access Programs}
-\begin{tabular}{p{3.8cm} p{4.5cm} p{2.5cm} p{3.2cm}}
-\toprule
-\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
-\midrule
-\texttt{embedText} & \texttt{text: String} & \texttt{TextEmbedding} & \texttt{ModelError} \\
-\texttt{scoreTextSimilarity} & \texttt{a: TextEmbedding, b: TextEmbedding} & \texttt{float} & \texttt{ModelError} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Semantics}
-
-\subsubsection{State Variables}
-\begin{itemize}
-    \item Embedding model weights.
-\end{itemize}
-
-\subsubsection{Environment Variables}
-\begin{itemize}
-    \item Model runtime.
-\end{itemize}
-
-\subsubsection{Assumptions}
-\begin{itemize}
-    \item Input text is normalized (script, encoding).
-\end{itemize}
-
-\subsubsection{Access Routine Semantics}
-
-\noindent \texttt{embedText(text)}:
-\begin{itemize}
-    \item output: fixed-length embedding vector.
-    \item exception: \texttt{ModelError} if model fails.
-\end{itemize}
-
-\noindent \texttt{scoreTextSimilarity(a, b)}:
-\begin{itemize}
-    \item output: similarity score in \([0, 1]\).
-    \item exception: \texttt{ModelError} if inputs invalid.
-\end{itemize}
-
-\subsubsection{Local Functions}
-\begin{itemize}
-    \item \texttt{cosineSimilarity(a, b)} – core similarity computation.
 \end{itemize}
 
 
