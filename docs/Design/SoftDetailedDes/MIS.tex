@@ -490,7 +490,7 @@ This module allows users to select, preview, and submit manuscript fragment imag
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{Svc.API} – for upload endpoints.
+    \item \texttt{Svc.API} – specifically \texttt{POST /fragments/upload} for submitting image files and receiving fragment identifiers, and \texttt{GET /fragments/\{id\}/status} for polling processing status after upload.
     \item \texttt{HW.ImageStorage} – indirectly, via backend, for persistent image storage.
 \end{itemize}
 
@@ -1920,6 +1920,7 @@ This module provides model-based similarity estimates based on fragment edge con
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – to retrieve normalized images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1996,7 +1997,8 @@ This module classifies the script type of a fragment (for example, Gupta Brāhm�
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{HW.ImageStorage}.
+    \item \texttt{HW.ImageStorage} – for retrieving fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2055,6 +2057,80 @@ This module classifies the script type of a fragment (for example, Gupta Brāhm�
 
 
 
+\section{MIS of ML.TextSim} \label{ML.TextSim}
+
+\subsection{Module}
+\textbf{ML.TextSim} \; (Textual Content Similarity Model)
+
+This module computes semantic similarity between text segments derived from transcribed text or manual annotations.
+
+\subsection{Uses}
+\begin{itemize}
+    \item \texttt{Data.FragmentStore} – for accessing fragment text content.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
+\end{itemize}
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+\begin{itemize}
+    \item \texttt{EMBEDDING\_DIM}
+\end{itemize}
+
+\subsubsection{Exported Access Programs}
+
+\begin{table}[H]
+\centering
+\small
+\caption{ML.TextSim - Exported Access Programs}
+\begin{tabular}{p{3.8cm} p{4.5cm} p{2.5cm} p{3.2cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{embedText} & \texttt{text: String} & \texttt{TextEmbedding} & \texttt{ModelError} \\
+\texttt{scoreTextSimilarity} & \texttt{a: TextEmbedding, b: TextEmbedding} & \texttt{float} & \texttt{ModelError} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+\begin{itemize}
+    \item Embedding model weights.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+\begin{itemize}
+    \item Model runtime.
+\end{itemize}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Input text is normalized (script, encoding).
+\end{itemize}
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{embedText(text)}:
+\begin{itemize}
+    \item output: fixed-length embedding vector.
+    \item exception: \texttt{ModelError} if model fails.
+\end{itemize}
+
+\noindent \texttt{scoreTextSimilarity(a, b)}:
+\begin{itemize}
+    \item output: similarity score in \([0, 1]\).
+    \item exception: \texttt{ModelError} if inputs invalid.
+\end{itemize}
+
+\subsubsection{Local Functions}
+\begin{itemize}
+    \item \texttt{cosineSimilarity(a, b)} – core similarity computation.
+\end{itemize}
+
+
+
 \section{MIS of ML.Segmentation} \label{ML.Segmentation}
 
 \subsection{Module}
@@ -2065,6 +2141,7 @@ This module performs image segmentation to identify and isolate individual fragm
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for retrieving images to segment.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2146,6 +2223,7 @@ This module detects circular marks, holes, or decorative elements in manuscript 
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2226,6 +2304,7 @@ This module analyzes manuscript fragments to count the number of text lines pres
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2306,6 +2385,7 @@ This module classifies fragment edges into categories such as torn, cut, origina
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
     \item \texttt{ML.EdgeMatch} – edge signatures may be shared for classification.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
