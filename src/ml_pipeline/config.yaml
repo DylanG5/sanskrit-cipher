@@ -66,7 +66,7 @@ processors:
     enabled: true
     config:
       model_version: "1.0"
-      edge_method: "hull_segments"  # or "bbox_runs"
+      edge_method: "hull_segments"  # "hull_segments" | "bbox_runs" | "oriented_runs" | "oriented_runs_scaled"
       near_frac: 0.05
       min_run_frac: 0.05
       max_mean_line_err: 12.0
@@ -77,6 +77,17 @@ processors:
       hull_near_frac: 0.06
       hull_angle_h: 12.0
       hull_angle_v: 78.0
+      oriented_near_frac: 0.04
+      oriented_min_run_frac: 0.40
+      oriented_max_line_err_frac: 0.02
+      oriented_max_side_offset_frac: 0.025
+      oriented_angle_tol_deg: 18.0
+      oriented_min_confidence: 0.60
+      oriented_smoothing_window: 7
+      oriented_trim_frac: 0.10
+      oriented_scaled_target_pixels_per_unit: 100.0
+      oriented_scaled_crop_pad: 4
+      oriented_scaled_max_dimension: 8192
   linedetection:
     enabled: true
     model_path: "../models/line-detection/best.pt"
