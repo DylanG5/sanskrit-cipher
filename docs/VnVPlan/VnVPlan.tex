@@ -37,6 +37,7 @@ Date October 27 & 1.2 & Added section 2 and reflection\\
 Date October 27 & 1.3 & Added section 3.1 - 3.4\\
 Date October 27 & 1.4 & Added implementation, automated, and software verification\\
 Feb.\ 15, 2026 & 1.5 & Updated plan to match implemented scope and added unit test section\\
+April 6, 2026 & 1.6 & Clarified feedback metrics, ambiguity definition, and reference warning criteria\\
 \bottomrule
 \end{tabularx}
 
@@ -175,7 +176,8 @@ This subsection defines how we will verify that the SRS \citep{SRS-Sanskrit-Ciph
 
 \subsubsection*{TA/Peer Guided Review (Structured Feedback)}
 \textbf{Instrument.} A checklist-driven review by peers and TAs to ensure we are staying in line with the fundamentals of our requirements. Issues are filed in GitHub as feedback from TAs and peers as well as feedback on Avenue which is more detailed from the TA\\
-\textbf{Process.}
+
+\noindent\textbf{Process.}
 \begin{enumerate}
   \item After handing in the SRS document our peers go through the document and highlight areas to improve on.
   \item Once our peers have given us feedback we are to address the feedback
@@ -184,10 +186,10 @@ This subsection defines how we will verify that the SRS \citep{SRS-Sanskrit-Ciph
 \end{enumerate}
 \textbf{Success metrics.}
 \begin{itemize}
-  \item \textbf{Measurability coverage:} $\geq 100\%$ of feedback has been addressed
-  \item \textbf{Ambiguity count:} \(\leq 2\) open ambiguity items after rework.
+  \item \textbf{Measurability coverage:} $100\%$ of distinct feedback items are resolved with a measurable change or testable requirement.
+  \item \textbf{Ambiguity count:} $0$ unresolved ambiguity items remain in the SRS after rework, where an ambiguity item is any requirement statement or review comment that still needs clarification before it can be turned into a measurable fit criterion or test case.
   \item \textbf{Defect turn-around time (TAT):} All feedback has been addressed within 72 hours of being given the feedback (with a grace period of 48 hours for the entire team)
-  \item \textbf{Link/xref errors:} $0$ build warnings for missing references.
+  \item \textbf{Link/xref errors:} $0$ build warnings for missing references or unresolved cross-references.
 \end{itemize}
 
 \subsubsection*{Supervisor Validation via Survey plus Interview (Non-technical \textrightarrow{} Technical)}
