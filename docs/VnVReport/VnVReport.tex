@@ -96,6 +96,7 @@ Functional evaluation is aligned to the test cases defined in the V\&V Plan (Sec
 \begin{table}[H]
 \centering
 \caption{Functional Requirement Evaluation Summary (Part 1)}
+\label{tab:func-eval-1}
 \begin{tabularx}{\textwidth}{
 p{1.5cm}
 >{\raggedright\arraybackslash}p{3.4cm}
@@ -125,6 +126,7 @@ Pass\\
 \begin{table}[H]
 \centering
 \caption{Functional Requirement Evaluation Summary (Part 2)}
+\label{tab:func-eval-2}
 \begin{tabularx}{\textwidth}{
 p{1.5cm}
 >{\raggedright\arraybackslash}p{3.4cm}
@@ -159,6 +161,7 @@ Nonfunctional tests are defined in the V\&V Plan (Section 4). Each NFR test ID w
 \begin{table}[H]
 \centering
 \caption{Nonfunctional Requirement Evaluation Summary (Part 1)}
+\label{tab:nfr-eval-1}
 \begin{tabularx}{\textwidth}{
 >{\raggedright\arraybackslash}p{3.2cm}
 >{\raggedright\arraybackslash}p{7.1cm}
@@ -195,6 +198,7 @@ Pass\\
 \begin{table}[H]
 \centering
 \caption{Nonfunctional Requirement Evaluation Summary (Part 2)}
+\label{tab:nfr-eval-2}
 \begin{tabularx}{\textwidth}{
 >{\raggedright\arraybackslash}p{3.2cm}
 >{\raggedright\arraybackslash}p{7.1cm}
@@ -446,12 +450,12 @@ Automated testing was executed using the scripts referenced in the V\&V Plan. Wh
 \toprule
 \textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Status}\\
 \midrule
-S.4.1 & Start a reconstruction session & VnVPlan tests: test-fr-session-1, test-fr-session-2. & Verified\\
-S.4.2 & Browse, filter, and place fragments & VnVPlan tests: test-fr-filter-1, test-fr-canvas-1. & Verified\\
-S.4.3 & Save/restore projects; edge matching & VnVPlan tests: test-fr-save-1, test-fr-edge-match-1. & Verified\\
-S.4.4 & View and edit metadata & VnVPlan tests: test-fr-metadata-1, test-fr-metadata-2. & Verified\\
-S.4.5 & Upload new fragments & VnVPlan tests: test-fr-upload-1, test-fr-upload-2. & Verified\\
-S.4.6 & Run ML pipeline for enrichment & VnVPlan tests: test-fr-ml-1, test-fr-ml-2. & Verified\\
+S.4.1 & Start a reconstruction session & test-fr-session-1, test-fr-session-2; execution details in Tables~\ref{tab:func-eval-1}--\ref{tab:func-eval-2}. & Verified\\
+S.4.2 & Browse, filter, and place fragments & test-fr-filter-1, test-fr-canvas-1; execution details in Tables~\ref{tab:func-eval-1}--\ref{tab:func-eval-2}. & Verified\\
+S.4.3 & Save/restore projects; edge matching & test-fr-save-1, test-fr-edge-match-1; execution details in Tables~\ref{tab:func-eval-1}--\ref{tab:func-eval-2}. & Verified\\
+S.4.4 & View and edit metadata & test-fr-metadata-1, test-fr-metadata-2; execution details in Tables~\ref{tab:func-eval-1}--\ref{tab:func-eval-2}. & Verified\\
+S.4.5 & Upload new fragments & test-fr-upload-1, test-fr-upload-2; execution details in Tables~\ref{tab:func-eval-1}--\ref{tab:func-eval-2}. & Verified\\
+S.4.6 & Run ML pipeline for enrichment & test-fr-ml-1, test-fr-ml-2; execution details in Tables~\ref{tab:func-eval-1}--\ref{tab:func-eval-2}. & Verified\\
 \bottomrule
 \end{tabularx}
 \setlength{\tabcolsep}{6pt}
@@ -466,14 +470,14 @@ S.4.6 & Run ML pipeline for enrichment & VnVPlan tests: test-fr-ml-1, test-fr-ml
 \toprule
 \textbf{Req.} & \textbf{Requirement Summary} & \textbf{Evidence/Test Artifacts} & \textbf{Status}\\
 \midrule
-NFR-Perf & System performance & VnVPlan tests: test-nfr-perf-1, test-nfr-perf-2. & Verified\\
-NFR-AI & ML pipeline output completeness & VnVPlan test: test-nfr-ai-1. & Verified\\
-NFR-Usability & Usability & VnVPlan tests: test-nfr-usability-1, test-nfr-usability-2. & Verified\\
-NFR-Reliability & Reliability and recoverability & VnVPlan tests: test-nfr-reliability-1, test-nfr-reliability-2. & Verified\\
-NFR-Data/Sec & Data integrity and security & VnVPlan tests: test-nfr-data-1, test-nfr-data-2. & Verified\\
-NFR-Scale & Scalability & VnVPlan test: test-nfr-scale-1. & Verified\\
-NFR-Compat & Cross-platform compatibility & VnVPlan test: test-nfr-compat-1. & Verified\\
-NFR-Bench & Performance benchmarking & VnVPlan test: test-nfr-bench-1. & Verified\\
+NFR-Perf & System performance & test-nfr-perf-1, test-nfr-perf-2; results in Table~\ref{tab:perf-bench}, execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
+NFR-AI & ML pipeline output completeness & test-nfr-ai-1; results in Table~\ref{tab:ml-metrics}, execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
+NFR-Usability & Usability & test-nfr-usability-1, test-nfr-usability-2; results in Table~\ref{tab:usability-summary}, execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
+NFR-Reliability & Reliability and recoverability & test-nfr-reliability-1, test-nfr-reliability-2; execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
+NFR-Data/Sec & Data integrity and security & test-nfr-data-1, test-nfr-data-2; execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
+NFR-Scale & Scalability & test-nfr-scale-1; results in Table~\ref{tab:scale-bench}, execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
+NFR-Compat & Cross-platform compatibility & test-nfr-compat-1; execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
+NFR-Bench & Performance benchmarking & test-nfr-bench-1; results in Table~\ref{tab:perf-bench}, execution details in Tables~\ref{tab:nfr-eval-1}--\ref{tab:nfr-eval-2}. & Verified\\
 \bottomrule
 \end{tabularx}
 \setlength{\tabcolsep}{6pt}
