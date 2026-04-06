@@ -63,6 +63,7 @@ Nov.\ 13, 2025 & 1.2 & Added Section 4: Notation.\\
 Jan.\ 18, 2025 & 1.3 & Added Section 5: Module Decomposition.\\
 Jan.\ 18, 2025 & 1.4 & Added Sections 6--29: Module Interface Specifications for all modules.\\
 Nov.\ 13, 2025 & 1.5 & Added Reflection and References\\
+Apr.\ 6, 2026 & 1.6 & Expanded the Section 2 exception glossary for consistency with the module specifications.\\
 
 \bottomrule
 \end{tabularx}
@@ -111,13 +112,29 @@ The following symbols, abbreviations, and acronyms are used throughout this Modu
 
 \subsection*{Exceptions / Errors}
 \begin{itemize}
-    \item \textbf{UIRenderError} — User Interface Rendering Error
-    \item \textbf{NetworkError} — Network Communication Error
-    \item \textbf{ValidationError} — Input Validation Error
-    \item \textbf{UploadError} — File Upload Failure
-    \item \textbf{AuthError} — Authentication Error
-    \item \textbf{NotFoundError} — Missing Resource
-    \item \textbf{StorageWriteError} / \textbf{StorageReadError} — File I/O Problems
+    \item \textbf{AggregationError} — Score aggregation or multi-model fusion failure
+    \item \textbf{AuthError} — Authentication or credential verification failure
+    \item \textbf{CatalogError} — Catalog association lookup or persistence failure
+    \item \textbf{ConfigError} — Missing or invalid configuration value
+    \item \textbf{ExportError} — Export generation or serialization failure
+    \item \textbf{FragmentError} — Fragment creation, update, or deletion failure
+    \item \textbf{InboxOverflowError} — Too many pending authentication or request items to accept another
+    \item \textbf{InvalidFormatError} — Uploaded file format or payload structure is not supported
+    \item \textbf{LayoutError} — Canvas placement or rotation violates layout constraints
+    \item \textbf{MatchError} — Fragment matching service or result generation failure
+    \item \textbf{ModelError} — Machine learning inference, preprocessing, or feature extraction failure
+    \item \textbf{NetworkError} — Network communication or backend connectivity failure
+    \item \textbf{NotFoundError} — Requested resource does not exist or is not accessible in context
+    \item \textbf{PreprocError} — Preprocessing job creation or execution failure
+    \item \textbf{ProjectError} — Project creation, update, or query failure
+    \item \textbf{SearchError} — Search query validation or execution failure
+    \item \textbf{ServiceError} — Service-layer orchestration or downstream dependency failure
+    \item \textbf{SessionError} — Session or saved-layout persistence failure
+    \item \textbf{StorageWriteError} / \textbf{StorageReadError} — File or object storage I/O failure
+    \item \textbf{UIRenderError} — User interface rendering or display update failure
+    \item \textbf{UploadError} — File upload transfer failure
+    \item \textbf{UserError} — User record creation or update failure
+    \item \textbf{ValidationError} — Input, request, or argument validation failure
 \end{itemize}
 
 \subsection*{Machine Learning Terms}
