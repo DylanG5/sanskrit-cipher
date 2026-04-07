@@ -1,35 +1,644 @@
-\documentclass{article}
+\documentclass[12pt]{article}
 
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
 \usepackage{booktabs}
-\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{verbatim}
+\usepackage{titlesec}
 
-\input{../Comments}
-\input{../Common}
+\graphicspath{{images/}}
 
-\title{User Guide\\\progname}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={User Manual for Sanskrit Fragment Reconstruction Studio}
+}
 
-\author{\authname}
+\setlist{itemsep=0.35em, topsep=0.35em}
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+\setlength{\headheight}{15pt}
 
-\date{}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Sanskrit Fragment Reconstruction Studio}
+\fancyhead[R]{User Manual}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
 
 \begin{document}
 
-\begin{table}[hp]
-\caption{Revision History} \label{TblRevisionHistory}
-\begin{tabularx}{\textwidth}{llX}
-\toprule
-\textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
-\midrule
-Date1 & Name(s) & Description of changes\\
-Date2 & Name(s) & Description of changes\\
-... & ... & ...\\
-\bottomrule
-\end{tabularx}
-\end{table}
+\pagenumbering{gobble}
 
+\begin{titlepage}
+\centering
+{\Large Sanskrit Ciphers\par}
+\vspace{1.5cm}
+{\Huge\bfseries User Manual\par}
+\vspace{0.6cm}
+{\LARGE Sanskrit Fragment Reconstruction Studio\par}
+\vspace{1.5cm}
+{\large Professional User Guide for the Desktop Application\par}
+\vfill
+
+\begin{tabular}{>{\bfseries}p{4cm}p{9cm}}
+Application & Sanskrit Fragment Reconstruction Studio \\
+Project & Sanskrit Ciphers \\
+Audience & Scholars, researchers, and non-technical users \\
+Prepared From & Source code in the project's \texttt{src/} directory \\
+Date & March 17, 2026 \\
+\end{tabular}
+
+\vfill
+This manual describes the current desktop application implemented in the repository's
+\texttt{src/web/web-canvas} module. Supporting machine learning tools are referenced
+when they affect normal use of the application.
+\end{titlepage}
+
+\clearpage
+\pagenumbering{roman}
+\tableofcontents
 \newpage
+\pagenumbering{arabic}
 
-\maketitle
+\section{Introduction}
 
+\subsection{Purpose of the Application}
+Sanskrit Fragment Reconstruction Studio is a desktop application for organizing,
+searching, and visually arranging manuscript fragment images. It is designed to help
+users examine fragment images, place them on a reconstruction canvas, edit metadata,
+and save reconstruction sessions for later review.
+
+\subsection{Target Users}
+This application is intended for:
+\begin{itemize}
+  \item scholars working with manuscript fragments,
+  \item research assistants organizing image collections, and
+  \item users who need a visual workspace without writing code.
+\end{itemize}
+
+\subsection{Overview of Features}
+The current application provides the following user-facing features:
+\begin{itemize}
+  \item a home screen with project history and fragment search,
+  \item a searchable fragment library,
+  \item an interactive canvas for arranging fragments,
+  \item project saving and reloading,
+  \item fragment uploads,
+  \item editable fragment metadata,
+  \item bulk metadata editing for multiple fragments,
+  \item filter tools for narrowing large fragment collections,
+  \item optional segmented-image display for supported fragments, and
+  \item edge-match suggestions generated from previously prepared AI matching data.
+\end{itemize}
+
+\subsection{AI-Assisted Features}
+The application includes several AI-assisted features that help users work more efficiently with large fragment collections:
+\begin{itemize}
+  \item \textbf{Segmentation support:} some fragments can be shown in a segmented view, where the fragment is isolated from the background for easier visual comparison.
+  \item \textbf{Metadata enrichment:} fragment records may already include AI-generated information such as line count, script type, edge-related flags, circle detection, and scale information.
+  \item \textbf{Edge-match suggestions:} the app can display ranked candidate matches for a selected fragment based on previously computed similarity data.
+\end{itemize}
+
+These AI features support the user's decision-making process. They are best treated as helpful suggestions rather than final scholarly conclusions.
+
+\section{System Requirements}
+
+\subsection{Hardware Requirements}
+\begin{itemize}
+  \item A desktop or laptop computer
+  \item Mouse or trackpad for drag-and-drop work
+  \item Enough free disk space for fragment images, the local database, and saved projects
+\end{itemize}
+
+\subsection{Software Requirements}
+\begin{itemize}
+  \item Windows, macOS, or Linux, depending on the packaged build provided to the user
+  \item Permission to install a desktop application on the target machine
+\end{itemize}
+
+\subsection{Data Requirements}
+The packaged application is assumed to include the fragment data needed for normal use.
+Internally, the app uses:
+\begin{itemize}
+  \item a local SQLite database of fragments and projects, and
+  \item a local image folder used by that database.
+\end{itemize}
+
+For the intended end user, these data files are assumed to be bundled with the installer or packaged application.
+
+\section{Installation Guide}
+
+\subsection{Recommended Setup}
+The intended user is expected to receive a packaged desktop build of the application.
+In this setup, the fragment database and bundled image data already come with the installed app.
+
+\subsection{Step-by-Step Installation}
+\begin{enumerate}
+  \item Locate the installer or packaged application provided by your project team.
+  \item Run the installer, or open the packaged application according to your operating system.
+  \item Follow the on-screen installation steps.
+  \item When installation is complete, launch \textbf{Sanskrit Fragment Reconstruction Studio}.
+\end{enumerate}
+
+\subsection{What the Installer Is Expected to Include}
+The packaged version is assumed to include:
+\begin{itemize}
+  \item the desktop application,
+  \item the bundled fragment image set,
+  \item the local database used for search and project management, and
+  \item any precomputed AI-generated metadata shipped with the release.
+\end{itemize}
+
+\subsection{Uninstalling the Application}
+\begin{enumerate}
+  \item Close the application.
+  \item Open your operating system's installed applications list.
+  \item Select \textbf{Sanskrit Fragment Reconstruction Studio}.
+  \item Choose the uninstall or remove option.
+  \item Follow the on-screen prompts.
+\end{enumerate}
+
+If your installation stores additional user-created content, your operating system may ask whether you also want to remove application data.
+
+\section{Getting Started}
+
+\subsection{How to Launch the App}
+After installation, launch the app from your desktop shortcut, applications menu,
+or packaged application folder. When the app opens, you will first see the home page.
+
+\subsection{First-Time Usage Walkthrough}
+\begin{enumerate}
+  \item Review the project history panel on the left side of the home page.
+  \item If you are starting fresh, click \textbf{New Project}.
+  \item If fragments already exist in the local database, use the search bar to search by fragment ID.
+  \item Open a project or create a new one to enter the canvas workspace.
+  \item Drag fragments from the left sidebar onto the canvas.
+  \item Arrange fragments, edit metadata, and save your progress.
+\end{enumerate}
+
+\subsection{What Happens on First Use}
+Depending on how your environment was prepared, you may see one of two common starting states:
+\begin{itemize}
+  \item \textbf{Preloaded environment:} the fragment library is already populated, search works immediately, and older projects may appear in the history list.
+  \item \textbf{Fresh user environment:} the bundled fragment library is present, but your own project history begins empty until you create projects.
+\end{itemize}
+
+\section{Features \& Usage}
+
+\subsection{Home Screen}
+The home screen is the application's starting point.
+
+\subsubsection{Create a New Project}
+\begin{enumerate}
+  \item Click \textbf{New Project}.
+  \item The app creates a new reconstruction session.
+  \item You are taken directly to the canvas workspace.
+\end{enumerate}
+
+\subsubsection{Open an Existing Project}
+\begin{enumerate}
+  \item Find the project in the \textbf{Session History} panel.
+  \item Click the project name.
+  \item The saved canvas arrangement opens in the workspace.
+\end{enumerate}
+
+\subsubsection{Rename or Delete a Project}
+\begin{enumerate}
+  \item Move the pointer over a saved project.
+  \item Use the rename icon to change its name.
+  \item Use the delete icon to remove it.
+  \item Confirm deletion when prompted.
+\end{enumerate}
+
+\subsubsection{Search for a Fragment}
+\begin{enumerate}
+  \item Enter a fragment ID or search text in the main search bar.
+  \item Wait for autocomplete suggestions, if available.
+  \item Press \textbf{Enter}, click \textbf{Search}, or choose a suggestion.
+  \item The app opens the canvas workspace and filters the fragment library to the search results.
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{home_screen.png}
+\caption{The home screen provides project history, a fragment search bar, and a quick way to start a new project.}
+\end{figure}
+
+\subsection{Fragment Sidebar}
+The sidebar on the left side of the canvas workspace shows the available fragment library.
+
+\subsubsection{Browse and Search the Library}
+\begin{itemize}
+  \item Use the sidebar search field to search within the current library.
+  \item Use the sort control to switch between A-to-Z and Z-to-A ordering.
+  \item If the dataset is large, more fragments load as needed.
+\end{itemize}
+
+\subsubsection{Select Multiple Fragments}
+\begin{itemize}
+  \item Use \textbf{Select all} to select all visible fragments.
+  \item Use the \textbf{Auto-pair} option to automatically include a fragment's reverse side when selecting, when such pairing exists.
+  \item Clear the selection using the clear control in the selection bar.
+\end{itemize}
+
+\subsubsection{Add Fragments to the Canvas}
+\begin{enumerate}
+  \item Drag a fragment from the sidebar to the canvas, or
+  \item select multiple fragments and click \textbf{Add to Canvas}.
+  \item The selected fragments appear in the workspace.
+\end{enumerate}
+
+\subsubsection{Edit or Delete Fragments from the Library}
+\begin{itemize}
+  \item Click a fragment entry to open its metadata panel.
+  \item Select multiple fragments and choose \textbf{Edit Metadata} for bulk changes.
+  \item Select multiple fragments and choose \textbf{Delete} to permanently remove them from the database.
+\end{itemize}
+
+\subsection{Canvas Workspace}
+The canvas is the main visual reconstruction area.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{empty_canvas.png}
+\caption{A newly opened canvas workspace with the fragment library on the left and the main canvas area ready for placement.}
+\end{figure}
+
+\subsubsection{Basic Placement and Selection}
+\begin{itemize}
+  \item Drag fragments onto the canvas to place them.
+  \item Click a fragment to select it.
+  \item Use \textbf{Shift} or \textbf{Ctrl/Cmd} with click to select multiple fragments.
+  \item Click an empty area to clear the current selection.
+\end{itemize}
+
+\subsubsection{Move, Resize, and Rotate}
+\begin{itemize}
+  \item Drag a fragment to move it.
+  \item Use the transform handles to resize it.
+  \item Use the rotation handle to rotate it.
+  \item If grouped fragments are selected together, they move together.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{non-empty_canvas.png}
+\caption{A fragment placed on the canvas for inspection and manual arrangement.}
+\end{figure}
+
+\subsubsection{Toolbar Actions}
+The top toolbar provides the main workspace controls.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{3cm} p{10.5cm}}
+\toprule
+\textbf{Control} & \textbf{Purpose} \\
+\midrule
+Home & Return to the home screen \\
+Lock / Unlock & Prevent or allow editing of selected fragments \\
+Front / Back & Change visual stacking order \\
+Group / Ungroup & Move selected fragments as a set or separate them again \\
+Mirror & Flip one selected fragment horizontally \\
+Segmented / Original & Switch between segmented and original image display for one supported fragment \\
+Edit Metadata & Edit metadata for two or more selected fragments at once \\
+Delete & Remove selected fragments from the canvas only \\
+Grid & Show or hide the measurement grid \\
+Filters & Open or close the filter panel \\
+Clear Canvas & Remove all fragments from the canvas after confirmation \\
+Save & Save the current canvas state immediately \\
+Upload & Add new image files to the fragment library \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{Zoom and Navigation}
+\begin{itemize}
+  \item Use the mouse wheel or trackpad gesture to zoom.
+  \item Drag on empty canvas space to pan.
+  \item Use the \textbf{Recenter} button to center the view on the current fragments.
+  \item Use the zoom controls in the lower-right corner to zoom in, zoom out, or reset zoom.
+\end{itemize}
+
+\subsubsection{Grid Display}
+When the grid is turned on:
+\begin{itemize}
+  \item small squares represent 1 cm by 1 cm,
+  \item bold grid intervals represent 5 cm by 5 cm, and
+  \item the app briefly shows a scale reminder in the lower-left corner.
+\end{itemize}
+
+\subsubsection{Edge Match Suggestions}
+When exactly one canvas fragment is selected, an \textbf{Edge Match?} button may appear.
+
+To use it:
+\begin{enumerate}
+  \item Select one fragment already on the canvas.
+  \item Click \textbf{Edge Match?}
+  \item Review the ranked suggestions in the sidebar.
+  \item Click \textbf{Place} beside a suggested match to place it on the canvas.
+\end{enumerate}
+
+This feature uses previously generated AI matching results stored in the packaged data. It helps users review likely neighboring fragments more quickly.
+
+\subsection{Metadata Editing}
+
+\subsubsection{Open Fragment Metadata}
+You can open the metadata dialog in two ways:
+\begin{itemize}
+  \item click a fragment entry in the sidebar, or
+  \item double-click a fragment already placed on the canvas.
+\end{itemize}
+
+\subsubsection{Fields You Can Edit}
+The metadata dialog allows editing of user-facing fields such as:
+\begin{itemize}
+  \item line count,
+  \item script type,
+  \item transcription,
+  \item notes,
+  \item edge-related flags,
+  \item circle detection flag,
+  \item scale values,
+  \item and any custom metadata fields that have been added by your team.
+\end{itemize}
+
+Some of these values may already be filled in by AI-assisted preprocessing. Users can review, correct, or replace them when needed.
+
+\subsubsection{How to Edit a Field}
+\begin{enumerate}
+  \item Open the metadata dialog.
+  \item Click the value or edit icon beside the field.
+  \item Enter or choose the new value.
+  \item Save the change.
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{metadata.png}
+\caption{The metadata panel lets users review and edit descriptive fields for the selected fragment.}
+\end{figure}
+
+\subsubsection{Bulk Metadata Editing}
+To update multiple fragments at once:
+\begin{enumerate}
+  \item select multiple fragments from the sidebar or canvas,
+  \item click \textbf{Edit Metadata},
+  \item check only the fields you want to update,
+  \item enter the new values, and
+  \item click \textbf{Apply}.
+\end{enumerate}
+
+\subsection{Filters}
+The filter panel on the right side of the canvas workspace helps narrow the fragment library.
+
+\subsubsection{Available Built-In Filters}
+The current app supports filters for:
+\begin{itemize}
+  \item minimum and maximum line count,
+  \item script type,
+  \item edge-piece status,
+  \item top edge,
+  \item bottom edge,
+  \item left edge,
+  \item right edge,
+  \item circle presence, and
+  \item search text.
+\end{itemize}
+
+\subsubsection{Custom Filters}
+Users can also create custom filters from the filter panel.
+
+To create one:
+\begin{enumerate}
+  \item open the filter panel,
+  \item click \textbf{Add Custom Filter},
+  \item enter a filter name,
+  \item choose either \textbf{Multiselect} or \textbf{Text match},
+  \item add options if needed, and
+  \item click \textbf{Create Filter}.
+\end{enumerate}
+
+Custom filters can later be edited or deleted from the same panel.
+
+\subsubsection{Apply or Reset Filters}
+\begin{itemize}
+  \item Click \textbf{Apply Filters} to refresh the library using the current settings.
+  \item Click \textbf{Reset Filters} to return to the default view.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{canvas_with_filter.png}
+\caption{The filter panel narrows the fragment library while keeping the current canvas visible for comparison.}
+\end{figure}
+
+\subsection{Uploading New Fragments}
+The app can import image files directly into the local fragment library.
+
+\begin{enumerate}
+  \item Click \textbf{Upload} in the top toolbar.
+  \item Click \textbf{Select Images}.
+  \item Choose one or more JPG, JPEG, or PNG files.
+  \item Review the selected file list.
+  \item Click \textbf{Upload}.
+  \item Wait for the result messages.
+\end{enumerate}
+
+Uploaded fragments appear in the sidebar after the library refreshes. Their metadata can be edited later. Newly uploaded files may not immediately have the same AI-generated metadata as the fragments that were bundled with the application.
+
+\section{User Interface Overview}
+
+\subsection{Main Screens}
+
+\subsubsection{Home Page}
+The home page includes:
+\begin{itemize}
+  \item a collapsible project history panel on the left,
+  \item a central search bar with autocomplete,
+  \item a \textbf{New Project} button,
+  \item a count of active projects, and
+  \item a count of available fragments.
+\end{itemize}
+
+\subsubsection{Canvas Page}
+The canvas page includes:
+\begin{itemize}
+  \item a top toolbar for workspace actions,
+  \item a left fragment sidebar,
+  \item a central canvas area,
+  \item a right filter panel, and
+  \item pop-up dialogs for metadata and uploads.
+\end{itemize}
+
+\subsection{Navigation}
+\begin{itemize}
+  \item Use \textbf{Home} in the toolbar to return to the home page.
+  \item Use the sidebar toggle buttons to hide or show the fragment and filter panels.
+  \item Use search from the home page to jump directly into a filtered canvas session.
+\end{itemize}
+
+\subsection{Status Indicators}
+The application shows several useful status indicators:
+\begin{itemize}
+  \item project save state: \textbf{Saved}, \textbf{Saving...}, or \textbf{Unsaved},
+  \item active filter badge on the filter button,
+  \item loading indicators while fragments are being fetched,
+  \item upload results after image import, and
+  \item search-result messages when search mode is active.
+\end{itemize}
+
+\section{Example Workflows}
+
+\subsection{Workflow 1: Start a New Reconstruction}
+\begin{enumerate}
+  \item Launch the app.
+  \item Click \textbf{New Project}.
+  \item Use the fragment sidebar to find relevant fragments.
+  \item Drag fragments onto the canvas.
+  \item Move, rotate, and resize them until you reach a useful arrangement.
+  \item Click \textbf{Save}.
+\end{enumerate}
+
+\subsection{Workflow 2: Search for a Known Fragment ID}
+\begin{enumerate}
+  \item Open the home page.
+  \item Enter the fragment ID in the search bar.
+  \item Choose the matching autocomplete result, or click \textbf{Search}.
+  \item Review the filtered results in the canvas workspace.
+  \item Drag the fragment onto the canvas and inspect its metadata if needed.
+\end{enumerate}
+
+\subsection{Workflow 3: Add New Fragment Images}
+\begin{enumerate}
+  \item Open any canvas project.
+  \item Click \textbf{Upload}.
+  \item Select one or more image files.
+  \item Upload them.
+  \item Wait for the sidebar to refresh.
+  \item Open the metadata dialog and add useful descriptive information.
+\end{enumerate}
+
+\subsection{Workflow 6: Use AI Assistance During Review}
+\begin{enumerate}
+  \item Search for or place a fragment on the canvas.
+  \item Check whether the fragment already includes AI-generated metadata such as line count, script type, or edge information.
+  \item If available, switch to segmented view to reduce background distraction.
+  \item Use \textbf{Edge Match?} to review suggested neighboring fragments.
+  \item Accept, reject, or manually refine the arrangement based on your own judgment.
+\end{enumerate}
+
+\subsection{Workflow 4: Review Possible Matches}
+\begin{enumerate}
+  \item Place a fragment on the canvas.
+  \item Select that single fragment.
+  \item Click \textbf{Edge Match?}
+  \item Review the ranked suggestions in the sidebar.
+  \item Click \textbf{Place} on a promising candidate.
+  \item Compare the placement visually and continue refining the arrangement.
+\end{enumerate}
+
+\subsection{Workflow 5: Standardize Metadata Across Many Fragments}
+\begin{enumerate}
+  \item Select several fragments from the sidebar.
+  \item Click \textbf{Edit Metadata}.
+  \item Enable only the fields you want to change.
+  \item Enter the shared value.
+  \item Apply the update.
+\end{enumerate}
+
+\section{Troubleshooting}
+
+\subsection{The App Opens but No Fragments Appear}
+Possible causes:
+\begin{itemize}
+  \item the installed package was incomplete,
+  \item the bundled data was not installed correctly, or
+  \item no fragments match the current filters.
+\end{itemize}
+
+Try this:
+\begin{itemize}
+  \item reset the filters,
+  \item clear any search text,
+  \item restart the app, or
+  \item contact your project team to confirm that the packaged data was installed correctly.
+\end{itemize}
+
+\subsection{Search Returns No Results}
+Possible causes:
+\begin{itemize}
+  \item the fragment ID does not exist in the database,
+  \item the spelling is different from the stored record, or
+  \item the current filters exclude the fragment you are trying to find.
+\end{itemize}
+
+\subsection{Uploaded Images Do Not Show Up Immediately}
+\begin{itemize}
+  \item Wait a moment for the upload result and refresh cycle.
+  \item Check whether any file failed during upload.
+  \item Reopen the upload dialog and try again if necessary.
+\end{itemize}
+
+\subsection{The Segmented/Original Toggle Does Not Appear}
+This is normal when the fragment does not have segmentation data available. The toggle is shown only for fragments that already contain segmentation information.
+
+\subsection{Edge Match Suggestions Do Not Appear}
+This usually means the selected fragment does not have packaged edge-match data available, or the installed data set does not include that feature for the current fragment.
+
+\subsection{A Project Was Not Saved}
+The app includes auto-save, but users should still click \textbf{Save} before closing an important session. If the status indicator shows \textbf{Unsaved}, wait or save manually before exiting.
+
+\subsection{A Metadata Value Is Rejected}
+Some metadata fields are validated. For example, number-based fields and scale values must use valid numeric input, and script type must match one of the supported options.
+
+\section{Limitations \& Assumptions}
+
+\begin{itemize}
+  \item This manual describes the desktop application, not the full machine learning training pipeline.
+  \item The packaged release is assumed to include the data needed for normal use.
+  \item Edge matching, segmentation display, and some metadata depend on AI-generated preprocessing performed before the app is delivered to the user.
+  \item Project notes exist in the database schema, but they are not currently exposed as a normal end-user feature in the interface.
+  \item The desktop app is intended for local use on one machine. Collaboration, cloud sync, and multi-user editing are not described by the present codebase.
+  \item Uploaded images are added to the local environment only. The app does not provide a built-in remote backup service.
+  \item AI-generated metadata and match suggestions are assistive features. They may be helpful, but they should still be reviewed by the user.
+  \item Bulk deletion from the sidebar permanently removes fragments from the database and should be used carefully.
+\end{itemize}
+
+\section{FAQ}
+
+\subsection{Do I need programming knowledge to use the app?}
+No. The application is designed as a graphical desktop tool. Most tasks are completed with buttons, search fields, and drag-and-drop actions.
+
+\subsection{Can I use the app if I only have image files?}
+Yes. You can upload additional image files, but bundled fragments may include richer AI-generated metadata than newly uploaded files.
+
+\subsection{Does the app save my work automatically?}
+Yes. The app includes auto-save, but using the \textbf{Save} button is still recommended before closing a project.
+
+\subsection{Can I edit metadata after uploading fragments?}
+Yes. Open a fragment's metadata dialog to update line count, script type, transcription, notes, edge flags, scale values, and custom fields.
+
+\subsection{Can I edit several fragments at once?}
+Yes. Select multiple fragments, then use \textbf{Edit Metadata}.
+
+\subsection{Why are some fragments shown with a segmented view and others are not?}
+Segmented display is available only when segmented data was prepared for that fragment in the bundled application data.
+
+\subsection{Can the app calculate matches by itself while I am using it?}
+The app displays packaged edge-match suggestions that were generated ahead of time. In normal end-user use, it acts as a viewer for those AI results rather than generating new ones live.
+
+\subsection{What is the safest way to close the app?}
+Check that the save indicator shows \textbf{Saved}, or click \textbf{Save} manually before closing the window.
 
 \end{document}
