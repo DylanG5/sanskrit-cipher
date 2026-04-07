@@ -2591,7 +2591,8 @@ This module provides structured logging for events, errors, and performance metr
 \begin{itemize}
     \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
     \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
-    \item output: none; writes informational log entry.
+    \item transition: writes informational log entry.
+    \item output: none.
     \item exception: none.
 \end{itemize}
 
@@ -2599,7 +2600,8 @@ This module provides structured logging for events, errors, and performance metr
 \begin{itemize}
     \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
     \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
-    \item output: none; writes warning log entry.
+    \item transition: writes warning log entry.
+    \item output: none.
     \item exception: none.
 \end{itemize}
 
@@ -2607,7 +2609,8 @@ This module provides structured logging for events, errors, and performance metr
 \begin{itemize}
     \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
     \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
-    \item output: none; writes error entry including details from \texttt{err}.
+    \item transition: writes error entry including details from \texttt{err}.
+    \item output: none.
     \item exception: none.
 \end{itemize}
 
