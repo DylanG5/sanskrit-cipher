@@ -9,10 +9,13 @@
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{enumitem}
+\usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{fancyhdr}
 \usepackage{verbatim}
 \usepackage{titlesec}
+
+\graphicspath{{images/}}
 
 \hypersetup{
   colorlinks=true,
@@ -228,6 +231,12 @@ The home screen is the application's starting point.
   \item The app opens the canvas workspace and filters the fragment library to the search results.
 \end{enumerate}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{home_screen.png}
+\caption{The home screen provides project history, a fragment search bar, and a quick way to start a new project.}
+\end{figure}
+
 \subsection{Fragment Sidebar}
 The sidebar on the left side of the canvas workspace shows the available fragment library.
 
@@ -262,6 +271,12 @@ The sidebar on the left side of the canvas workspace shows the available fragmen
 \subsection{Canvas Workspace}
 The canvas is the main visual reconstruction area.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{empty_canvas.png}
+\caption{A newly opened canvas workspace with the fragment library on the left and the main canvas area ready for placement.}
+\end{figure}
+
 \subsubsection{Basic Placement and Selection}
 \begin{itemize}
   \item Drag fragments onto the canvas to place them.
@@ -277,6 +292,12 @@ The canvas is the main visual reconstruction area.
   \item Use the rotation handle to rotate it.
   \item If grouped fragments are selected together, they move together.
 \end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{non-empty_canvas.png}
+\caption{A fragment placed on the canvas for inspection and manual arrangement.}
+\end{figure}
 
 \subsubsection{Toolbar Actions}
 The top toolbar provides the main workspace controls.
@@ -362,6 +383,12 @@ Some of these values may already be filled in by AI-assisted preprocessing. User
   \item Save the change.
 \end{enumerate}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{metadata.png}
+\caption{The metadata panel lets users review and edit descriptive fields for the selected fragment.}
+\end{figure}
+
 \subsubsection{Bulk Metadata Editing}
 To update multiple fragments at once:
 \begin{enumerate}
@@ -409,6 +436,12 @@ Custom filters can later be edited or deleted from the same panel.
   \item Click \textbf{Apply Filters} to refresh the library using the current settings.
   \item Click \textbf{Reset Filters} to return to the default view.
 \end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{canvas_with_filter.png}
+\caption{The filter panel narrows the fragment library while keeping the current canvas visible for comparison.}
+\end{figure}
 
 \subsection{Uploading New Fragments}
 The app can import image files directly into the local fragment library.
