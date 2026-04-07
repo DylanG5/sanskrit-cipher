@@ -12,6 +12,11 @@
 }
 \usepackage[round]{natbib}
 \usepackage{adjustbox}
+\usepackage{titlesec}
+
+% Enforce consistent spacing around section headers.
+\titlespacing*{\subsection}{0pt}{1.25\baselineskip}{0.5\baselineskip}
+\titlespacing*{\subsubsection}{0pt}{1.0\baselineskip}{0.4\baselineskip}
 
 \input{../Comments}
 \input{../Common}
@@ -63,6 +68,31 @@ The software system being tested is \textbf{Sanskrit Manuscript Reconstruction P
 The verification and validation process will ensure that all core functionalities, including fragment upload, search/filtering, canvas workspace interactions, ML analysis outputs, and edge matching, perform correctly, reliably, and consistently across diverse manuscript inputs and cultural/linguistic contexts. It will also verify that data integrity and safety-critical requirements identified in the Hazard Analysis are met.
 \newline
 Testing will be conducted incrementally across all major milestones (Proof of Concept, Revision 0, and Revision 1) using a combination of unit testing, integration testing, usability testing, and system-level validation to confirm that the software meets its specified functional and non-functional requirements as outlined in the SRS.
+
+\newpage
+
+\subsection{Abbreviations and Acronyms}
+
+\begin{table}[h]
+\centering
+\caption{Abbreviations and Acronyms}
+\begin{tabular}{ll}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+V\&V & Verification and Validation \\
+TAT & Turn-Around Time \\
+SRS & Software Requirements Specification \\
+NFR & Non-Functional Requirement \\
+FR & Functional Requirement \\
+ML & Machine Learning \\
+OCR & Optical Character Recognition \\
+UI & User Interface \\
+DB & Database \\
+CLI & Command-Line Interface \\
+\bottomrule
+\end{tabular}
+\end{table}
   
 \subsection{Objectives}
 
@@ -579,6 +609,12 @@ ML pipeline tests evaluate whether required metadata outputs are generated and s
 
 \end{enumerate}
 
+\subsubsection{AI Model Accuracy and Quality Validation}
+
+To ensure the platform is suitable for scholarly use, AI components will be evaluated using training and validation sets. During training, we will track learning curves and summary graphs for metrics such as accuracy, loss, recall, and F1-score. Final model quality decisions will be based on the corresponding values measured on the validation set.
+
+For evaluation, the final validation-set values will be used as the decision criteria, specifically model accuracy together with recall and F1-score. These final values will be reported for each model and used to compare model quality across training runs.
+
 \subsubsection{Usability Testing}
 
 Usability testing evaluates whether the system interface enables scholars to effectively perform manuscript reconstruction research tasks. These tests combine task-based user testing and systematic interface evaluation.
@@ -839,7 +875,7 @@ This test documents average response times for common operations to establish pe
         \hline
         S.6, E.3 & System performance & test-nfr-perf-1, test-nfr-perf-2 & Automated \\
         \hline
-        S.6 & ML pipeline output completeness & test-nfr-ai-1 & Manual/automated eval \\
+        S.6 & ML pipeline output completeness and model quality & test-nfr-ai-1 (plus final validation-set accuracy, recall, and F1-score reporting) & Manual/automated eval \\
         \hline
         S.6, S.2.1 & Usability & test-nfr-usability-1, test-nfr-usability-2 & Manual testing \\
         \hline
@@ -990,21 +1026,18 @@ Unit tests are not the primary mechanism for NFR verification. NFRs are evaluate
 
 \section{Appendix}
 
-This is where you can place additional information.
+Supplementary material used by the V\&V process is summarized below.
 
 \subsection{Symbolic Parameters}
 
-The definition of the test cases will call for SYMBOLIC\_CONSTANTS.
-Their values are defined in this section for easy maintenance.
+No additional symbolic constants are defined in this deliverable.
 
-\subsection{Usability Survey Questions?}
+\subsection{Usability Survey Questions}
 
-\wss{This is a section that would be appropriate for some projects.}
+Usability survey prompts are documented in the Usability Testing subsection of this plan.
 
 \newpage{}
 \section*{Appendix --- Reflection}
-
-\wss{This section is not required for CAS 741}
 
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Lifelong Learning.
