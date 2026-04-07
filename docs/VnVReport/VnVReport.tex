@@ -70,16 +70,16 @@ March 3, 2026 & 1.0 & Initial complete V\&V report populated from project artifa
 
 \pagenumbering{arabic}
 
-This document reports the verification and validation outcomes for the Sanskrit Ciphers project based on implemented code, available scripts, and documentation artifacts in the repository. The report records what has been validated, what remains partially validated, and how evidence traces to requirements and modules. The evaluation is aligned to the V\&V Plan (\path{docs/VnVPlan/VnVPlan.tex}). Items explicitly out of scope in the plan (user authentication/roles and OCR transcription assistance) are not evaluated here.
+This document reports the verification and validation outcomes for the Sanskrit Ciphers project based on implemented code, available scripts, and documentation artifacts in the repository. The report records what has been validated, what remains partially validated, and how evidence traces to requirements and modules. The evaluation is aligned to the \href{https://github.com/DylanG5/sanskrit-cipher/blob/main/docs/VnVPlan/VnVPlan.pdf}{V\&V Plan}. Items explicitly out of scope in the plan (user authentication/roles and OCR transcription assistance) are not evaluated here.
 
-This document reports the verification and validation outcomes for the \textit{Sanskrit Ciphers} project. Testing and evaluation were performed according to the procedures and test cases defined in the V\&V Plan (\path{docs/VnVPlan/VnVPlan.tex}). All test IDs referenced in the V\&V Plan were executed by the development team, and all tests met their respective pass criteria.
+This document reports the verification and validation outcomes for the \textit{Sanskrit Ciphers} project. Testing and evaluation were performed according to the procedures and test cases defined in the \href{https://github.com/DylanG5/sanskrit-cipher/blob/main/docs/VnVPlan/VnVPlan.pdf}{V\&V Plan}. All test IDs referenced in the V\&V Plan were executed by the development team, and all tests met their respective pass criteria.
 
 Items explicitly out of scope in the V\&V Plan (user authentication/roles and OCR transcription assistance) are not evaluated in this report.
 
 \subsection{How Tests Were Executed (Aligned with the V\&V Plan)}
 The following evidence types were produced exactly as described in the V\&V Plan:
 \begin{itemize}
-  \item \textbf{Manual functional tests (FR):} Executed by the team using defined step-by-step procedures in the V\&V Plan and validated through observation of expected system behavior.
+  \item \textbf{Manual functional tests (Functional Requirements):} Executed by the team using defined step-by-step procedures in the V\&V Plan and validated through observation of expected system behavior.
   \item \textbf{Automated unit tests:} Executed using PyTest for ML pipeline utilities, database operations, and registry behavior.
   \item \textbf{ML evaluation scripts:} Executed using the evaluation scripts specified in the V\&V Plan to compute task-level metrics (recall and F1).
   \item \textbf{Performance and scalability benchmarks:} Executed using the benchmarking scripts defined in the V\&V Plan, repeated for multiple runs, and compared to pass thresholds.
@@ -108,7 +108,7 @@ p{2cm}
 \midrule
 
 S.4.1 & Start a reconstruction session (create/load project) &
-Executed test-fr-session-1 and test-fr-session-2: created a new project, saved state, and reloaded project; verified correct restoration of fragments and UI state. Implementation in \url{src/web/web-canvas/src/pages/CanvasPage.tsx} and \url{src/web/web-canvas/src/services/electron-api.ts}. &
+Executed test-fr-session-1 and test-fr-session-2: created a new project, saved state, and reloaded project; verified correct restoration of fragments and UI state. Implementation in \url{src/web/web-canvas/src/pages/CanvasPage.tsx} and \url{src/web/web-canvas/src/services/electron-api.ts}. (You should have the repo cloned) &
 Pass\\
 
 S.4.2 & Browse, filter, and place fragments &
@@ -250,7 +250,7 @@ Segmentation & 99.749\% & 0.9987\\
 
 In addition to the quantitative evaluation metrics reported in Table~\ref{tab:ml-metrics}, visual outputs from each ML model were reviewed to verify that the models produce meaningful predictions on manuscript fragments. These visualizations provide qualitative confirmation that the pipeline correctly detects relevant structural features.
 
-All images shown below were generated using the evaluation scripts described in the V\&V Plan and are stored in the repository under the \path{VNVREPORT/results/} directory.
+All images shown below were generated using the evaluation scripts described in the V\&V Plan and are stored in the repository under the \href{https://github.com/DylanG5/sanskrit-cipher/tree/main/docs/VnVReport/results}{VNVREPORT/results/} directory.
 
 \FloatBarrier
 
@@ -260,7 +260,7 @@ The circle detection model identifies circular features present in manuscript fr
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{results/Circle-Detection/results.png}
+\includegraphics[width=0.98\textwidth]{results/Circle-Detection/results.png}
 \caption{Circle detection model output showing predicted circular regions on fragments.}
 \label{fig:circle-detection}
 \end{figure}
@@ -271,7 +271,7 @@ The segmentation model isolates manuscript fragments from the background. This s
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{results/Segmentation/results.png}
+\includegraphics[width=0.98\textwidth]{results/Segmentation/results.png}
 \caption{Segmentation model output showing predicted fragment masks.}
 \label{fig:segmentation-results}
 \end{figure}
@@ -282,23 +282,25 @@ The line detection model identifies individual text lines within manuscript frag
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{results/Line-Detection/results.png}
+\includegraphics[width=0.98\textwidth]{results/Line-Detection/results.png}
 \caption{Line detection model output showing predicted line boundaries on fragments.}
 \label{fig:line-detection}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{results/Line-Detection/confusion_matrix_lines.png}
+\includegraphics[width=0.98\textwidth]{results/Line-Detection/confusion_matrix_lines.png}
 \caption{Confusion matrix for line detection model showing classification performance.}
 \label{fig:line-detection-confusion}
 \end{figure}
+
+Most values are concentrated along the main diagonal in Figure~\ref{fig:line-detection-confusion}, indicating that the model correctly classifies most line-detection cases while only a smaller number of predictions fall into incorrect classes.
 
 \subsubsection{Script Type Classification}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{results/Script-Type/results.png}
+\includegraphics[width=0.98\textwidth]{results/Script-Type/results.png}
 \caption{Script type classification model output graph.}
 \label{fig:script-type-model-output}
 \end{figure}
@@ -664,7 +666,6 @@ Key observations:
 
 \FloatBarrier
 \bibliographystyle{plainnat}
-\bibliography{../../refs/References}
 
 \FloatBarrier
 \clearpage
