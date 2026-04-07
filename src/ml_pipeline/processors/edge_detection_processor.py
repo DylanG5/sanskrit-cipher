@@ -1,10 +1,15 @@
 import os
 import json
 import math
+from pathlib import Path
 import cv2
 import numpy as np
+import torch
 from ml_pipeline.core.processor import BaseProcessor, ProcessorMetadata, FragmentRecord, ProcessingResult
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+from edge_classification import load_edge_classifier
+from edge_classification.dataset import build_edge_image_transform, render_fragment_image
 
 class EdgeExtractor:
     def __init__(self, smoothing_iterations: int = 2, epsilon_factor: float = 0.001):
@@ -734,15 +739,39 @@ class EdgeDetectionProcessor(BaseProcessor):
         self.oriented_scaled_target_pixels_per_unit = self.config['config'].get('oriented_scaled_target_pixels_per_unit', 100.0)
         self.oriented_scaled_crop_pad = self.config['config'].get('oriented_scaled_crop_pad', 4)
         self.oriented_scaled_max_dimension = self.config['config'].get('oriented_scaled_max_dimension', 8192)
+        self.classifier_device_name = self.config['config'].get('classifier_device', 'auto')
+        self.classifier_fallback_method = self.config['config'].get('classifier_fallback_method', 'oriented_runs')
+        self.classifier_thresholds_override = self.config['config'].get('classifier_thresholds')
+        self.classifier_img_size_override = self.config['config'].get('classifier_img_size')
+        self.classifier_input_mode_override = self.config['config'].get('classifier_input_mode')
+        self.classifier_target_pixels_per_unit_override = self.config['config'].get('classifier_target_pixels_per_unit')
+        self.classifier_crop_pad_override = self.config['config'].get('classifier_crop_pad')
+        self.classifier_max_scaled_longest_side_override = self.config['config'].get('classifier_max_scaled_longest_side')
+        self.edge_classifier_model = None
+        self.edge_classifier_device = None
+        self.edge_classifier_thresholds: List[float] = [0.5, 0.5, 0.5, 0.5]
+        self.edge_classifier_transform = None
+        self.edge_classifier_input_mode = "masked_rgb"
+        self.edge_classifier_target_pixels_per_unit = 100.0
+        self.edge_classifier_crop_pad = 6
+        self.edge_classifier_max_scaled_longest_side = 1024
+        self.edge_classifier_meta: Dict[str, Any] = {}
 
         self.version = self.config['config'].get('model_version', '1.0')
+        if self.edge_method in {"edge_classifier", "ml_classifier"}:
+            self._setup_edge_classifier()
 
     def get_metadata(self) -> ProcessorMetadata:
         return ProcessorMetadata(
             name="edgedetection",
             version=self.version,
             description="Detects fragment border edges (top/bottom/left/right)",
-            requires_gpu=False,
+            model_path=self.config.get('model_path'),
+            requires_gpu=bool(
+                self.edge_method in {"edge_classifier", "ml_classifier"}
+                and self.edge_classifier_device is not None
+                and self.edge_classifier_device.type == "cuda"
+            ),
             batch_size=1,
         )
 
@@ -750,6 +779,263 @@ class EdgeDetectionProcessor(BaseProcessor):
         # Only process if edges not set
         #return fragment.has_top_edge is None and fragment.has_bottom_edge is None
         return True
+
+    def _resolve_torch_device(self, requested: str) -> torch.device:
+        if requested == "cpu":
+            return torch.device("cpu")
+        if requested == "cuda":
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def _resolve_classifier_meta_path(self, model_path: Path) -> Optional[Path]:
+        explicit_meta = self.config.get("meta_path")
+        if explicit_meta:
+            candidate = Path(explicit_meta)
+            if candidate.exists():
+                return candidate
+
+        sibling = model_path.with_name("metadata.json")
+        if sibling.exists():
+            return sibling
+
+        parent = model_path.parent.parent / "metadata.json"
+        if parent.exists():
+            return parent
+
+        return None
+
+    def _normalize_classifier_thresholds(self, value: Optional[Sequence[float]]) -> List[float]:
+        if value is None:
+            return [0.5, 0.5, 0.5, 0.5]
+
+        if isinstance(value, str):
+            raw_values = [part.strip() for part in value.split(",") if part.strip()]
+            thresholds = [float(part) for part in raw_values]
+        else:
+            thresholds = [float(item) for item in value]
+
+        if len(thresholds) != 4:
+            raise ValueError("classifier_thresholds must contain exactly 4 values")
+        return thresholds
+
+    def _setup_edge_classifier(self) -> None:
+        model_path = self.config.get("model_path")
+        if not model_path:
+            raise ValueError("edgedetection model_path is required when edge_method=edge_classifier")
+
+        model_path_obj = Path(model_path)
+        if not model_path_obj.exists():
+            raise FileNotFoundError(f"Edge classifier model not found: {model_path_obj}")
+
+        meta_path = self._resolve_classifier_meta_path(model_path_obj)
+        metadata: Dict[str, Any] = {}
+        if meta_path is not None and meta_path.exists():
+            metadata = json.loads(meta_path.read_text())
+
+        model_config = metadata.get("config", {})
+        thresholds = self.classifier_thresholds_override
+        if thresholds is None:
+            thresholds = metadata.get("best_thresholds")
+        self.edge_classifier_thresholds = self._normalize_classifier_thresholds(thresholds)
+
+        self.edge_classifier_input_mode = str(
+            self.classifier_input_mode_override
+            if self.classifier_input_mode_override is not None
+            else model_config.get("input_mode", "masked_rgb")
+        )
+        self.edge_classifier_target_pixels_per_unit = float(
+            self.classifier_target_pixels_per_unit_override
+            if self.classifier_target_pixels_per_unit_override is not None
+            else model_config.get("target_pixels_per_unit", 100.0)
+        )
+        self.edge_classifier_crop_pad = int(
+            self.classifier_crop_pad_override
+            if self.classifier_crop_pad_override is not None
+            else model_config.get("crop_pad", 6)
+        )
+        self.edge_classifier_max_scaled_longest_side = int(
+            self.classifier_max_scaled_longest_side_override
+            if self.classifier_max_scaled_longest_side_override is not None
+            else model_config.get("max_scaled_longest_side", 1024)
+        )
+        classifier_img_size = int(
+            self.classifier_img_size_override
+            if self.classifier_img_size_override is not None
+            else model_config.get("img_size", 224)
+        )
+        aux_piece_head = bool(model_config.get("aux_piece_head", True))
+        dropout_rate = float(model_config.get("dropout_rate", 0.3))
+
+        self.edge_classifier_device = self._resolve_torch_device(self.classifier_device_name)
+        self.edge_classifier_model = load_edge_classifier(
+            model_path=str(model_path_obj),
+            device=str(self.edge_classifier_device),
+            pretrained=False,
+            aux_piece_head=aux_piece_head,
+            dropout_rate=dropout_rate,
+            freeze_backbone_fraction=0.0,
+        )
+        self.edge_classifier_transform = build_edge_image_transform(
+            img_size=classifier_img_size,
+            augment=False,
+        )
+        self.edge_classifier_meta = metadata
+        self.logger.info(
+            "Loaded edge classifier model from %s on %s (thresholds=%s)",
+            model_path_obj,
+            self.edge_classifier_device,
+            [round(value, 3) for value in self.edge_classifier_thresholds],
+        )
+
+    def _bbox_from_mask(self, mask: np.ndarray) -> Tuple[int, int, int, int]:
+        ys, xs = np.where(mask > 0)
+        if len(xs) == 0:
+            raise ValueError("Empty mask")
+        return int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())
+
+    def _predict_edges_with_classifier(
+        self,
+        img: np.ndarray,
+        fragment: FragmentRecord,
+        contour: np.ndarray,
+        mask: np.ndarray,
+    ) -> Dict[str, Any]:
+        if self.edge_classifier_model is None or self.edge_classifier_transform is None or self.edge_classifier_device is None:
+            raise RuntimeError("Edge classifier is not initialized")
+
+        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        rendered = render_fragment_image(
+            rgb=rgb,
+            segmentation_coords=fragment.segmentation_coords,
+            pixels_per_unit=getattr(fragment, "pixels_per_unit", None),
+            crop_pad=self.edge_classifier_crop_pad,
+            target_pixels_per_unit=self.edge_classifier_target_pixels_per_unit,
+            max_scaled_longest_side=self.edge_classifier_max_scaled_longest_side,
+            input_mode=self.edge_classifier_input_mode,
+        )
+        image_tensor = self.edge_classifier_transform(rendered).unsqueeze(0).to(self.edge_classifier_device)
+
+        with torch.no_grad():
+            outputs = self.edge_classifier_model(image_tensor)
+            edge_probs = torch.sigmoid(outputs["edge_logits"]).cpu().numpy()[0]
+            piece_logits = outputs.get("piece_logits")
+            piece_probs = None
+            if piece_logits is not None:
+                piece_probs = torch.softmax(piece_logits, dim=1).cpu().numpy()[0]
+
+        side_names = ["top_edge", "bottom_edge", "left_edge", "right_edge"]
+        border_edges = [
+            side_name
+            for side_name, probability, threshold in zip(side_names, edge_probs, self.edge_classifier_thresholds)
+            if float(probability) >= float(threshold)
+        ]
+        piece_type = self.extractor._classify_piece_type(border_edges)
+        piece_prediction_aux = None
+        if piece_probs is not None:
+            piece_classes = ["interior", "edge", "corner"]
+            piece_prediction_aux = piece_classes[int(np.argmax(piece_probs))]
+
+        x0, y0, x1, y1 = self._bbox_from_mask(mask)
+        edge_data: Dict[str, Any] = {
+            "contour": contour,
+            "bbox": (x0, y0, x1, y1),
+            "top_edge": None,
+            "bottom_edge": None,
+            "left_edge": None,
+            "right_edge": None,
+            "tear_edges": [side for side in side_names if side not in border_edges],
+            "border_edges": border_edges,
+            "piece_type": piece_type,
+            "scores": {
+                side_name: {
+                    "probability": float(probability),
+                    "threshold": float(threshold),
+                    "prediction": float(probability) >= float(threshold),
+                }
+                for side_name, probability, threshold in zip(side_names, edge_probs, self.edge_classifier_thresholds)
+            },
+            "classifier": {
+                "edge_probabilities": {
+                    side_name: float(probability)
+                    for side_name, probability in zip(side_names, edge_probs)
+                },
+                "thresholds": {
+                    side_name: float(threshold)
+                    for side_name, threshold in zip(side_names, self.edge_classifier_thresholds)
+                },
+                "input_mode": self.edge_classifier_input_mode,
+                "target_pixels_per_unit": self.edge_classifier_target_pixels_per_unit,
+                "crop_pad": self.edge_classifier_crop_pad,
+                "max_scaled_longest_side": self.edge_classifier_max_scaled_longest_side,
+            },
+        }
+        if piece_probs is not None:
+            piece_classes = ["interior", "edge", "corner"]
+            edge_data["classifier"]["piece_probabilities"] = {
+                piece_name: float(probability)
+                for piece_name, probability in zip(piece_classes, piece_probs)
+            }
+            edge_data["classifier"]["piece_prediction_aux"] = piece_prediction_aux
+        return edge_data
+
+    def _run_heuristic_method(
+        self,
+        method: str,
+        contour: np.ndarray,
+        mask: np.ndarray,
+        fragment: FragmentRecord,
+    ) -> Dict[str, Any]:
+        if method == "hull_segments":
+            return self.extractor.classify_edges_hull_segments(
+                contour=contour,
+                mask=mask,
+                err_thresh=self.hull_err_thresh,
+                min_len_pts=self.hull_min_len_pts,
+                min_cov=self.hull_min_cov,
+                max_err=self.hull_max_err,
+                near_frac=self.hull_near_frac,
+                angle_h=self.hull_angle_h,
+                angle_v=self.hull_angle_v,
+            )
+        if method == "oriented_runs":
+            return self.extractor.classify_edges_oriented_runs(
+                contour=contour,
+                mask=mask,
+                near_frac=self.oriented_near_frac,
+                min_run_frac=self.oriented_min_run_frac,
+                max_line_err_frac=self.oriented_max_line_err_frac,
+                max_side_offset_frac=self.oriented_max_side_offset_frac,
+                angle_tol_deg=self.oriented_angle_tol_deg,
+                min_confidence=self.oriented_min_confidence,
+                smoothing_window=self.oriented_smoothing_window,
+                trim_frac=self.oriented_trim_frac,
+            )
+        if method == "oriented_runs_scaled":
+            return self.extractor.classify_edges_oriented_runs_scaled(
+                contour=contour,
+                mask=mask,
+                pixels_per_unit=getattr(fragment, "pixels_per_unit", None),
+                target_pixels_per_unit=self.oriented_scaled_target_pixels_per_unit,
+                crop_pad=self.oriented_scaled_crop_pad,
+                max_dimension=self.oriented_scaled_max_dimension,
+                near_frac=self.oriented_near_frac,
+                min_run_frac=self.oriented_min_run_frac,
+                max_line_err_frac=self.oriented_max_line_err_frac,
+                max_side_offset_frac=self.oriented_max_side_offset_frac,
+                angle_tol_deg=self.oriented_angle_tol_deg,
+                min_confidence=self.oriented_min_confidence,
+                smoothing_window=self.oriented_smoothing_window,
+                trim_frac=self.oriented_trim_frac,
+            )
+        if method == "bbox_runs":
+            return self.extractor.classify_edges(
+                contour=contour,
+                mask=mask,
+                near_frac=self.near_frac,
+                min_run_frac=self.min_run_frac,
+                max_mean_line_err=self.max_mean_line_err,
+            )
+        raise ValueError(f"Unsupported edge method: {method}")
 
     def process(self, fragment: FragmentRecord, data_dir: str) -> ProcessingResult:
         img_path = os.path.join(data_dir, fragment.image_path)
@@ -792,61 +1078,50 @@ class EdgeDetectionProcessor(BaseProcessor):
         h, w = img.shape[:2]
         mask = np.zeros((h, w), dtype=np.uint8)
         cv2.fillPoly(mask, [contour], 255)
+        try:
+            if self.edge_method in {"edge_classifier", "ml_classifier"}:
+                try:
+                    edge_data = self._predict_edges_with_classifier(
+                        img=img,
+                        fragment=fragment,
+                        contour=contour,
+                        mask=mask,
+                    )
+                except Exception as exc:
+                    fallback_method = self.classifier_fallback_method
+                    if fallback_method in {None, "", "none"}:
+                        raise
+                    self.logger.warning(
+                        "Edge classifier failed for %s: %s. Falling back to %s.",
+                        fragment.fragment_id,
+                        exc,
+                        fallback_method,
+                    )
+                    edge_data = self._run_heuristic_method(
+                        method=fallback_method,
+                        contour=contour,
+                        mask=mask,
+                        fragment=fragment,
+                    )
+                    edge_data.setdefault("classifier", {})
+                    edge_data["classifier"]["fallback_method"] = fallback_method
+                    edge_data["classifier"]["fallback_error"] = str(exc)
+            else:
+                edge_data = self._run_heuristic_method(
+                    method=self.edge_method,
+                    contour=contour,
+                    mask=mask,
+                    fragment=fragment,
+                )
+        except Exception as exc:
+            return ProcessingResult(
+                success=False,
+                updates={"processing_error": str(exc)},
+                error=str(exc),
+            )
 
-
-        if self.edge_method == "hull_segments":
-            edge_data = self.extractor.classify_edges_hull_segments(
-                contour=contour,
-                mask=mask,
-                err_thresh=self.hull_err_thresh,
-                min_len_pts=self.hull_min_len_pts,
-                min_cov=self.hull_min_cov,
-                max_err=self.hull_max_err,
-                near_frac=self.hull_near_frac,
-                angle_h=self.hull_angle_h,
-                angle_v=self.hull_angle_v,
-            )
-        elif self.edge_method == "oriented_runs":
-            edge_data = self.extractor.classify_edges_oriented_runs(
-                contour=contour,
-                mask=mask,
-                near_frac=self.oriented_near_frac,
-                min_run_frac=self.oriented_min_run_frac,
-                max_line_err_frac=self.oriented_max_line_err_frac,
-                max_side_offset_frac=self.oriented_max_side_offset_frac,
-                angle_tol_deg=self.oriented_angle_tol_deg,
-                min_confidence=self.oriented_min_confidence,
-                smoothing_window=self.oriented_smoothing_window,
-                trim_frac=self.oriented_trim_frac,
-            )
-        elif self.edge_method == "oriented_runs_scaled":
-            edge_data = self.extractor.classify_edges_oriented_runs_scaled(
-                contour=contour,
-                mask=mask,
-                pixels_per_unit=getattr(fragment, "pixels_per_unit", None),
-                target_pixels_per_unit=self.oriented_scaled_target_pixels_per_unit,
-                crop_pad=self.oriented_scaled_crop_pad,
-                max_dimension=self.oriented_scaled_max_dimension,
-                near_frac=self.oriented_near_frac,
-                min_run_frac=self.oriented_min_run_frac,
-                max_line_err_frac=self.oriented_max_line_err_frac,
-                max_side_offset_frac=self.oriented_max_side_offset_frac,
-                angle_tol_deg=self.oriented_angle_tol_deg,
-                min_confidence=self.oriented_min_confidence,
-                smoothing_window=self.oriented_smoothing_window,
-                trim_frac=self.oriented_trim_frac,
-            )
-        else:
-            edge_data = self.extractor.classify_edges(
-                contour=contour,
-                mask=mask,
-                near_frac=self.near_frac,
-                min_run_frac=self.min_run_frac,
-                max_mean_line_err=self.max_mean_line_err,
-            )
-        
-        print("EDGE SCORES:", fragment.fragment_id, edge_data["scores"])
-        print("BORDERS:", edge_data["border_edges"])
+        self.logger.debug("Edge scores for %s: %s", fragment.fragment_id, edge_data.get("scores"))
+        self.logger.debug("Border edges for %s: %s", fragment.fragment_id, edge_data.get("border_edges"))
 
         # Set edge flags as booleans
         has_top = "top_edge" in edge_data["border_edges"]
@@ -872,6 +1147,8 @@ class EdgeDetectionProcessor(BaseProcessor):
                 "piece_type": edge_data["piece_type"],
                 "borders": edge_data["border_edges"],
                 "tears": edge_data["tear_edges"],
+                "scores": edge_data.get("scores"),
+                "classifier": edge_data.get("classifier"),
             }
         )
 
@@ -882,4 +1159,7 @@ class EdgeDetectionProcessor(BaseProcessor):
         return max(contours, key=cv2.contourArea)
 
     def cleanup(self) -> None:
-        pass
+        self.edge_classifier_model = None
+        self.edge_classifier_transform = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()

@@ -13,6 +13,7 @@ from unittest.mock import MagicMock
 import cv2
 import numpy as np
 import pytest
+import torch
 
 from ml_pipeline.core.processor import FragmentRecord, ProcessingResult
 
@@ -240,7 +241,7 @@ class TestEdgeExtractor:
 # ---------------------------------------------------------------------------
 
 class TestEdgeDetectionProcessor:
-    def _make_processor(self, edge_method="bbox_runs"):
+    def _make_processor(self, edge_method="bbox_runs", **overrides):
         config = {
             "config": {
                 "model_version": "1.0",
@@ -266,8 +267,14 @@ class TestEdgeDetectionProcessor:
                 "oriented_scaled_target_pixels_per_unit": 150.0,
                 "oriented_scaled_crop_pad": 4,
                 "oriented_scaled_max_dimension": 8192,
+                "classifier_device": "cpu",
+                "classifier_fallback_method": "oriented_runs",
             }
         }
+        extra_config = overrides.pop("config", None)
+        if extra_config:
+            config["config"].update(extra_config)
+        config.update(overrides)
         logger = logging.getLogger("test_edge")
         return EdgeDetectionProcessor(config, logger)
 
@@ -401,6 +408,104 @@ class TestEdgeDetectionProcessor:
         assert result.updates["has_bottom_edge"] is True
         assert result.updates["has_left_edge"] is True
         assert result.updates["has_right_edge"] is True
+
+    def test_process_edge_classifier_method(self, tmp_path, monkeypatch):
+        class FakeModel:
+            def __call__(self, tensor):
+                return {
+                    "edge_logits": torch.tensor([[6.0, -6.0, 5.0, -5.0]], dtype=torch.float32),
+                    "piece_logits": torch.tensor([[0.1, 0.2, 0.7]], dtype=torch.float32),
+                }
+
+        monkeypatch.setattr(
+            "ml_pipeline.processors.edge_detection_processor.load_edge_classifier",
+            lambda **kwargs: FakeModel(),
+        )
+
+        model_path = tmp_path / "edge-best.pt"
+        model_path.write_bytes(b"stub")
+        meta_path = tmp_path / "metadata.json"
+        meta_path.write_text(json.dumps({
+            "best_thresholds": [0.5, 0.5, 0.5, 0.5],
+            "config": {
+                "img_size": 96,
+                "input_mode": "masked_rgb",
+                "target_pixels_per_unit": 100.0,
+                "crop_pad": 6,
+                "max_scaled_longest_side": 512,
+                "aux_piece_head": True,
+                "dropout_rate": 0.3,
+            },
+        }))
+
+        p = self._make_processor(
+            "edge_classifier",
+            model_path=str(model_path),
+            meta_path=str(meta_path),
+        )
+        h, w = 200, 250
+        img = np.zeros((h, w, 3), dtype=np.uint8)
+        img_path = tmp_path / "uploads" / "f001.png"
+        img_path.parent.mkdir(parents=True)
+        cv2.imwrite(str(img_path), img)
+
+        contour = _rect_contour(10, 10, 200, 150)
+        seg_data = json.dumps({"contours": [contour.squeeze().tolist()]})
+        frag = _make_fragment(segmentation_coords=seg_data, pixels_per_unit=120.0)
+        result = p.process(frag, str(tmp_path))
+
+        assert result.success is True
+        assert result.updates["has_top_edge"] is True
+        assert result.updates["has_bottom_edge"] is False
+        assert result.updates["has_left_edge"] is True
+        assert result.updates["has_right_edge"] is False
+        assert result.metadata["classifier"]["piece_prediction_aux"] == "corner"
+
+    def test_process_edge_classifier_falls_back_to_oriented_runs(self, tmp_path, monkeypatch):
+        class FailingFakeModel:
+            def __call__(self, tensor):
+                raise RuntimeError("boom")
+
+        monkeypatch.setattr(
+            "ml_pipeline.processors.edge_detection_processor.load_edge_classifier",
+            lambda **kwargs: FailingFakeModel(),
+        )
+
+        model_path = tmp_path / "edge-best.pt"
+        model_path.write_bytes(b"stub")
+        meta_path = tmp_path / "metadata.json"
+        meta_path.write_text(json.dumps({
+            "best_thresholds": [0.5, 0.5, 0.5, 0.5],
+            "config": {
+                "img_size": 96,
+                "input_mode": "masked_rgb",
+                "target_pixels_per_unit": 100.0,
+            },
+        }))
+
+        p = self._make_processor(
+            "edge_classifier",
+            model_path=str(model_path),
+            meta_path=str(meta_path),
+        )
+        h, w = 200, 250
+        img = np.zeros((h, w, 3), dtype=np.uint8)
+        img_path = tmp_path / "uploads" / "f001.png"
+        img_path.parent.mkdir(parents=True)
+        cv2.imwrite(str(img_path), img)
+
+        contour = _rect_contour(10, 10, 200, 150)
+        seg_data = json.dumps({"contours": [contour.squeeze().tolist()]})
+        frag = _make_fragment(segmentation_coords=seg_data, pixels_per_unit=120.0)
+        result = p.process(frag, str(tmp_path))
+
+        assert result.success is True
+        assert result.updates["has_top_edge"] is True
+        assert result.updates["has_bottom_edge"] is True
+        assert result.updates["has_left_edge"] is True
+        assert result.updates["has_right_edge"] is True
+        assert result.metadata["classifier"]["fallback_method"] == "oriented_runs"
+        assert "boom" in result.metadata["classifier"]["fallback_error"]
 
     def test_cleanup_does_nothing(self):
         p = self._make_processor()

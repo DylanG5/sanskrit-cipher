@@ -64,9 +64,13 @@ processors:
 
   edgedetection:
     enabled: true
+    model_path: "../models/edge-classification/best.pt"
+    meta_path: "../models/edge-classification/metadata.json"
     config:
-      model_version: "1.0"
-      edge_method: "hull_segments"  # "hull_segments" | "bbox_runs" | "oriented_runs" | "oriented_runs_scaled"
+      model_version: "2.0"
+      edge_method: "edge_classifier"  # "edge_classifier" | "hull_segments" | "bbox_runs" | "oriented_runs" | "oriented_runs_scaled"
+      classifier_device: "auto"
+      classifier_fallback_method: "oriented_runs"
       near_frac: 0.05
       min_run_frac: 0.05
       max_mean_line_err: 12.0

@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Sequence
 
 import cv2
 import numpy as np
+import torch
+from torch.utils.data import DataLoader
 
 
 SCRIPT_ROOT = Path(__file__).resolve()
@@ -21,7 +23,13 @@ REPO_ROOT = SCRIPT_ROOT.parents[3]
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from edge_classification.dataset import EDGE_LABEL_KEYS  # noqa: E402
+from edge_classification import (  # noqa: E402
+    EDGE_LABEL_KEYS,
+    EdgeClassificationDataset,
+    EdgeClassificationSample,
+    evaluate_model,
+    load_edge_classifier,
+)
 from ml_pipeline.processors.edge_detection_processor import EdgeExtractor  # noqa: E402
 
 
@@ -275,6 +283,66 @@ def evaluate_heuristics_on_manifest(manifest_path: Path, target_pixels_per_unit:
     return results
 
 
+def evaluate_saved_model_on_manifest(run_dir: Path, device_name: str) -> Dict[str, Any]:
+    metadata = json.loads((run_dir / "metadata.json").read_text())
+    manifest_items = json.loads((run_dir / "manifests" / "test.json").read_text())
+    model_config = metadata.get("config", {})
+
+    samples = [
+        EdgeClassificationSample(
+            relative_path=item["relative_path"],
+            absolute_path=Path(item["absolute_path"]),
+            collection=item["collection"],
+            labels=item["labels"],
+            piece_type=item["piece_type"],
+            segmentation_coords=item["segmentation_coords"],
+            pixels_per_unit=item.get("pixels_per_unit"),
+            scale_unit=item.get("scale_unit"),
+        )
+        for item in manifest_items
+    ]
+    dataset = EdgeClassificationDataset(
+        samples,
+        img_size=int(model_config.get("img_size", 224)),
+        augment=False,
+        target_pixels_per_unit=model_config.get("target_pixels_per_unit", 100.0),
+        input_mode=model_config.get("input_mode", "masked_rgb"),
+        crop_pad=int(model_config.get("crop_pad", 6)),
+        max_scaled_longest_side=int(model_config.get("max_scaled_longest_side", 1024)),
+    )
+    dataloader = DataLoader(
+        dataset,
+        batch_size=int(model_config.get("batch_size", 16)),
+        shuffle=False,
+        num_workers=0,
+        pin_memory=(device_name == "cuda"),
+    )
+
+    device = torch.device("cuda" if device_name == "cuda" and torch.cuda.is_available() else "cpu")
+    model = load_edge_classifier(
+        model_path=str(run_dir / "weights" / "best.pt"),
+        device=str(device),
+        pretrained=False,
+        aux_piece_head=bool(model_config.get("aux_piece_head", True)),
+        dropout_rate=float(model_config.get("dropout_rate", 0.3)),
+        freeze_backbone_fraction=0.0,
+    )
+    metrics = evaluate_model(
+        model=model,
+        dataloader=dataloader,
+        device=device,
+        thresholds=metadata.get("best_thresholds"),
+        tune_on_dataset=False,
+    )
+    return {
+        "exact_match_accuracy": metrics["exact_match_accuracy"],
+        "micro_accuracy": metrics["micro_accuracy"],
+        "piece_accuracy": metrics.get("piece_accuracy"),
+        "side_metrics": metrics["side_metrics"],
+        "test_samples_scored": len(samples),
+    }
+
+
 def aggregate_metrics(seed_results: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     method_names = ["model", *HEURISTIC_METHODS]
     aggregate: Dict[str, Any] = {}
@@ -365,7 +433,7 @@ def main() -> None:
     for seed in seeds:
         print(f"\n=== Seed {seed} ===")
         run_dir = run_training_for_seed(args, seed)
-        metadata = json.loads((run_dir / "metadata.json").read_text())
+        model_metrics = evaluate_saved_model_on_manifest(run_dir, args.device)
         heuristic_metrics = evaluate_heuristics_on_manifest(
             run_dir / "manifests" / "test.json",
             target_pixels_per_unit=args.target_pixels_per_unit,
@@ -374,10 +442,7 @@ def main() -> None:
             {
                 "seed": seed,
                 "run_dir": str(run_dir),
-                "model": {
-                    **metadata["test"],
-                    "test_samples_scored": metadata["splits"]["test"]["count"],
-                },
+                "model": model_metrics,
                 **heuristic_metrics,
             }
         )

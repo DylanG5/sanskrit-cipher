@@ -29,6 +29,38 @@ PIECE_TYPE_NAMES = ["interior", "edge", "corner"]
 PIECE_TYPE_TO_INDEX = {name: index for index, name in enumerate(PIECE_TYPE_NAMES)}
 
 
+def build_edge_image_transform(
+    img_size: int = 224,
+    augment: bool = False,
+) -> T.Compose:
+    transforms: List[object] = [T.ToPILImage()]
+
+    if augment:
+        transforms.extend(
+            [
+                T.ColorJitter(brightness=0.18, contrast=0.18, saturation=0.1),
+                T.RandomAffine(
+                    degrees=0,
+                    translate=(0.04, 0.04),
+                    scale=(0.96, 1.04),
+                    fill=255,
+                ),
+            ]
+        )
+
+    transforms.extend(
+        [
+            T.Resize((int(img_size), int(img_size))),
+            T.ToTensor(),
+            T.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            ),
+        ]
+    )
+    return T.Compose(transforms)
+
+
 @dataclass(frozen=True)
 class EdgeClassificationSample:
     relative_path: str
@@ -296,7 +328,30 @@ def render_sample_image(
         raise ValueError(f"Failed to read image: {sample.absolute_path}")
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    contours = parse_segmentation_contours(sample.segmentation_coords)
+    return render_fragment_image(
+        rgb=rgb,
+        segmentation_coords=sample.segmentation_coords,
+        pixels_per_unit=sample.pixels_per_unit,
+        crop_pad=crop_pad,
+        target_pixels_per_unit=target_pixels_per_unit,
+        max_scaled_longest_side=max_scaled_longest_side,
+        input_mode=input_mode,
+    )
+
+
+def render_fragment_image(
+    rgb: np.ndarray,
+    segmentation_coords: str,
+    pixels_per_unit: Optional[float] = None,
+    crop_pad: int = 6,
+    target_pixels_per_unit: Optional[float] = 100.0,
+    max_scaled_longest_side: int = 1024,
+    input_mode: str = "masked_rgb",
+) -> np.ndarray:
+    if rgb.ndim != 3 or rgb.shape[2] != 3:
+        raise ValueError("rgb image must have shape HxWx3")
+
+    contours = parse_segmentation_contours(segmentation_coords)
     mask = np.zeros(rgb.shape[:2], dtype=np.uint8)
     cv2.fillPoly(mask, [contour.astype(np.int32) for contour in contours], 255)
 
@@ -315,13 +370,13 @@ def render_sample_image(
 
     if (
         target_pixels_per_unit is not None
-        and sample.pixels_per_unit is not None
-        and sample.pixels_per_unit > 0
+        and pixels_per_unit is not None
+        and pixels_per_unit > 0
     ):
         crop_rgb, crop_mask = _scale_crop(
             crop_rgb,
             crop_mask,
-            scale_factor=float(target_pixels_per_unit) / float(sample.pixels_per_unit),
+            scale_factor=float(target_pixels_per_unit) / float(pixels_per_unit),
             max_scaled_longest_side=max_scaled_longest_side,
         )
 
@@ -387,32 +442,7 @@ class EdgeClassificationDataset(Dataset):
         self.transform = self._build_transforms()
 
     def _build_transforms(self) -> T.Compose:
-        transforms: List[object] = [T.ToPILImage()]
-
-        if self.augment:
-            transforms.extend(
-                [
-                    T.ColorJitter(brightness=0.18, contrast=0.18, saturation=0.1),
-                    T.RandomAffine(
-                        degrees=0,
-                        translate=(0.04, 0.04),
-                        scale=(0.96, 1.04),
-                        fill=255,
-                    ),
-                ]
-            )
-
-        transforms.extend(
-            [
-                T.Resize((self.img_size, self.img_size)),
-                T.ToTensor(),
-                T.Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225],
-                ),
-            ]
-        )
-        return T.Compose(transforms)
+        return build_edge_image_transform(img_size=self.img_size, augment=self.augment)
 
     def __len__(self) -> int:
         return len(self.samples)

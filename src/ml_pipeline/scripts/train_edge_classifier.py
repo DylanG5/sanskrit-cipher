@@ -289,6 +289,8 @@ def main() -> None:
             "freeze_backbone_fraction": args.freeze_backbone_fraction,
             "dropout_rate": args.dropout_rate,
             "target_pixels_per_unit": args.target_pixels_per_unit,
+            "crop_pad": args.crop_pad,
+            "max_scaled_longest_side": args.max_scaled_longest_side,
             "input_mode": args.input_mode,
             "require_scale": args.require_scale,
             "pretrained": not args.no_pretrained,
@@ -378,7 +380,10 @@ def main() -> None:
         if score > best_score:
             best_score = score
             bad_epochs = 0
-            best_state = {key: value.cpu() for key, value in model.state_dict().items()}
+            best_state = {
+                key: value.detach().cpu().clone()
+                for key, value in model.state_dict().items()
+            }
             best_metrics = val_metrics
             torch.save(model.state_dict(), weights_dir / "best.pt")
         else:
