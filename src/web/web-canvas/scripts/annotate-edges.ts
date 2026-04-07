@@ -1,8 +1,9 @@
 #!/usr/bin/env tsx
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { stdin as input, stdout as output } from 'node:process';
 import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +14,8 @@ type EdgeKey =
   | 'has_bottom_edge'
   | 'has_left_edge'
   | 'has_right_edge';
+type OrderMode = 'balanced' | 'ordered' | 'targeted';
+type TargetLabel = 'top' | 'bottom' | 'left' | 'right' | 'corner';
 
 interface AnnotationRecord {
   has_top_edge: EdgeValue;
@@ -36,14 +39,19 @@ interface AnnotationStore {
 interface Options {
   dataRoot: string;
   annotationsFile: string;
+  fragmentsDb?: string;
   collection?: string;
   match?: string;
   autoOpen: boolean;
   statsOnly: boolean;
   exportCsv?: string;
   start?: string;
-  randomizeOrder: boolean;
+  orderMode: OrderMode;
   seed: string;
+  dataRootExplicit: boolean;
+  annotationsFileExplicit: boolean;
+  fragmentsDbExplicit: boolean;
+  targetLabels: TargetLabel[];
 }
 
 interface ImageItem {
@@ -51,13 +59,37 @@ interface ImageItem {
   relativePath: string;
   collection: string;
   filename: string;
+  targetScore?: number;
+  targetTags?: string[];
+}
+
+interface DbEdgePrediction {
+  has_top_edge: boolean | null;
+  has_bottom_edge: boolean | null;
+  has_left_edge: boolean | null;
+  has_right_edge: boolean | null;
+  edge_piece: boolean | null;
+}
+
+interface TargetSummary {
+  label: TargetLabel;
+  reviewedPositives: number;
+  predictedPositives: number;
+}
+
+interface TargetingContext {
+  fragmentsDb: string;
+  predictions: Map<string, DbEdgePrediction>;
+  targetLabels: TargetLabel[];
 }
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(SCRIPT_DIR, '..');
+const REPO_ROOT = path.resolve(APP_ROOT, '..', '..', '..');
 const DEFAULT_DATA_ROOT = path.join(APP_ROOT, 'data');
 const DEFAULT_ANNOTATIONS_FILE = path.join(DEFAULT_DATA_ROOT, 'edge-annotations.json');
 const DEFAULT_RANDOM_SEED = 'edge-annotator-balanced-v1';
+const DEFAULT_FRAGMENTS_DB = path.join(APP_ROOT, 'electron', 'resources', 'database', 'fragments.db');
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.tif', '.tiff', '.webp']);
 const EDGE_KEYS: EdgeKey[] = [
   'has_top_edge',
@@ -78,12 +110,16 @@ function parseArgs(argv: string[]): Options {
   const options: Options = {
     dataRoot: DEFAULT_DATA_ROOT,
     annotationsFile: DEFAULT_ANNOTATIONS_FILE,
+    fragmentsDb: DEFAULT_FRAGMENTS_DB,
     autoOpen: false,
     statsOnly: false,
-    randomizeOrder: true,
+    orderMode: 'balanced',
     seed: DEFAULT_RANDOM_SEED,
+    dataRootExplicit: false,
+    annotationsFileExplicit: false,
+    fragmentsDbExplicit: false,
+    targetLabels: [],
   };
-  let annotationsFileExplicit = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -95,6 +131,7 @@ function parseArgs(argv: string[]): Options {
           throw new Error('--data-root requires a value');
         }
         options.dataRoot = path.resolve(next);
+        options.dataRootExplicit = true;
         i += 1;
         break;
       case '--annotations-file':
@@ -102,7 +139,15 @@ function parseArgs(argv: string[]): Options {
           throw new Error('--annotations-file requires a value');
         }
         options.annotationsFile = path.resolve(next);
-        annotationsFileExplicit = true;
+        options.annotationsFileExplicit = true;
+        i += 1;
+        break;
+      case '--fragments-db':
+        if (!next) {
+          throw new Error('--fragments-db requires a value');
+        }
+        options.fragmentsDb = path.resolve(next);
+        options.fragmentsDbExplicit = true;
         i += 1;
         break;
       case '--collection':
@@ -133,8 +178,19 @@ function parseArgs(argv: string[]): Options {
         options.seed = next.trim();
         i += 1;
         break;
+      case '--targeted':
+        options.orderMode = 'targeted';
+        break;
+      case '--targets':
+        if (!next) {
+          throw new Error('--targets requires a value');
+        }
+        options.targetLabels = parseTargetLabels(next);
+        options.orderMode = 'targeted';
+        i += 1;
+        break;
       case '--ordered':
-        options.randomizeOrder = false;
+        options.orderMode = 'ordered';
         break;
       case '--open':
         options.autoOpen = true;
@@ -158,7 +214,7 @@ function parseArgs(argv: string[]): Options {
     }
   }
 
-  if (!annotationsFileExplicit) {
+  if (!options.annotationsFileExplicit) {
     options.annotationsFile = path.join(options.dataRoot, 'edge-annotations.json');
   }
 
@@ -176,10 +232,13 @@ Usage:
 Options:
   --data-root <path>          Override the image root. Default: src/web/web-canvas/data
   --annotations-file <path>   Override the JSON annotations file
+  --fragments-db <path>       Override fragments.db used for targeted ordering
   --collection <name>         Restrict to one collection folder, e.g. BLL42
   --match <text>              Restrict to paths containing text
   --start <value>             Start at 1-based index, exact path, or "first-unreviewed"
   --seed <value>              Seed for balanced random ordering. Default: ${DEFAULT_RANDOM_SEED}
+  --targeted                  Prioritize likely underrepresented edge cases using fragments.db
+  --targets <csv>             Focus targeted mode on: right,left,corner,top,bottom (default: auto)
   --ordered                   Disable balanced random ordering and use sorted paths
   --open                      Open each image in the OS viewer when selected
   --stats                     Print summary stats and exit
@@ -198,6 +257,7 @@ Interactive commands:
   reset                      Clear the current annotation record
   goto <index|path text>     Jump by 1-based index or first path match
   stats                      Print progress summary
+  target-stats               Print live target coverage and remaining candidate counts
   save                       Force-save annotations JSON
   help                       Show commands
   q                          Quit
@@ -206,8 +266,49 @@ Notes:
   - Annotations autosave on every change.
   - Records are stored in data/edge-annotations.json by relative image path.
   - By default, images are shown in a balanced random order across collections.
+  - Targeted mode uses fragments.db edge priors and your reviewed-label counts to bias toward underrepresented cases.
+  - If the local data folder is empty, the tool will try nearby sibling repos before failing.
 `;
   console.log(help.trim());
+}
+
+function parseTargetLabels(raw: string): TargetLabel[] {
+  const normalized = raw
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (normalized.length === 0 || normalized.includes('auto')) {
+    return [];
+  }
+
+  const labels: TargetLabel[] = [];
+  const seen = new Set<TargetLabel>();
+  const aliases: Record<string, TargetLabel> = {
+    t: 'top',
+    top: 'top',
+    b: 'bottom',
+    bottom: 'bottom',
+    l: 'left',
+    left: 'left',
+    r: 'right',
+    right: 'right',
+    c: 'corner',
+    corner: 'corner',
+  };
+
+  for (const value of normalized) {
+    const label = aliases[value];
+    if (!label) {
+      throw new Error(`Unknown target label: ${value}`);
+    }
+    if (!seen.has(label)) {
+      labels.push(label);
+      seen.add(label);
+    }
+  }
+
+  return labels;
 }
 
 function listImages(dataRoot: string): ImageItem[] {
@@ -249,6 +350,160 @@ function listImages(dataRoot: string): ImageItem[] {
   }
 
   return items.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
+}
+
+function findNearbyDataRoots(): string[] {
+  const candidates = new Set<string>();
+  const repoParent = path.dirname(REPO_ROOT);
+  const capstoneData = path.join(os.homedir(), 'capstone_data');
+
+  if (fs.existsSync(capstoneData)) {
+    candidates.add(path.resolve(capstoneData));
+  }
+
+  if (fs.existsSync(repoParent)) {
+    const entries = fs.readdirSync(repoParent, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      const candidate = path.join(repoParent, entry.name, 'src', 'web', 'web-canvas', 'data');
+      if (fs.existsSync(candidate)) {
+        candidates.add(path.resolve(candidate));
+      }
+    }
+  }
+
+  return [...candidates];
+}
+
+function findNearbyFragmentsDbs(): string[] {
+  const candidates = new Set<string>();
+  const repoParent = path.dirname(REPO_ROOT);
+
+  const localDefault = path.resolve(DEFAULT_FRAGMENTS_DB);
+  if (fs.existsSync(localDefault)) {
+    candidates.add(localDefault);
+  }
+
+  if (fs.existsSync(repoParent)) {
+    const entries = fs.readdirSync(repoParent, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      const candidate = path.join(
+        repoParent,
+        entry.name,
+        'src',
+        'web',
+        'web-canvas',
+        'electron',
+        'resources',
+        'database',
+        'fragments.db'
+      );
+      if (fs.existsSync(candidate)) {
+        candidates.add(path.resolve(candidate));
+      }
+    }
+  }
+
+  return [...candidates];
+}
+
+function formatPathList(paths: string[]): string {
+  return paths.map((candidate) => `  - ${candidate}`).join('\n');
+}
+
+function resolveDataInputs(options: Options): {
+  dataRoot: string;
+  annotationsFile: string;
+  allImages: ImageItem[];
+  autoDetected: boolean;
+} {
+  if (!fs.existsSync(options.dataRoot)) {
+    throw new Error(`Data root not found: ${options.dataRoot}`);
+  }
+
+  const currentRoot = path.resolve(options.dataRoot);
+  let allImages = listImages(currentRoot);
+  if (allImages.length > 0) {
+    return {
+      dataRoot: currentRoot,
+      annotationsFile: options.annotationsFile,
+      allImages,
+      autoDetected: false,
+    };
+  }
+
+  if (options.dataRootExplicit) {
+    throw new Error(
+      `Data root exists but contains no supported images: ${currentRoot}\n` +
+      'Use --data-root to point at a directory containing collection folders such as BLL10.'
+    );
+  }
+
+  const alternates = findNearbyDataRoots().filter((candidate) => candidate !== currentRoot);
+  const populatedAlternates = alternates.filter((candidate) => listImages(candidate).length > 0);
+
+  if (populatedAlternates.length === 1) {
+    const dataRoot = populatedAlternates[0];
+    allImages = listImages(dataRoot);
+    return {
+      dataRoot,
+      annotationsFile: options.annotationsFileExplicit
+        ? options.annotationsFile
+        : path.join(dataRoot, 'edge-annotations.json'),
+      allImages,
+      autoDetected: true,
+    };
+  }
+
+  if (populatedAlternates.length > 1) {
+    throw new Error(
+      `Default data root contains no supported images: ${currentRoot}\n` +
+      'Multiple nearby image roots were found. Re-run with --data-root using one of:\n' +
+      formatPathList(populatedAlternates)
+    );
+  }
+
+  throw new Error(
+    `Default data root contains no supported images: ${currentRoot}\n` +
+    'No nearby populated image roots were found. Re-run with --data-root pointing at your extracted corpus.'
+  );
+}
+
+function resolveFragmentsDb(options: Options, dataRoot: string): string | undefined {
+  const explicitDb = options.fragmentsDb ? path.resolve(options.fragmentsDb) : undefined;
+
+  if (options.fragmentsDbExplicit) {
+    if (!explicitDb || !fs.existsSync(explicitDb)) {
+      throw new Error(`fragments.db not found: ${options.fragmentsDb}`);
+    }
+    return explicitDb;
+  }
+
+  const siblingDb = path.join(path.dirname(dataRoot), 'electron', 'resources', 'database', 'fragments.db');
+  if (fs.existsSync(siblingDb)) {
+    return path.resolve(siblingDb);
+  }
+
+  const alternates = findNearbyFragmentsDbs();
+  if (alternates.length === 1) {
+    return alternates[0];
+  }
+
+  if (alternates.length > 1) {
+    const matchingPrefix = alternates.find((candidate) =>
+      candidate.startsWith(path.dirname(path.dirname(path.dirname(dataRoot))))
+    );
+    if (matchingPrefix) {
+      return matchingPrefix;
+    }
+  }
+
+  return undefined;
 }
 
 function createEmptyStore(dataRoot: string): AnnotationStore {
@@ -429,6 +684,356 @@ function getReviewedCountsByCollection(store: AnnotationStore): Map<string, numb
   return counts;
 }
 
+function toDbBoolean(value: unknown): boolean | null {
+  if (value === 0 || value === false) {
+    return false;
+  }
+  if (value === 1 || value === true) {
+    return true;
+  }
+  return null;
+}
+
+function loadDbEdgePredictions(
+  fragmentsDb: string,
+  images: ImageItem[]
+): Map<string, DbEdgePrediction> {
+  const wantedPaths = new Set(images.map((image) => image.relativePath));
+  const predictions = new Map<string, DbEdgePrediction>();
+  const queryScript = `
+import json
+import sqlite3
+import sys
+
+conn = sqlite3.connect(sys.argv[1])
+conn.row_factory = sqlite3.Row
+rows = conn.execute(
+    """
+    SELECT
+      REPLACE(image_path, '\\\\', '/') AS image_path,
+      has_top_edge,
+      has_bottom_edge,
+      has_left_edge,
+      has_right_edge,
+      edge_piece
+    FROM fragments
+    """
+).fetchall()
+json.dump([dict(row) for row in rows], sys.stdout)
+`;
+  let raw = '';
+  try {
+    raw = execFileSync('python3', ['-c', queryScript, fragmentsDb], {
+      encoding: 'utf-8',
+      maxBuffer: 64 * 1024 * 1024,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read edge priors from fragments.db via python3: ${message}`);
+  }
+  const rows = JSON.parse(raw) as Array<Record<string, unknown>>;
+
+  for (const row of rows) {
+    const imagePath = String(row.image_path ?? '');
+    if (!wantedPaths.has(imagePath)) {
+      continue;
+    }
+
+    predictions.set(imagePath, {
+      has_top_edge: toDbBoolean(row.has_top_edge),
+      has_bottom_edge: toDbBoolean(row.has_bottom_edge),
+      has_left_edge: toDbBoolean(row.has_left_edge),
+      has_right_edge: toDbBoolean(row.has_right_edge),
+      edge_piece: toDbBoolean(row.edge_piece),
+    });
+  }
+
+  return predictions;
+}
+
+function countTrueEdges(prediction: DbEdgePrediction): number {
+  return EDGE_KEYS.reduce((count, key) => count + (prediction[key] === true ? 1 : 0), 0);
+}
+
+function predictionHasLabel(prediction: DbEdgePrediction, label: TargetLabel): boolean {
+  if (label === 'corner') {
+    return countTrueEdges(prediction) >= 2;
+  }
+
+  const keyByLabel: Record<Exclude<TargetLabel, 'corner'>, EdgeKey> = {
+    top: 'has_top_edge',
+    bottom: 'has_bottom_edge',
+    left: 'has_left_edge',
+    right: 'has_right_edge',
+  };
+
+  return prediction[keyByLabel[label]] === true;
+}
+
+function getReviewedPositiveCounts(store: AnnotationStore): Map<TargetLabel, number> {
+  const counts = new Map<TargetLabel, number>([
+    ['top', 0],
+    ['bottom', 0],
+    ['left', 0],
+    ['right', 0],
+    ['corner', 0],
+  ]);
+
+  for (const record of Object.values(store.annotations)) {
+    if (!record.reviewed || record.skipped) {
+      continue;
+    }
+
+    if (record.has_top_edge === true) {
+      counts.set('top', (counts.get('top') ?? 0) + 1);
+    }
+    if (record.has_bottom_edge === true) {
+      counts.set('bottom', (counts.get('bottom') ?? 0) + 1);
+    }
+    if (record.has_left_edge === true) {
+      counts.set('left', (counts.get('left') ?? 0) + 1);
+    }
+    if (record.has_right_edge === true) {
+      counts.set('right', (counts.get('right') ?? 0) + 1);
+    }
+
+    const positiveEdges = EDGE_KEYS.filter((key) => record[key] === true).length;
+    if (positiveEdges >= 2) {
+      counts.set('corner', (counts.get('corner') ?? 0) + 1);
+    }
+  }
+
+  return counts;
+}
+
+function formatReviewedPositiveCounts(store: AnnotationStore): string {
+  const counts = getReviewedPositiveCounts(store);
+  return ['top', 'bottom', 'left', 'right', 'corner']
+    .map((label) => `${label}=${counts.get(label as TargetLabel) ?? 0}`)
+    .join(' ');
+}
+
+function summarizeTargets(
+  labels: TargetLabel[],
+  images: ImageItem[],
+  predictions: Map<string, DbEdgePrediction>,
+  store: AnnotationStore
+): TargetSummary[] {
+  const reviewedCounts = getReviewedPositiveCounts(store);
+  return labels.map((label) => {
+    let predictedPositives = 0;
+    for (const image of images) {
+      const prediction = predictions.get(image.relativePath);
+      if (prediction && predictionHasLabel(prediction, label)) {
+        predictedPositives += 1;
+      }
+    }
+
+    return {
+      label,
+      reviewedPositives: reviewedCounts.get(label) ?? 0,
+      predictedPositives,
+    };
+  });
+}
+
+function getUnreviewedImages(images: ImageItem[], store: AnnotationStore): ImageItem[] {
+  return images.filter((image) => !getRecord(store, image.relativePath).reviewed);
+}
+
+function getCurrentTargetSummaries(
+  images: ImageItem[],
+  store: AnnotationStore,
+  targeting?: TargetingContext
+): TargetSummary[] {
+  if (!targeting) {
+    return [];
+  }
+
+  return summarizeTargets(
+    targeting.targetLabels,
+    getUnreviewedImages(images, store),
+    targeting.predictions,
+    store
+  );
+}
+
+function formatTargetSummary(summaries: TargetSummary[]): string {
+  return summaries
+    .map((summary) => `${summary.label} reviewed=${summary.reviewedPositives} candidates=${summary.predictedPositives}`)
+    .join(' | ');
+}
+
+function printTargetStats(
+  images: ImageItem[],
+  store: AnnotationStore,
+  targeting?: TargetingContext
+): void {
+  console.log(`Reviewed positives: ${formatReviewedPositiveCounts(store)}`);
+  if (!targeting) {
+    console.log('Targeted mode is not active. Launch with --targeted to see candidate counts.');
+    return;
+  }
+
+  const summaries = getCurrentTargetSummaries(images, store, targeting);
+  console.log(`Target focus: ${formatTargetSummary(summaries) || '(no positive target candidates found)'}`);
+  console.log(`fragments.db: ${targeting.fragmentsDb}`);
+}
+
+function chooseAutoTargetLabels(
+  images: ImageItem[],
+  predictions: Map<string, DbEdgePrediction>,
+  store: AnnotationStore
+): TargetLabel[] {
+  const summaries = summarizeTargets(['right', 'left', 'corner', 'top', 'bottom'], images, predictions, store)
+    .filter((summary) => summary.predictedPositives > 0)
+    .sort((left, right) => {
+      const reviewedDiff = left.reviewedPositives - right.reviewedPositives;
+      if (reviewedDiff !== 0) {
+        return reviewedDiff;
+      }
+      const predictedDiff = right.predictedPositives - left.predictedPositives;
+      if (predictedDiff !== 0) {
+        return predictedDiff;
+      }
+      return left.label.localeCompare(right.label);
+    });
+
+  return summaries.slice(0, 3).map((summary) => summary.label);
+}
+
+function rankImagesForTargets(
+  images: ImageItem[],
+  predictions: Map<string, DbEdgePrediction>,
+  targetSummaries: TargetSummary[]
+): { hits: ImageItem[]; misses: ImageItem[] } {
+  if (images.length === 0 || targetSummaries.length === 0) {
+    return { hits: [], misses: [...images] };
+  }
+
+  const maxReviewed = Math.max(...targetSummaries.map((summary) => summary.reviewedPositives), 1);
+  const scoreForLabel = new Map<TargetLabel, number>();
+  for (const summary of targetSummaries) {
+    scoreForLabel.set(summary.label, Math.max(1, maxReviewed - summary.reviewedPositives));
+  }
+
+  const hits: ImageItem[] = [];
+  const misses: ImageItem[] = [];
+
+  for (const image of images) {
+    const prediction = predictions.get(image.relativePath);
+    if (!prediction) {
+      misses.push(image);
+      continue;
+    }
+
+    let score = 0;
+    const tags: string[] = [];
+    for (const summary of targetSummaries) {
+      if (!predictionHasLabel(prediction, summary.label)) {
+        continue;
+      }
+      const weight = scoreForLabel.get(summary.label) ?? 1;
+      score += summary.label === 'corner' ? weight * 1.15 : weight;
+      tags.push(summary.label);
+    }
+
+    if (score > 0) {
+      hits.push({ ...image, targetScore: score, targetTags: tags });
+    } else {
+      misses.push(image);
+    }
+  }
+
+  return { hits, misses };
+}
+
+function buildTargetedCollectionOrder(
+  images: ImageItem[],
+  store: AnnotationStore,
+  seed: string
+): ImageItem[] {
+  if (images.length <= 1) {
+    return [...images];
+  }
+
+  const byCollection = new Map<string, ImageItem[]>();
+  for (const image of images) {
+    const items = byCollection.get(image.collection) ?? [];
+    items.push(image);
+    byCollection.set(image.collection, items);
+  }
+
+  for (const [collection, items] of byCollection.entries()) {
+    const random = createSeededRandom(`${seed}::items::${collection}`);
+    const tieBreaker = new Map(
+      items.map((image) => [image.relativePath, random()])
+    );
+    items.sort((left, right) => {
+      const scoreDiff = (right.targetScore ?? 0) - (left.targetScore ?? 0);
+      if (scoreDiff !== 0) {
+        return scoreDiff;
+      }
+      const tieDiff = (tieBreaker.get(left.relativePath) ?? 0) - (tieBreaker.get(right.relativePath) ?? 0);
+      if (tieDiff !== 0) {
+        return tieDiff;
+      }
+      return left.relativePath.localeCompare(right.relativePath);
+    });
+  }
+
+  const reviewedCounts = getReviewedCountsByCollection(store);
+  const collectionOrder = [...byCollection.keys()];
+  const tieBreakers = new Map(
+    collectionOrder.map((collection) => [
+      collection,
+      createSeededRandom(`${seed}::collection-rank::${collection}`)(),
+    ])
+  );
+
+  collectionOrder.sort((left, right) => {
+    const reviewedDiff = (reviewedCounts.get(left) ?? 0) - (reviewedCounts.get(right) ?? 0);
+    if (reviewedDiff !== 0) {
+      return reviewedDiff;
+    }
+
+    const bestLeft = byCollection.get(left)?.[0]?.targetScore ?? 0;
+    const bestRight = byCollection.get(right)?.[0]?.targetScore ?? 0;
+    const scoreDiff = bestRight - bestLeft;
+    if (scoreDiff !== 0) {
+      return scoreDiff;
+    }
+
+    const tieDiff = (tieBreakers.get(left) ?? 0) - (tieBreakers.get(right) ?? 0);
+    if (tieDiff !== 0) {
+      return tieDiff;
+    }
+
+    return left.localeCompare(right);
+  });
+
+  const ordered: ImageItem[] = [];
+  let madeProgress = true;
+
+  while (madeProgress) {
+    madeProgress = false;
+    for (const collection of collectionOrder) {
+      const items = byCollection.get(collection);
+      if (!items || items.length === 0) {
+        continue;
+      }
+      const next = items.shift();
+      if (!next) {
+        continue;
+      }
+      ordered.push(next);
+      madeProgress = true;
+    }
+  }
+
+  return ordered;
+}
+
 function isReviewed(store: AnnotationStore, relativePath: string): boolean {
   return Boolean(store.annotations[relativePath]?.reviewed);
 }
@@ -500,8 +1105,13 @@ function buildBalancedRandomOrder(
   return ordered;
 }
 
-function orderImages(images: ImageItem[], store: AnnotationStore, options: Options): ImageItem[] {
-  if (!options.randomizeOrder) {
+function orderImages(
+  images: ImageItem[],
+  store: AnnotationStore,
+  options: Options,
+  targeting?: TargetingContext
+): ImageItem[] {
+  if (options.orderMode === 'ordered') {
     return images;
   }
 
@@ -514,6 +1124,20 @@ function orderImages(images: ImageItem[], store: AnnotationStore, options: Optio
     } else {
       unreviewed.push(image);
     }
+  }
+
+  if (options.orderMode === 'targeted' && targeting) {
+    const ranked = rankImagesForTargets(
+      unreviewed,
+      targeting.predictions,
+      summarizeTargets(targeting.targetLabels, unreviewed, targeting.predictions, store)
+    );
+
+    return [
+      ...buildTargetedCollectionOrder(ranked.hits, store, `${options.seed}::targeted-hits`),
+      ...buildBalancedRandomOrder(ranked.misses, store, `${options.seed}::targeted-misses`),
+      ...buildBalancedRandomOrder(reviewed, store, `${options.seed}::reviewed`),
+    ];
   }
 
   return [
@@ -694,15 +1318,23 @@ function printCurrent(images: ImageItem[], index: number, store: AnnotationStore
     `R=${edgeValueLabel(record.has_right_edge)} ` +
     `| edge_piece=${edgeValueLabel(edgePiece)}`
   );
+  if (image.targetTags && image.targetTags.length > 0) {
+    console.log(`Target:    ${image.targetTags.join(', ')}${image.targetScore ? ` | score=${image.targetScore.toFixed(1)}` : ''}`);
+  }
   console.log(`Status:    reviewed=${record.reviewed ? 'yes' : 'no'} skipped=${record.skipped ? 'yes' : 'no'}`);
   console.log(`Notes:     ${record.notes || '(none)'}`);
 }
 
 function printInteractiveHelp(): void {
-  console.log('Commands: t b l r | d | x | n | p | u | o | auto-open | note <text> | clear-note | reset | goto <index|text> | stats | save | help | q');
+  console.log('Commands: t b l r | d | x | n | p | u | o | auto-open | note <text> | clear-note | reset | goto <index|text> | stats | target-stats | save | help | q');
 }
 
-async function runInteractive(images: ImageItem[], store: AnnotationStore, options: Options): Promise<void> {
+async function runInteractive(
+  images: ImageItem[],
+  store: AnnotationStore,
+  options: Options,
+  targeting?: TargetingContext
+): Promise<void> {
   const rl = readline.createInterface({ input, output });
   let index = findStartIndex(images, store, options.start);
   let autoOpenImage = options.autoOpen;
@@ -746,6 +1378,11 @@ async function runInteractive(images: ImageItem[], store: AnnotationStore, optio
 
       if (normalized === 'stats') {
         printStats(images, store);
+        continue;
+      }
+
+      if (normalized === 'target-stats' || normalized === 'ts') {
+        printTargetStats(images, store, targeting);
         continue;
       }
 
@@ -893,22 +1530,47 @@ async function runInteractive(images: ImageItem[], store: AnnotationStore, optio
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
-
-  if (!fs.existsSync(options.dataRoot)) {
-    throw new Error(`Data root not found: ${options.dataRoot}`);
+  const resolved = resolveDataInputs(options);
+  options.dataRoot = resolved.dataRoot;
+  options.annotationsFile = resolved.annotationsFile;
+  if (options.orderMode === 'targeted') {
+    options.fragmentsDb = resolveFragmentsDb(options, resolved.dataRoot);
+    if (!options.fragmentsDb) {
+      console.warn('Targeted mode requested but no fragments.db was resolved. Falling back to balanced order.');
+      options.orderMode = 'balanced';
+    }
   }
-
-  const store = loadStore(options.annotationsFile, options.dataRoot);
-  const allImages = listImages(options.dataRoot);
+  const store = loadStore(resolved.annotationsFile, resolved.dataRoot);
+  const allImages = resolved.allImages;
   const filteredImages = filterImages(allImages, options);
-  const images = orderImages(filteredImages, store, options);
+  let targeting: TargetingContext | undefined;
+  if (options.orderMode === 'targeted' && options.fragmentsDb) {
+    const predictions = loadDbEdgePredictions(options.fragmentsDb, filteredImages);
+    const unreviewed = getUnreviewedImages(filteredImages, store);
+    const targetLabels = options.targetLabels.length > 0
+      ? options.targetLabels
+      : chooseAutoTargetLabels(unreviewed, predictions, store);
+    targeting = {
+      fragmentsDb: options.fragmentsDb,
+      predictions,
+      targetLabels,
+    };
+  }
+  const images = orderImages(filteredImages, store, options, targeting);
 
   if (images.length === 0) {
-    throw new Error('No images matched the requested filters.');
+    throw new Error(
+      `No images matched the requested filters in ${resolved.dataRoot}.\n` +
+      `Collection filter: ${options.collection ?? '(none)'}\n` +
+      `Match filter: ${options.match ?? '(none)'}`
+    );
   }
 
   if (options.statsOnly) {
     printStats(images, store);
+    if (options.orderMode === 'targeted') {
+      printTargetStats(images, store, targeting);
+    }
     return;
   }
 
@@ -918,15 +1580,21 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`Loaded ${images.length} images from ${options.dataRoot}`);
-  console.log(`Annotations file: ${options.annotationsFile}`);
-  if (options.randomizeOrder) {
+  if (resolved.autoDetected) {
+    console.log(`Resolved image root automatically: ${resolved.dataRoot}`);
+  }
+  console.log(`Loaded ${images.length} images from ${resolved.dataRoot}`);
+  console.log(`Annotations file: ${resolved.annotationsFile}`);
+  if (options.orderMode === 'targeted') {
+    console.log(`Order: targeted across ${new Set(images.map((image) => image.collection)).size} collections (seed=${options.seed})`);
+    printTargetStats(images, store, targeting);
+  } else if (options.orderMode === 'balanced') {
     const collectionCount = new Set(images.map((image) => image.collection)).size;
     console.log(`Order: balanced-random across ${collectionCount} collections (seed=${options.seed})`);
   } else {
     console.log('Order: sorted by relative path');
   }
-  await runInteractive(images, store, options);
+  await runInteractive(images, store, options, targeting);
   saveStore(options.annotationsFile, store);
   console.log('Saved annotations and exited.');
 }
