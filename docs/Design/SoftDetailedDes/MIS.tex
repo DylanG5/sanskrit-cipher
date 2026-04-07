@@ -60,9 +60,9 @@ urlcolor=cyan          % color of external links
 Nov.\ 13, 2025 & 1.0 & Added Section 2: Symbols, Abbreviations and Acronyms.\\
 Nov.\ 13, 2025 & 1.1 & Added Section 3: Introduction.\\
 Nov.\ 13, 2025 & 1.2 & Added Section 4: Notation.\\
-Jan.\ 18, 2025 & 1.3 & Added Section 5: Module Decomposition.\\
-Jan.\ 18, 2025 & 1.4 & Added Sections 6--29: Module Interface Specifications for all modules.\\
-Nov.\ 13, 2025 & 1.5 & Added Reflection and References\\
+Jan.\ 18, 2026 & 1.3 & Added Section 5: Module Decomposition.\\
+Jan.\ 18, 2026 & 1.4 & Added Sections 6--29: Module Interface Specifications for all modules.\\
+Jan.\ 18, 2026 & 1.5 & Added Reflection and References.\\
 Apr.\ 6, 2026 & 1.6 & Expanded the Section 2 exception glossary for consistency with the module specifications.\\
 Apr.\ 6, 2026 & 1.7 & Removed the unimplemented \texttt{ML.TextSim} module from the MIS to align the document with the codebase.\\
 Apr.\ 6, 2026 & 1.8 & Added explicit \texttt{pre:} and \texttt{post:} conditions to access routine semantics for stronger interface precision.\\
@@ -224,7 +224,7 @@ This section explains how interfaces and operations are written in the MIS. The 
     \item \textbf{Inputs and Outputs:} Labeled as \texttt{in:} and \texttt{out:} in operation definitions. Example: \texttt{search(in: SearchQuery, out: SearchResult)}
     \item \textbf{Operation Format:} \texttt{functionName(in: InputType, out: OutputType) → may throw ErrorType}
     \item \textbf{Module Naming Convention:} Each module name follows the format \texttt{Layer.Module}, for example: \texttt{UI.Canvas}, \texttt{Svc.MatchOrch}, or \texttt{Data.FragmentStore}.
-    \item \textbf{Boolean Conditions:} Represented using logical symbols such as $\land$ (and), $\lor$ (or), $\lnot$ (not), and $\implies$ (implies).
+    \item \textbf{Logical Expressions:} Represented using logical symbols such as $\land$ (and), $\lor$ (or), $\lnot$ (not), and the implication operator $\implies$.
 \end{itemize}
 
 
@@ -252,10 +252,11 @@ Each level in the hierarchy captures a different design concern:
 \toprule
 \textbf{Level 1} & \textbf{Level 2 Modules} \\
 \midrule
-Hardware-Hiding (HW) & Image Storage Interface \\
+Hardware-Hiding (HW) & -- \\
 \addlinespace
 Behaviour-Hiding & 
 \begin{minipage}[t]{0.7\linewidth}
+\texttt{HW.ImageStorage}\\
 \textbf{User Interface (UI):} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload}, \texttt{UI.SaveSession}, \texttt{UI.LoadSession}\\
 \textbf{Service Layer (Svc):} \texttt{Svc.API}, \texttt{Svc.Search}, \texttt{Svc.AuthZ}, \texttt{Svc.Session}, \texttt{Svc.ProcOrch}, \texttt{Svc.MatchOrch}\\
 \textbf{Data Management (Data):} \texttt{Data.FragmentStore}, \texttt{Data.Catalog}, \texttt{Data.User}, \texttt{Data.Project}\\
@@ -275,10 +276,10 @@ Utility and Support Modules (Error Handling, Logging, Configuration Management, 
 \subsection{Description of Levels}
 
 \subsubsection{Hardware-Hiding Level}
-This level hides all hardware and platform dependencies from the rest of the system. It includes interfaces that communicate with the file storage system, image repositories, and cloud infrastructure. These components provide a uniform interface for accessing images and metadata regardless of the underlying storage medium.
+This level hides operating-system and platform dependencies from the rest of the system. In this design, those low-level details remain external to the application modules rather than being specified as separate MIS leaf modules.
 
 \subsubsection{Behaviour-Hiding Level}
-This level defines the functional behavior of the system, implementing the requirements outlined in the SRS. It includes the user-facing modules (UI), the application logic (Service Layer), data persistence (Data Layer), and intelligent processing (ML Layer). These modules interact through clearly defined service interfaces, promoting modularity and separation of concerns.
+This level defines the functional behavior of the system, implementing the requirements outlined in the SRS. It includes \texttt{HW.ImageStorage}, the user-facing modules (UI), the application logic (Service Layer), data persistence (Data Layer), and intelligent processing (ML Layer). These modules interact through clearly defined service interfaces, promoting modularity and separation of concerns.
 
 \subsubsection{Software Decision Level}
 This level includes supporting components that are primarily design decisions rather than functional necessities. These modules include configuration handlers, utility libraries, and testing or logging frameworks that support development, debugging, and maintenance.
@@ -289,13 +290,10 @@ This level includes supporting components that are primarily design decisions ra
 \subsection{Module}
 \textbf{HW.ImageStorage} \; (Image Storage Interface)
 
-This module provides a uniform interface for reading, writing, and managing manuscript fragment image files and related metadata in the underlying file system or cloud storage. It hides all platform-specific file operations from higher-level modules and ensures consistent access and naming conventions.
-
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{Data.FragmentStore} – for linking stored image references to fragment metadata records.
-    \item \texttt{Svc.ProcOrch} – for initiating preprocessing or orientation correction workflows once an image is stored.
     \item External file system or object storage API.
+    \item \texttt{Util.Error} – for constructing storage-related error objects.
 \end{itemize}
 
 \subsection{Syntax}
@@ -341,7 +339,6 @@ This module provides a uniform interface for reading, writing, and managing manu
 \subsubsection{Assumptions}
 \begin{itemize}
     \item The underlying storage service guarantees atomic read/write operations.
-    \item ImageIDs are globally unique.
 \end{itemize}
 
 \subsubsection{Access Routine Semantics}
@@ -350,8 +347,8 @@ This module provides a uniform interface for reading, writing, and managing manu
 \begin{itemize}
     \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
     \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
-    \item transition: file is written to storage; \texttt{storageIndex} and \texttt{metadataCache} updated with new entry.
-    \item output: a newly generated \texttt{ImageID}.
+    \item transition: a candidate \texttt{ImageID} is generated and checked with \texttt{isUniqueImageID}; if the identifier is unused, the file is written to storage and \texttt{storageIndex} and \texttt{metadataCache} are updated with the new entry.
+    \item output: a newly generated unique \texttt{ImageID}.
     \item exception: \texttt{InvalidFormatError} if file type not in \texttt{SUPPORTED\_FORMATS}; \texttt{StorageWriteError} if write fails.
 \end{itemize}
 
@@ -382,8 +379,9 @@ This module provides a uniform interface for reading, writing, and managing manu
 
 \subsubsection{Local Functions}
 \begin{itemize}
-    \item \texttt{generateImageID(file: ImageFile): ImageID}
-    \item \texttt{validateFormat(file: ImageFile): bool}
+    \item \texttt{generateImageID(file: ImageFile): ImageID} – generates a candidate identifier for a newly stored image.
+    \item \texttt{isUniqueImageID(id: ImageID): bool} – returns \texttt{true} iff \texttt{id} is not already present in \texttt{storageIndex}.
+    \item \texttt{validateFormat(file: ImageFile): bool} – checks that the uploaded file format is supported.
 \end{itemize}
 
 
@@ -440,7 +438,6 @@ This module provides the browser-facing login and logout experience. It collects
 
 \subsubsection{Assumptions}
 \begin{itemize}
-    \item Network connectivity is available for requests to \texttt{Svc.AuthZ}.
     \item Password input is masked and handled securely by the browser.
 \end{itemize}
 
@@ -459,9 +456,9 @@ This module provides the browser-facing login and logout experience. It collects
 \begin{itemize}
     \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
     \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
-    \item transition: sends credentials to \texttt{Svc.AuthZ}; updates \texttt{loginAttempts} and \texttt{authErrorMessage} based on response.
+    \item transition: checks whether \texttt{Svc.AuthZ} is reachable, then sends credentials to it; updates \texttt{loginAttempts} and \texttt{authErrorMessage} based on response.
     \item output: \texttt{AuthResult} indicating success or failure.
-    \item exception: \texttt{AuthError} if credentials rejected; \texttt{NetworkError} if backend unreachable.
+    \item exception: \texttt{AuthError} if credentials rejected; \texttt{NetworkError} if the reachability check fails or the backend is unreachable.
 \end{itemize}
 
 \noindent \texttt{logoutUser()}:
@@ -476,6 +473,7 @@ This module provides the browser-facing login and logout experience. It collects
 \subsubsection{Local Functions}
 \begin{itemize}
     \item \texttt{displayError(msg: String)} – updates UI error region.
+    \item \texttt{checkAuthServiceReachable(): bool} – checks whether the authentication service can be contacted before submitting credentials.
     \item \texttt{resetForm()} – clears form fields.
 \end{itemize}
 
@@ -605,7 +603,7 @@ This module provides the interactive canvas where scholars can view, move, rotat
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
 \texttt{renderCanvas} & \texttt{state: CanvasState} & \texttt{none} & \texttt{UIRenderError} \\
-\texttt{placeFragment} & \texttt{id: FragmentID, position: Tuple} & \texttt{none} & \texttt{LayoutError} \\
+\texttt{placeFragment} & \texttt{id: FragmentID, position: Record\{x: float, y: float\}} & \texttt{none} & \texttt{LayoutError} \\
 \texttt{rotateFragment} & \texttt{id: FragmentID, angle: float} & \texttt{none} & \texttt{LayoutError} \\
 \texttt{requestMatches} & \texttt{id: FragmentID} & \texttt{none} & \texttt{NetworkError} \\
 \texttt{saveLayout} & \texttt{none} & \texttt{LayoutID} & \texttt{NetworkError} \\
@@ -647,7 +645,7 @@ This module provides the interactive canvas where scholars can view, move, rotat
 \begin{itemize}
     \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
     \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
-    \item transition: updates \texttt{currentState} with new position for \texttt{id}.
+    \item transition: validates the \texttt{position} record, where \texttt{position.x} and \texttt{position.y} are the target canvas coordinates for the fragment's anchor point, then updates \texttt{currentState} with that new position for \texttt{id}.
     \item output: none.
     \item exception: \texttt{LayoutError} if fragment exceeds bounds or limit exceeded.
 \end{itemize}
@@ -681,6 +679,7 @@ This module provides the interactive canvas where scholars can view, move, rotat
 
 \subsubsection{Local Functions}
 \begin{itemize}
+    \item \texttt{validateCanvasPosition(position: Record\{x: float, y: float\}): bool} – checks that a proposed placement is inside the canvas bounds.
     \item \texttt{snapToEdges(id)} – adjusts position so nearby edges align visually.
     \item \texttt{highlightMatches(id)} – visually emphasizes suggested neighbors.
 \end{itemize}
@@ -1021,6 +1020,7 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
+\texttt{startApplication} & \texttt{none} & \texttt{none} & \texttt{ServiceError} \\
 \texttt{handleAuthRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{AuthError} \\
 \texttt{handleUploadRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ValidationError, ServiceError} \\
 \texttt{handleMatchRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ServiceError} \\
@@ -1034,6 +1034,7 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \subsubsection{State Variables}
 \begin{itemize}
+    \item \texttt{appInitialized: bool} – true once handlers and service bindings are registered.
     \item \texttt{routeTable: Map[Endpoint, Handler]} – mapping between URL paths and internal handlers.
 \end{itemize}
 
@@ -1049,6 +1050,15 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 \end{itemize}
 
 \subsubsection{Access Routine Semantics}
+
+\noindent \texttt{startApplication()}:
+\begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
+    \item transition: initializes the route table, binds handlers to the application service boundary, and marks \texttt{appInitialized} as \texttt{true}.
+    \item output: none.
+    \item exception: \texttt{ServiceError} if the service boundary cannot be initialized.
+\end{itemize}
 
 \noindent \texttt{handleAuthRequest(req)}:
 \begin{itemize}
@@ -1097,6 +1107,7 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \subsubsection{Local Functions}
 \begin{itemize}
+    \item \texttt{initializeRouteTable()} – registers the handlers used by the application entrypoint.
     \item \texttt{parseJSONBody(req)} – extracts and validates JSON payload.
     \item \texttt{buildErrorResponse(code, msg)} – standardizes error responses.
 \end{itemize}
@@ -2797,7 +2808,7 @@ graduate attribute of Problem Analysis and Design.
   \item While creating the design doc, what parts of your other documents (e.g.
   requirements, hazard analysis, etc), it any, needed to be changed, and why?
 
-    \hspace{2em} Very few changes were needed to our previous documents. Because this is a pre-approved project with a well-defined problem and scope, many of the requirements and expectations were already laid out for us in the project description. As a result, our earlier documents, such as the SRS \citep{SRS-Sanskrit-Ciphers} and Hazard Analysis \citep{HazardAnalysis}, aligned naturally with the design work we did here. We did not need to revisit or adjust them significantly, beyond minor wording refinements and consistency updates.
+    \hspace{2em} Very few changes were needed to our previous documents. Because this is a pre-approved project with a well-defined problem and scope, many of the requirements and expectations were already laid out for us in the project description. As a result, our earlier documents, such as the \href{https://github.com/DylanG5/sanskrit-ciphers-requirements}{SRS} and \href{https://github.com/DylanG5/sanskrit-cipher/blob/main/docs/HazardAnalysis/HazardAnalysis.pdf}{Hazard Analysis}, aligned naturally with the design work we did here. We did not need to revisit or adjust them significantly, beyond minor wording refinements and consistency updates.
 
   \item What are the limitations of your solution?  Put another way, given
   unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)
