@@ -37,6 +37,7 @@ Date October 27 & 1.2 & Added section 2 and reflection\\
 Date October 27 & 1.3 & Added section 3.1 - 3.4\\
 Date October 27 & 1.4 & Added implementation, automated, and software verification\\
 Feb.\ 15, 2026 & 1.5 & Updated plan to match implemented scope and added unit test section\\
+April 6, 2026 & 1.6 & Clarified feedback metrics, ambiguity definition, and reference warning criteria\\
 \bottomrule
 \end{tabularx}
 
@@ -59,7 +60,7 @@ Feb.\ 15, 2026 & 1.5 & Updated plan to match implemented scope and added unit te
 \subsection{Summary}
 The software system being tested is \textbf{Sanskrit Manuscript Reconstruction Platform}, a research tool designed to assist scholars in reconstructing fragmented Buddhist manuscripts through computational analysis. The system integrates machine learning, computer vision, and local data management to enable users to upload digitized manuscript fragments, search and filter fragment collections, and visually arrange fragments on an interactive canvas. An offline machine learning (ML) pipeline provides segmentation, script classification, line counting, circle/scale detection, and related metadata; edge matching is implemented in the backend.
 \newline
-The verification and validation process will ensure that all core functionalities, including fragment upload, search/filtering, canvas workspace interactions, ML analysis outputs, and edge matching, perform correctly, reliably, and consistently across diverse manuscript inputs. It will also verify that data integrity and safety-critical requirements identified in the Hazard Analysis are met.
+The verification and validation process will ensure that all core functionalities, including fragment upload, search/filtering, canvas workspace interactions, ML analysis outputs, and edge matching, perform correctly, reliably, and consistently across diverse manuscript inputs and cultural/linguistic contexts. It will also verify that data integrity and safety-critical requirements identified in the Hazard Analysis are met.
 \newline
 Testing will be conducted incrementally across all major milestones (Proof of Concept, Revision 0, and Revision 1) using a combination of unit testing, integration testing, usability testing, and system-level validation to confirm that the software meets its specified functional and non-functional requirements as outlined in the SRS.
   
@@ -104,7 +105,7 @@ Two approved extras are included as part of this project to enhance the evaluati
     A comprehensive user manual will be developed to assist scholars in using the platform effectively. It will describe the main workflows such as fragment upload, search/filtering, canvas arrangement, metadata editing, and running the ML pipeline, and provide troubleshooting guidance. The manual will also include annotated screenshots and short tutorials covering both basic and advanced usage scenarios.
 
     \item \textbf{Usability Report:}  
-    A formal usability evaluation will be conducted to assess the system’s ease of use, learnability, and effectiveness for non-technical users. Feedback will be collected from scholars in Buddhist Studies and related fields through observation and structured task completion. The resulting report will summarize key usability metrics, identify design pain points, and provide recommendations for improvement.
+    A formal usability evaluation will be conducted to assess the system’s ease of use, learnability, and effectiveness for non-technical users. Feedback will be collected from scholars in Buddhist Studies, linguists, and cultural domain experts in related fields through observation and structured task completion. The resulting report will summarize key usability metrics, identify design pain points, and provide recommendations for improvement.
 \end{itemize}
 
 These extras directly support the project’s primary goals of accessibility and scholarly usability by ensuring that end users can efficiently interact with complex AI-driven tools through a clear, guided interface.
@@ -115,25 +116,25 @@ This Verification and Validation Plan references all major project documents tha
 
 \begin{itemize}
     \item \textbf{Problem Statement and Goals Document} (\citet{ProblemStatement})  
-    Defines the project motivation, objectives, and expected outcomes for reconstructing fragmented Buddhist manuscripts.
+  Defines the project motivation, objectives, and expected outcomes for reconstructing fragmented Buddhist manuscripts. It helps the V\&V plan by clarifying which goals must be verified through system tests and validation activities.
 
     \item \textbf{Development Plan} (\citet{DevelopmentPlan})  
-    Outlines the workflow structure, team responsibilities, scheduling, coding standards, and continuous integration process.
+  Outlines the workflow structure, team responsibilities, scheduling, coding standards, and continuous integration process. It helps the V\&V plan by showing who is responsible for creating, executing, and reviewing verification tasks.
 
     \item \textbf{Software Requirements Specification (SRS)} (\citet{SRS-Sanskrit-Ciphers})  
-    Specifies all functional and non-functional requirements, including detailed system components, interfaces, and prioritized behaviors.
+  Specifies all functional and non-functional requirements, including detailed system components, interfaces, and prioritized behaviors. It helps the V\&V plan by providing the requirements that are traced directly to test cases and success criteria.
 
     \item \textbf{Hazard Analysis Document} (\citet{HazardAnalysis})  
-    Identifies potential hazards, risk factors, and corresponding safety and security requirements that inform this V\&V plan.
+  Identifies potential hazards, risk factors, and corresponding safety and security requirements that inform this V\&V plan. It helps the V\&V plan by identifying the risks that require dedicated validation and safety testing.
 
     \item \textbf{Design Documents (MG and MIS)} (\citet{DesignDocs})  
-    To be developed in later phases. These will provide architectural decomposition, module definitions, and design rationale.
+  To be developed in later phases. These will provide architectural decomposition, module definitions, and design rationale. They help the V\&V plan by defining the structures that must be checked during design verification and unit testing.
 
     \item \textbf{User Manual} (\citet{UserManual})  
-    Provides detailed guidance for scholars on using the platform’s core features, including uploading, searching/filtering, canvas arrangement, metadata editing, and pipeline execution.
+  Provides detailed guidance for scholars on using the platform’s core features, including uploading, searching/filtering, canvas arrangement, metadata editing, and pipeline execution. It helps the V\&V plan by supporting usability testing and confirming that workflows are understandable.
 
     \item \textbf{Usability Report} (\citet{UsabilityReport})  
-    Summarizes results from usability testing and participant feedback to evaluate ease of use, learnability, and overall effectiveness.
+  Summarizes results from usability testing and participant feedback to evaluate ease of use, learnability, and overall effectiveness. It helps the V\&V plan by documenting whether the evaluated interface meets the usability targets established in the plan.
 \end{itemize}
 
 Together, these documents establish a complete record of the project’s development and verification process, ensuring traceability between requirements, design, testing, and evaluation.
@@ -175,7 +176,8 @@ This subsection defines how we will verify that the SRS \citep{SRS-Sanskrit-Ciph
 
 \subsubsection*{TA/Peer Guided Review (Structured Feedback)}
 \textbf{Instrument.} A checklist-driven review by peers and TAs to ensure we are staying in line with the fundamentals of our requirements. Issues are filed in GitHub as feedback from TAs and peers as well as feedback on Avenue which is more detailed from the TA\\
-\textbf{Process.}
+
+\noindent\textbf{Process.}
 \begin{enumerate}
   \item After handing in the SRS document our peers go through the document and highlight areas to improve on.
   \item Once our peers have given us feedback we are to address the feedback
@@ -184,10 +186,10 @@ This subsection defines how we will verify that the SRS \citep{SRS-Sanskrit-Ciph
 \end{enumerate}
 \textbf{Success metrics.}
 \begin{itemize}
-  \item \textbf{Measurability coverage:} $\geq 100\%$ of feedback has been addressed
-  \item \textbf{Ambiguity count:} \(\leq 2\) open ambiguity items after rework.
+  \item \textbf{Measurability coverage:} $100\%$ of distinct feedback items are resolved with a measurable change or testable requirement.
+  \item \textbf{Ambiguity count:} $0$ unresolved ambiguity items remain in the SRS after rework, where an ambiguity item is any requirement statement or review comment that still needs clarification before it can be turned into a measurable fit criterion or test case.
   \item \textbf{Defect turn-around time (TAT):} All feedback has been addressed within 72 hours of being given the feedback (with a grace period of 48 hours for the entire team)
-  \item \textbf{Link/xref errors:} $0$ build warnings for missing references.
+  \item \textbf{Link/xref errors:} $0$ build warnings for missing references or unresolved cross-references.
 \end{itemize}
 
 \subsubsection*{Supervisor Validation via Survey plus Interview (Non-technical \textrightarrow{} Technical)}
@@ -342,6 +344,7 @@ Validation ensures that the implemented system meets the supervisor's requiremen
 \textbf{Validation Activities:}
 \begin{itemize}
   \item \textbf{Supervisor Review Sessions:} Periodic demonstrations to the project supervisor and relevant stakeholders in the field to confirm that features meet research and usability expectations.
+  \item \textbf{Cultural and Linguistic Expert Review:} Sample manuscript images and model outputs will be reviewed by our Buddhist Studies supervisor and, where available, experts in relevant linguistic and cultural domains to confirm that symbols, contexts, and annotations are interpreted appropriately.
   \item \textbf{Usability Testing:} Stakeholders will try reconstructing manuscripts to observe system functionality and performance.
   \item \textbf{Requirements Comparison Review:} Comparing system behavior with the functional and non-functional requirements in the SRS to confirm all requirements are satisfied.
   \item \textbf{Manuscript Validation:} Comparison of fragment matches generated by the system with manuscript pairings that are proven to be accurate from the same dataset.
