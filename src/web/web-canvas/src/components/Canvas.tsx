@@ -731,7 +731,7 @@ const Canvas: React.FC<CanvasProps> = ({
               y={-50000}
               width={100000}
               height={100000}
-              fill="rgba(0,0,0,0.4)"
+              fill="rgba(0,0,0,0.7)"
               listening={false}
             />
             <FragmentImage
@@ -744,7 +744,7 @@ const Canvas: React.FC<CanvasProps> = ({
         )}
       </Stage>
 
-      {/* Edge Match Button */}
+      {/* Edge Match Button — hidden until matching pipeline is validated
       {edgeMatchButtonPosition && !isDragging && (
         <button
           onClick={() => {
@@ -775,6 +775,7 @@ const Canvas: React.FC<CanvasProps> = ({
           Edge Match?
         </button>
       )}
+      */}
 
       {/* Grid Scale Indicator */}
       {isGridVisible && showGridReference && (
