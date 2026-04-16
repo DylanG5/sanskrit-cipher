@@ -101,6 +101,13 @@ processors:
       model_version: "1.0"
       skip_processed: true  # Skip already-processed fragments
 
+  embedding:
+    enabled: true
+    # No model_path needed (uses torch.hub to download DINOv2)
+    config:
+      model_version: "dinov2-s-1.0"
+      skip_processed: true  # Skip fragments already embedded with same version
+
 
 # Processing options
 processing:

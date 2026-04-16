@@ -27,6 +27,7 @@ interface CanvasProps {
   onViewportChange?: (scale: number, position: { x: number; y: number }) => void;
   previewFragment?: CanvasFragment | null;
   onPreviewDismiss?: () => void;
+  onDeleteSelected?: () => void;
 }
 
 interface FragmentImageProps {
@@ -161,6 +162,7 @@ const Canvas: React.FC<CanvasProps> = ({
   onViewportChange,
   previewFragment,
   onPreviewDismiss,
+  onDeleteSelected,
 }) => {
   console.log("Canvas rendering with fragments:", fragments.length);
 
@@ -579,6 +581,23 @@ const Canvas: React.FC<CanvasProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [stageScale, stagePosition, stageSize]);
+
+  // Backspace/Delete key: remove selected fragments from canvas
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Backspace" && e.key !== "Delete") return;
+      // Don't fire when typing in an input/textarea
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (selectedFragmentIds.length > 0 && onDeleteSelected) {
+        e.preventDefault();
+        onDeleteSelected();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedFragmentIds, onDeleteSelected]);
 
   // Generate grid lines covering the visible area at the current zoom level
   const generateGridLines = () => {

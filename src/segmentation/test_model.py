@@ -6,6 +6,7 @@ This script loads a trained YOLO segmentation model and runs inference
 on test images, visualizing the results with segmentation masks overlaid.
 """
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -35,6 +36,48 @@ def load_model(model_path="best.pt"):
     model = YOLO(model_path)
     print("Model loaded successfully!")
     return model
+
+
+def run_circle_detection(image_path, circle_model, conf=0.25):
+    """
+    Run circle detection on an image.
+
+    Returns a binary mask (H x W, uint8) of detected circle regions,
+    or None if no circles are detected.
+    """
+    img = cv2.imread(str(image_path))
+    if img is None:
+        return None
+
+    results = circle_model.predict(
+        source=str(image_path),
+        conf=conf,
+        save=False,
+        verbose=False,
+    )
+
+    res = results[0]
+    h, w = img.shape[:2]
+    circle_mask = np.zeros((h, w), dtype=np.uint8)
+
+    if res.boxes is None or len(res.boxes) == 0:
+        return None
+
+    # Use segmentation masks if available, otherwise fall back to bounding boxes
+    if res.masks is not None:
+        masks = res.masks.data.cpu().numpy()
+        for mask in masks:
+            mask_resized = cv2.resize(mask, (w, h))
+            circle_mask[mask_resized > 0.5] = 1
+    else:
+        for box in res.boxes.data.cpu().numpy():
+            x1, y1, x2, y2 = box[:4].astype(int)
+            circle_mask[y1:y2, x1:x2] = 1
+
+    if circle_mask.max() == 0:
+        return None
+
+    return circle_mask
 
 
 def get_test_images(test_dir="test_images"):
@@ -121,7 +164,7 @@ def extract_transparent_fragments(image_path, results, transparent_dir):
     return len(masks)
 
 
-def visualize_results(image_path, results, output_dir):
+def visualize_results(image_path, results, output_dir, circle_mask=None):
     """
     Visualize segmentation results by overlaying masks on the original image.
 
@@ -129,6 +172,7 @@ def visualize_results(image_path, results, output_dir):
         image_path: Path to original image
         results: YOLO prediction results
         output_dir: Directory to save output images
+        circle_mask: Optional binary mask (H x W) of circle regions to highlight in blue
     """
     # Read original image
     img = cv2.imread(str(image_path))
@@ -191,6 +235,15 @@ def visualize_results(image_path, results, output_dir):
     else:
         print(f"  No fragments detected")
 
+    # Overlay circle detection in blue, overwriting the green mask where circles are
+    if circle_mask is not None:
+        CIRCLE_BLUE = (255, 0, 0)  # BGR blue
+        colored_circle = np.zeros_like(img)
+        colored_circle[circle_mask == 1] = CIRCLE_BLUE
+        alpha = 0.4
+        vis_img = cv2.addWeighted(vis_img, 1, colored_circle, alpha, 0)
+        print(f"  Circle detected — highlighted in blue")
+
     # Save the visualization
     output_path = output_dir / f"result_{image_path.name}"
     cv2.imwrite(str(output_path), vis_img)
@@ -223,8 +276,21 @@ def print_statistics(all_results, total_extracted):
     print("="*60)
 
 
+SCRIPT_DIR = Path(__file__).parent
+DEFAULT_SEG_MODEL = SCRIPT_DIR / "best.pt"
+DEFAULT_CIRCLE_MODEL = SCRIPT_DIR / "../models/circle-classification/best.pt"
+
+
 def main():
     """Main testing workflow."""
+    parser = argparse.ArgumentParser(description="Manuscript Fragment Segmentation Model Testing")
+    parser.add_argument("--model", default=str(DEFAULT_SEG_MODEL), help="Path to segmentation model")
+    parser.add_argument("--circle-model", default=str(DEFAULT_CIRCLE_MODEL), help="Path to circle detection model")
+    parser.add_argument("--image", default=None, help="Path to a single image to process (default: first image in --test-dir)")
+    parser.add_argument("--test-dir", default=str(SCRIPT_DIR / "test_images"), help="Directory of test images (used if --image not set)")
+    parser.add_argument("--circle-conf", type=float, default=0.25, help="Confidence threshold for circle detection (default: 0.25)")
+    args = parser.parse_args()
+
     print("="*60)
     print("Manuscript Fragment Segmentation Model Testing")
     print("="*60)
@@ -235,16 +301,26 @@ def main():
         print(f"\nOutput directory: {output_dir.absolute()}")
         print(f"Transparent fragments directory: {transparent_dir.absolute()}")
 
-        # Load model
-        model = load_model()
+        # Load segmentation model
+        model = load_model(args.model)
 
-        # Get test images
-        test_images = get_test_images()
-        print(f"\nFound {len(test_images)} test images")
+        # Load circle detection model
+        circle_model = load_model(args.circle_model)
+        print(f"Circle detection enabled (conf={args.circle_conf})")
 
-        if len(test_images) == 0:
-            print("No test images found. Please add images to the 'test_images' directory.")
-            return
+        # Resolve images to process
+        if args.image:
+            test_images = [Path(args.image)]
+        else:
+            all_images = get_test_images(args.test_dir)
+            if not all_images:
+                print("No test images found.")
+                return
+            test_images = [all_images[0]]  # default: first image only
+            print(f"\nNo --image specified, using first image: {test_images[0].name}")
+            print(f"(Pass --image <path> or iterate test_images manually for bulk runs)")
+
+        print(f"\nProcessing {len(test_images)} image(s)")
 
         # Run inference on each image
         print("\nRunning inference...")
@@ -256,7 +332,7 @@ def main():
         for img_path in test_images:
             print(f"\nProcessing: {img_path.name}")
 
-            # Run inference
+            # Run segmentation inference
             results = model.predict(
                 source=str(img_path),
                 conf=0.25,  # Confidence threshold
@@ -264,8 +340,11 @@ def main():
                 verbose=False
             )
 
+            # Run circle detection
+            circle_mask = run_circle_detection(img_path, circle_model, conf=args.circle_conf)
+
             # Visualize and save results
-            visualize_results(img_path, results, output_dir)
+            visualize_results(img_path, results, output_dir, circle_mask=circle_mask)
 
             # Extract transparent fragments for web UI
             num_extracted = extract_transparent_fragments(img_path, results, transparent_dir)

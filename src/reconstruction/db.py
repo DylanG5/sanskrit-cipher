@@ -216,3 +216,92 @@ def get_fragment_scale(conn: sqlite3.Connection, fragment_id: str) -> Optional[T
     if row and row[0] is not None:
         return row[0], row[1]
     return None
+
+
+# ---------------------------------------------------------------------------
+# Canvas placement helpers
+# ---------------------------------------------------------------------------
+
+def place_matches_on_canvas(
+    conn: sqlite3.Connection,
+    project_name: str = "Auto-matched fragments",
+    min_confidence: float = 0.5,
+    max_matches: int = 50,
+    grid_scale: float = 25.0,
+) -> Optional[int]:
+    """Create a project with auto-placed fragment pairs from top matches.
+
+    Takes the best rank-1 matches above a confidence threshold and places
+    each pair on the canvas using their computed relative positions.
+
+    Args:
+        conn: SQLite connection
+        project_name: Name for the new project
+        min_confidence: Minimum confidence to include a match
+        max_matches: Maximum number of pairs to place
+        grid_scale: Pixels per cm on canvas (default 25)
+
+    Returns:
+        Project ID, or None if no matches qualify
+    """
+    matches = conn.execute("""
+        SELECT fragment_a_id, fragment_b_id,
+               relative_x_cm, relative_y_cm, rotation_deg,
+               score, confidence
+        FROM edge_matches
+        WHERE rank = 1 AND confidence >= ?
+        ORDER BY score ASC
+        LIMIT ?
+    """, (min_confidence, max_matches)).fetchall()
+
+    if not matches:
+        return None
+
+    project_id = create_validation_project(
+        conn,
+        project_name,
+        f"Auto-generated: {len(matches)} matched pairs (confidence >= {min_confidence})",
+    )
+
+    # Track which fragments are already placed so we don't duplicate
+    placed: Dict[str, Tuple[float, float]] = {}
+    spacing = 200.0  # Pixel spacing between unrelated pairs
+
+    for idx, row in enumerate(matches):
+        frag_a_id, frag_b_id = row[0], row[1]
+        rel_x_cm, rel_y_cm, rot_deg = row[2], row[3], row[4]
+
+        # Place fragment A if not already placed
+        if frag_a_id not in placed:
+            # Arrange pairs in a grid layout
+            col = idx % 5
+            row_idx = idx // 5
+            base_x = col * spacing
+            base_y = row_idx * spacing
+
+            insert_project_fragment(
+                conn, project_id, frag_a_id,
+                x=base_x, y=base_y,
+                width=None, height=None,
+                rotation=0,
+                z_index=idx * 2,
+            )
+            placed[frag_a_id] = (base_x, base_y)
+
+        # Place fragment B relative to A
+        a_x, a_y = placed[frag_a_id]
+        b_x = a_x + rel_x_cm * grid_scale
+        b_y = a_y + rel_y_cm * grid_scale
+
+        if frag_b_id not in placed:
+            insert_project_fragment(
+                conn, project_id, frag_b_id,
+                x=b_x, y=b_y,
+                width=None, height=None,
+                rotation=rot_deg,
+                z_index=idx * 2 + 1,
+            )
+            placed[frag_b_id] = (b_x, b_y)
+
+    conn.commit()
+    return project_id

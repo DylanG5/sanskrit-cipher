@@ -205,6 +205,25 @@ class DatabaseManager:
                 self.logger.error(f"Script type classification fields migration failed: {e}")
                 raise
 
+        # Check if embedding columns exist
+        cursor.execute("PRAGMA table_info(fragments)")
+        columns = [row[1] for row in cursor.fetchall()]
+
+        if 'embedding_path' not in columns:
+            migration_needed = True
+            self.logger.info("Running database migration for embedding fields...")
+
+            try:
+                cursor.execute("ALTER TABLE fragments ADD COLUMN embedding_path TEXT")
+                cursor.execute("ALTER TABLE fragments ADD COLUMN embedding_model_version TEXT")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_embedding_version ON fragments(embedding_model_version)")
+                self.conn.commit()
+                self.logger.info("Embedding fields migration completed successfully")
+            except sqlite3.Error as e:
+                self.conn.rollback()
+                self.logger.error(f"Embedding fields migration failed: {e}")
+                raise
+
         if not migration_needed:
             self.logger.info("Migration already applied, skipping")
 
@@ -288,7 +307,9 @@ class DatabaseManager:
                 scale_model_version=row_dict.get('scale_model_version'),
                 line_detection_data=row_dict.get('line_detection_data'),
                 line_detection_model_version=row_dict.get('line_detection_model_version'),
-                line_detection_confidence=row_dict.get('line_detection_confidence')
+                line_detection_confidence=row_dict.get('line_detection_confidence'),
+                embedding_path=row_dict.get('embedding_path'),
+                embedding_model_version=row_dict.get('embedding_model_version'),
             ))
 
         return fragments

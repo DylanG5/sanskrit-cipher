@@ -1687,6 +1687,7 @@ function CanvasPage() {
             }}
             previewFragment={previewFragment}
             onPreviewDismiss={() => { setPreviewFragment(null); setPreviewMetadataFragment(null); setFocusedFragmentIndex(null); }}
+            onDeleteSelected={handleDeleteSelected}
           />
         </div>
 

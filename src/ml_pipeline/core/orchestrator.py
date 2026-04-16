@@ -186,6 +186,9 @@ class PipelineOrchestrator:
                         processor_config['meta_path'], base_dir
                     ))
 
+                # Inject cache_dir so processors can write to it
+                processor_config['cache_dir'] = str(self.cache_dir)
+
                 # Get processor class from registry
                 processor_class = self.registry.get(name)
 

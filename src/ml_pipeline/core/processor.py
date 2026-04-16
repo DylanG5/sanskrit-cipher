@@ -55,6 +55,9 @@ class FragmentRecord:
     line_detection_data: Optional[str] = None  # JSON string
     line_detection_model_version: Optional[str] = None
     line_detection_confidence: Optional[float] = None
+    # Embedding fields
+    embedding_path: Optional[str] = None  # Relative path to CLS embedding .npy
+    embedding_model_version: Optional[str] = None
 
 @dataclass
 class ProcessingResult:
