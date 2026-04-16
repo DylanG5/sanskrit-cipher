@@ -60,9 +60,12 @@ urlcolor=cyan          % color of external links
 Nov.\ 13, 2025 & 1.0 & Added Section 2: Symbols, Abbreviations and Acronyms.\\
 Nov.\ 13, 2025 & 1.1 & Added Section 3: Introduction.\\
 Nov.\ 13, 2025 & 1.2 & Added Section 4: Notation.\\
-Jan.\ 18, 2025 & 1.3 & Added Section 5: Module Decomposition.\\
-Jan.\ 18, 2025 & 1.4 & Added Sections 6--29: Module Interface Specifications for all modules.\\
-Nov.\ 13, 2025 & 1.5 & Added Reflection and References\\
+Jan.\ 18, 2026 & 1.3 & Added Section 5: Module Decomposition.\\
+Jan.\ 18, 2026 & 1.4 & Added Sections 6--29: Module Interface Specifications for all modules.\\
+Jan.\ 18, 2026 & 1.5 & Added Reflection and References.\\
+Apr.\ 6, 2026 & 1.6 & Expanded the Section 2 exception glossary for consistency with the module specifications.\\
+Apr.\ 6, 2026 & 1.7 & Removed the unimplemented \texttt{ML.TextSim} module from the MIS to align the document with the codebase.\\
+Apr.\ 6, 2026 & 1.8 & Added explicit \texttt{pre:} and \texttt{post:} conditions to access routine semantics for stronger interface precision.\\
 
 \bottomrule
 \end{tabularx}
@@ -111,13 +114,29 @@ The following symbols, abbreviations, and acronyms are used throughout this Modu
 
 \subsection*{Exceptions / Errors}
 \begin{itemize}
-    \item \textbf{UIRenderError} — User Interface Rendering Error
-    \item \textbf{NetworkError} — Network Communication Error
-    \item \textbf{ValidationError} — Input Validation Error
-    \item \textbf{UploadError} — File Upload Failure
-    \item \textbf{AuthError} — Authentication Error
-    \item \textbf{NotFoundError} — Missing Resource
-    \item \textbf{StorageWriteError} / \textbf{StorageReadError} — File I/O Problems
+    \item \textbf{AggregationError} — Score aggregation or multi-model fusion failure
+    \item \textbf{AuthError} — Authentication or credential verification failure
+    \item \textbf{CatalogError} — Catalog association lookup or persistence failure
+    \item \textbf{ConfigError} — Missing or invalid configuration value
+    \item \textbf{ExportError} — Export generation or serialization failure
+    \item \textbf{FragmentError} — Fragment creation, update, or deletion failure
+    \item \textbf{InboxOverflowError} — Too many pending authentication or request items to accept another
+    \item \textbf{InvalidFormatError} — Uploaded file format or payload structure is not supported
+    \item \textbf{LayoutError} — Canvas placement or rotation violates layout constraints
+    \item \textbf{MatchError} — Fragment matching service or result generation failure
+    \item \textbf{ModelError} — Machine learning inference, preprocessing, or feature extraction failure
+    \item \textbf{NetworkError} — Network communication or backend connectivity failure
+    \item \textbf{NotFoundError} — Requested resource does not exist or is not accessible in context
+    \item \textbf{PreprocError} — Preprocessing job creation or execution failure
+    \item \textbf{ProjectError} — Project creation, update, or query failure
+    \item \textbf{SearchError} — Search query validation or execution failure
+    \item \textbf{ServiceError} — Service-layer orchestration or downstream dependency failure
+    \item \textbf{SessionError} — Session or saved-layout persistence failure
+    \item \textbf{StorageWriteError} / \textbf{StorageReadError} — File or object storage I/O failure
+    \item \textbf{UIRenderError} — User interface rendering or display update failure
+    \item \textbf{UploadError} — File upload transfer failure
+    \item \textbf{UserError} — User record creation or update failure
+    \item \textbf{ValidationError} — Input, request, or argument validation failure
 \end{itemize}
 
 \subsection*{Machine Learning Terms}
@@ -205,7 +224,7 @@ This section explains how interfaces and operations are written in the MIS. The 
     \item \textbf{Inputs and Outputs:} Labeled as \texttt{in:} and \texttt{out:} in operation definitions. Example: \texttt{search(in: SearchQuery, out: SearchResult)}
     \item \textbf{Operation Format:} \texttt{functionName(in: InputType, out: OutputType) → may throw ErrorType}
     \item \textbf{Module Naming Convention:} Each module name follows the format \texttt{Layer.Module}, for example: \texttt{UI.Canvas}, \texttt{Svc.MatchOrch}, or \texttt{Data.FragmentStore}.
-    \item \textbf{Boolean Conditions:} Represented using logical symbols such as $\land$ (and), $\lor$ (or), $\lnot$ (not), and $\implies$ (implies).
+    \item \textbf{Logical Expressions:} Represented using logical symbols such as $\land$ (and), $\lor$ (or), $\lnot$ (not), and the implication operator $\implies$.
 \end{itemize}
 
 
@@ -233,14 +252,15 @@ Each level in the hierarchy captures a different design concern:
 \toprule
 \textbf{Level 1} & \textbf{Level 2 Modules} \\
 \midrule
-Hardware-Hiding (HW) & Image Storage Interface \\
+Hardware-Hiding (HW) & -- \\
 \addlinespace
 Behaviour-Hiding & 
 \begin{minipage}[t]{0.7\linewidth}
+\texttt{HW.ImageStorage}\\
 \textbf{User Interface (UI):} \texttt{UI.Canvas}, \texttt{UI.Search}, \texttt{UI.Auth}, \texttt{UI.Upload}, \texttt{UI.SaveSession}, \texttt{UI.LoadSession}\\
 \textbf{Service Layer (Svc):} \texttt{Svc.API}, \texttt{Svc.Search}, \texttt{Svc.AuthZ}, \texttt{Svc.Session}, \texttt{Svc.ProcOrch}, \texttt{Svc.MatchOrch}\\
 \textbf{Data Management (Data):} \texttt{Data.FragmentStore}, \texttt{Data.Catalog}, \texttt{Data.User}, \texttt{Data.Project}\\
-\textbf{Machine Learning Modules (ML):} \texttt{ML.EdgeMatch}, \texttt{ML.ScriptClass}, \texttt{ML.TextSim}, \texttt{ML.Segmentation}, \texttt{ML.CircleRecognition}, \texttt{ML.LineCount}, \texttt{ML.EdgeClassification}
+\textbf{Machine Learning Modules (ML):} \texttt{ML.EdgeMatch}, \texttt{ML.ScriptClass}, \texttt{ML.Segmentation}, \texttt{ML.CircleRecognition}, \texttt{ML.LineCount}, \texttt{ML.EdgeClassification}
 \end{minipage} \\
 \addlinespace
 Software Decision & 
@@ -256,10 +276,10 @@ Utility and Support Modules (Error Handling, Logging, Configuration Management, 
 \subsection{Description of Levels}
 
 \subsubsection{Hardware-Hiding Level}
-This level hides all hardware and platform dependencies from the rest of the system. It includes interfaces that communicate with the file storage system, image repositories, and cloud infrastructure. These components provide a uniform interface for accessing images and metadata regardless of the underlying storage medium.
+This level hides operating-system and platform dependencies from the rest of the system. In this design, those low-level details remain external to the application modules rather than being specified as separate MIS leaf modules.
 
 \subsubsection{Behaviour-Hiding Level}
-This level defines the functional behavior of the system, implementing the requirements outlined in the SRS. It includes the user-facing modules (UI), the application logic (Service Layer), data persistence (Data Layer), and intelligent processing (ML Layer). These modules interact through clearly defined service interfaces, promoting modularity and separation of concerns.
+This level defines the functional behavior of the system, implementing the requirements outlined in the SRS. It includes \texttt{HW.ImageStorage}, the user-facing modules (UI), the application logic (Service Layer), data persistence (Data Layer), and intelligent processing (ML Layer). These modules interact through clearly defined service interfaces, promoting modularity and separation of concerns.
 
 \subsubsection{Software Decision Level}
 This level includes supporting components that are primarily design decisions rather than functional necessities. These modules include configuration handlers, utility libraries, and testing or logging frameworks that support development, debugging, and maintenance.
@@ -270,13 +290,10 @@ This level includes supporting components that are primarily design decisions ra
 \subsection{Module}
 \textbf{HW.ImageStorage} \; (Image Storage Interface)
 
-This module provides a uniform interface for reading, writing, and managing manuscript fragment image files and related metadata in the underlying file system or cloud storage. It hides all platform-specific file operations from higher-level modules and ensures consistent access and naming conventions.
-
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{Data.FragmentStore} – for linking stored image references to fragment metadata records.
-    \item \texttt{Svc.ProcOrch} – for initiating preprocessing or orientation correction workflows once an image is stored.
     \item External file system or object storage API.
+    \item \texttt{Util.Error} – for constructing storage-related error objects.
 \end{itemize}
 
 \subsection{Syntax}
@@ -322,26 +339,31 @@ This module provides a uniform interface for reading, writing, and managing manu
 \subsubsection{Assumptions}
 \begin{itemize}
     \item The underlying storage service guarantees atomic read/write operations.
-    \item ImageIDs are globally unique.
 \end{itemize}
 
 \subsubsection{Access Routine Semantics}
 
 \noindent \texttt{storeImage(file, metadata)}:
 \begin{itemize}
-    \item transition: file is written to storage; \texttt{storageIndex} and \texttt{metadataCache} updated with new entry.
-    \item output: a newly generated \texttt{ImageID}.
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
+    \item transition: a candidate \texttt{ImageID} is generated and checked with \texttt{isUniqueImageID}; if the identifier is unused, the file is written to storage and \texttt{storageIndex} and \texttt{metadataCache} are updated with the new entry.
+    \item output: a newly generated unique \texttt{ImageID}.
     \item exception: \texttt{InvalidFormatError} if file type not in \texttt{SUPPORTED\_FORMATS}; \texttt{StorageWriteError} if write fails.
 \end{itemize}
 
 \noindent \texttt{retrieveImage(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: image file associated with \texttt{id}.
     \item exception: \texttt{NotFoundError} if \texttt{id} absent from \texttt{storageIndex}; \texttt{StorageReadError} if read fails.
 \end{itemize}
 
 \noindent \texttt{deleteImage(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: remove image file from storage; delete entries from \texttt{storageIndex} and \texttt{metadataCache}.
     \item output: \texttt{true} if deletion successful.
     \item exception: \texttt{NotFoundError} if \texttt{id} not present; \texttt{StorageWriteError} if deletion fails.
@@ -349,14 +371,17 @@ This module provides a uniform interface for reading, writing, and managing manu
 
 \noindent \texttt{getMetadata(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: metadata record associated with \texttt{id}.
     \item exception: \texttt{NotFoundError} if no record exists.
 \end{itemize}
 
 \subsubsection{Local Functions}
 \begin{itemize}
-    \item \texttt{generateImageID(file: ImageFile): ImageID}
-    \item \texttt{validateFormat(file: ImageFile): bool}
+    \item \texttt{generateImageID(file: ImageFile): ImageID} – generates a candidate identifier for a newly stored image.
+    \item \texttt{isUniqueImageID(id: ImageID): bool} – returns \texttt{true} iff \texttt{id} is not already present in \texttt{storageIndex}.
+    \item \texttt{validateFormat(file: ImageFile): bool} – checks that the uploaded file format is supported.
 \end{itemize}
 
 
@@ -413,7 +438,6 @@ This module provides the browser-facing login and logout experience. It collects
 
 \subsubsection{Assumptions}
 \begin{itemize}
-    \item Network connectivity is available for requests to \texttt{Svc.AuthZ}.
     \item Password input is masked and handled securely by the browser.
 \end{itemize}
 
@@ -421,6 +445,8 @@ This module provides the browser-facing login and logout experience. It collects
 
 \noindent \texttt{renderLoginForm()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: updates DOM to show login form, clears previous error message.
     \item output: none.
     \item exception: \texttt{UIRenderError} if DOM cannot be updated.
@@ -428,13 +454,17 @@ This module provides the browser-facing login and logout experience. It collects
 
 \noindent \texttt{submitCredentials(creds)}:
 \begin{itemize}
-    \item transition: sends credentials to \texttt{Svc.AuthZ}; updates \texttt{loginAttempts} and \texttt{authErrorMessage} based on response.
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
+    \item transition: checks whether \texttt{Svc.AuthZ} is reachable, then sends credentials to it; updates \texttt{loginAttempts} and \texttt{authErrorMessage} based on response.
     \item output: \texttt{AuthResult} indicating success or failure.
-    \item exception: \texttt{AuthError} if credentials rejected; \texttt{NetworkError} if backend unreachable.
+    \item exception: \texttt{AuthError} if credentials rejected; \texttt{NetworkError} if the reachability check fails or the backend is unreachable.
 \end{itemize}
 
 \noindent \texttt{logoutUser()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: clears client-side session state and redirects to login view.
     \item output: \texttt{true} if logout succeeds.
     \item exception: \texttt{NetworkError} if logout call to backend fails.
@@ -443,6 +473,7 @@ This module provides the browser-facing login and logout experience. It collects
 \subsubsection{Local Functions}
 \begin{itemize}
     \item \texttt{displayError(msg: String)} – updates UI error region.
+    \item \texttt{checkAuthServiceReachable(): bool} – checks whether the authentication service can be contacted before submitting credentials.
     \item \texttt{resetForm()} – clears form fields.
 \end{itemize}
 
@@ -457,7 +488,7 @@ This module allows users to select, preview, and submit manuscript fragment imag
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{Svc.API} – for upload endpoints.
+    \item \texttt{Svc.API} – specifically \texttt{POST /fragments/upload} for submitting image files and receiving fragment identifiers, and \texttt{GET /fragments/\{id\}/status} for polling processing status after upload.
     \item \texttt{HW.ImageStorage} – indirectly, via backend, for persistent image storage.
 \end{itemize}
 
@@ -507,6 +538,8 @@ This module allows users to select, preview, and submit manuscript fragment imag
 
 \noindent \texttt{renderUploadPanel()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: renders the upload panel, including file input control and status indicators.
     \item output: none.
     \item exception: \texttt{UIRenderError} if DOM cannot be updated.
@@ -514,6 +547,8 @@ This module allows users to select, preview, and submit manuscript fragment imag
 
 \noindent \texttt{selectFiles(files)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: validates file count and basic properties; if valid, stores them in \texttt{pendingFiles}.
     \item output: none.
     \item exception: \texttt{ValidationError} if any file exceeds size or format constraints.
@@ -521,6 +556,8 @@ This module allows users to select, preview, and submit manuscript fragment imag
 
 \noindent \texttt{submitUpload()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: sends \texttt{pendingFiles} to backend via \texttt{Svc.API}; clears \texttt{pendingFiles} on success.
     \item output: \texttt{UploadResult} containing list of created fragment IDs.
     \item exception: \texttt{NetworkError} if request fails; \texttt{UploadError} if backend rejects the upload.
@@ -566,7 +603,7 @@ This module provides the interactive canvas where scholars can view, move, rotat
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
 \texttt{renderCanvas} & \texttt{state: CanvasState} & \texttt{none} & \texttt{UIRenderError} \\
-\texttt{placeFragment} & \texttt{id: FragmentID, position: Tuple} & \texttt{none} & \texttt{LayoutError} \\
+\texttt{placeFragment} & \texttt{id: FragmentID, position: Record\{x: float, y: float\}} & \texttt{none} & \texttt{LayoutError} \\
 \texttt{rotateFragment} & \texttt{id: FragmentID, angle: float} & \texttt{none} & \texttt{LayoutError} \\
 \texttt{requestMatches} & \texttt{id: FragmentID} & \texttt{none} & \texttt{NetworkError} \\
 \texttt{saveLayout} & \texttt{none} & \texttt{LayoutID} & \texttt{NetworkError} \\
@@ -597,6 +634,8 @@ This module provides the interactive canvas where scholars can view, move, rotat
 
 \noindent \texttt{renderCanvas(state)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: updates the visual layout to match \texttt{state}.
     \item output: none.
     \item exception: \texttt{UIRenderError} if rendering fails.
@@ -604,13 +643,17 @@ This module provides the interactive canvas where scholars can view, move, rotat
 
 \noindent \texttt{placeFragment(id, position)}:
 \begin{itemize}
-    \item transition: updates \texttt{currentState} with new position for \texttt{id}.
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
+    \item transition: validates the \texttt{position} record, where \texttt{position.x} and \texttt{position.y} are the target canvas coordinates for the fragment's anchor point, then updates \texttt{currentState} with that new position for \texttt{id}.
     \item output: none.
     \item exception: \texttt{LayoutError} if fragment exceeds bounds or limit exceeded.
 \end{itemize}
 
 \noindent \texttt{rotateFragment(id, angle)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: updates rotation of \texttt{id} in \texttt{currentState}.
     \item output: none.
     \item exception: \texttt{LayoutError} if rotation cannot be applied.
@@ -618,6 +661,8 @@ This module provides the interactive canvas where scholars can view, move, rotat
 
 \noindent \texttt{requestMatches(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: sends match request to \texttt{Svc.MatchOrch}; updates \texttt{activeMatchOverlay} when response is received.
     \item output: none.
     \item exception: \texttt{NetworkError} if request fails.
@@ -625,6 +670,8 @@ This module provides the interactive canvas where scholars can view, move, rotat
 
 \noindent \texttt{saveLayout()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: persists \texttt{currentState} via \texttt{Svc.Session}.
     \item output: a \texttt{LayoutID} for later retrieval.
     \item exception: \texttt{NetworkError} if persistence fails.
@@ -632,6 +679,7 @@ This module provides the interactive canvas where scholars can view, move, rotat
 
 \subsubsection{Local Functions}
 \begin{itemize}
+    \item \texttt{validateCanvasPosition(position: Record\{x: float, y: float\}): bool} – checks that a proposed placement is inside the canvas bounds.
     \item \texttt{snapToEdges(id)} – adjusts position so nearby edges align visually.
     \item \texttt{highlightMatches(id)} – visually emphasizes suggested neighbors.
 \end{itemize}
@@ -699,6 +747,8 @@ This module provides the interface for querying the fragment database, filtering
 
 \noindent \texttt{renderSearchPanel()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: displays search form, filters, and an empty or last-used results view.
     \item output: none.
     \item exception: \texttt{UIRenderError} if rendering fails.
@@ -706,6 +756,8 @@ This module provides the interface for querying the fragment database, filtering
 
 \noindent \texttt{submitQuery(q)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: validates query parameters; if valid, sends query to \texttt{Svc.Search} and updates \texttt{results} and \texttt{currentPage}.
     \item output: none.
     \item exception: \texttt{ValidationError} if query malformed; \texttt{NetworkError} if backend unreachable.
@@ -713,6 +765,8 @@ This module provides the interface for querying the fragment database, filtering
 
 \noindent \texttt{nextPage()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: increments \texttt{currentPage} and requests next result page.
     \item output: none.
     \item exception: \texttt{NetworkError} if request fails.
@@ -720,6 +774,8 @@ This module provides the interface for querying the fragment database, filtering
 
 \noindent \texttt{exportResults(format)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: sends export request for current query to backend.
     \item output: none at UI level; triggers file download in browser.
     \item exception: \texttt{NetworkError} if backend unreachable; \texttt{ExportError} if export fails.
@@ -794,6 +850,8 @@ This module provides the user interface for saving the current workspace state, 
 
 \noindent \texttt{renderSaveDialog()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: displays modal dialog with input field for session name and save button.
     \item output: none.
     \item exception: \texttt{UIRenderError} if dialog cannot be rendered.
@@ -801,6 +859,8 @@ This module provides the user interface for saving the current workspace state, 
 
 \noindent \texttt{saveCurrentSession(name)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: validates session name; captures current canvas state from \texttt{UI.Canvas}; sends save request to \texttt{Svc.Session}; updates \texttt{lastSavedID} on success.
     \item output: \texttt{SessionID} assigned by backend.
     \item exception: \texttt{ValidationError} if name invalid; \texttt{NetworkError} if save fails.
@@ -808,6 +868,8 @@ This module provides the user interface for saving the current workspace state, 
 
 \noindent \texttt{validateSessionName(name)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{true} if name meets length and character requirements.
     \item exception: \texttt{ValidationError} if name invalid.
 \end{itemize}
@@ -882,6 +944,8 @@ This module provides the user interface for browsing, selecting, and loading pre
 
 \noindent \texttt{renderLoadDialog()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: displays modal dialog with list of saved sessions and load button.
     \item output: none.
     \item exception: \texttt{UIRenderError} if dialog cannot be rendered.
@@ -889,6 +953,8 @@ This module provides the user interface for browsing, selecting, and loading pre
 
 \noindent \texttt{fetchSessionList()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: requests list of available sessions from \texttt{Svc.Session}; updates \texttt{availableSessions}.
     \item output: \texttt{SessionList} containing session metadata (ID, name, date, preview).
     \item exception: \texttt{NetworkError} if request fails.
@@ -896,6 +962,8 @@ This module provides the user interface for browsing, selecting, and loading pre
 
 \noindent \texttt{loadSession(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: retrieves session data from \texttt{Svc.Session}; applies state to \texttt{UI.Canvas}; closes load dialog.
     \item output: none.
     \item exception: \texttt{NotFoundError} if session does not exist; \texttt{NetworkError} if retrieval fails.
@@ -903,6 +971,8 @@ This module provides the user interface for browsing, selecting, and loading pre
 
 \noindent \texttt{deleteSession(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: sends delete request to \texttt{Svc.Session}; removes session from \texttt{availableSessions} on success.
     \item output: \texttt{true} if deletion successful.
     \item exception: \texttt{NetworkError} if deletion fails.
@@ -950,6 +1020,7 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
+\texttt{startApplication} & \texttt{none} & \texttt{none} & \texttt{ServiceError} \\
 \texttt{handleAuthRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{AuthError} \\
 \texttt{handleUploadRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ValidationError, ServiceError} \\
 \texttt{handleMatchRequest} & \texttt{req: HttpRequest} & \texttt{HttpResponse} & \texttt{ServiceError} \\
@@ -963,6 +1034,7 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \subsubsection{State Variables}
 \begin{itemize}
+    \item \texttt{appInitialized: bool} – true once handlers and service bindings are registered.
     \item \texttt{routeTable: Map[Endpoint, Handler]} – mapping between URL paths and internal handlers.
 \end{itemize}
 
@@ -979,8 +1051,19 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \subsubsection{Access Routine Semantics}
 
+\noindent \texttt{startApplication()}:
+\begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
+    \item transition: initializes the route table, binds handlers to the application service boundary, and marks \texttt{appInitialized} as \texttt{true}.
+    \item output: none.
+    \item exception: \texttt{ServiceError} if the service boundary cannot be initialized.
+\end{itemize}
+
 \noindent \texttt{handleAuthRequest(req)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: forwards credentials/token to \texttt{Svc.AuthZ}; logs outcome.
     \item output: \texttt{HttpResponse} with status code and (if successful) session token or user info.
     \item exception: \texttt{AuthError} if authentication fails or token invalid.
@@ -988,6 +1071,8 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \noindent \texttt{handleUploadRequest(req)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: validates payload size and type; forwards work to \texttt{Svc.ProcOrch} for ingestion.
     \item output: \texttt{HttpResponse} including created fragment IDs or error details.
     \item exception: \texttt{ValidationError} if request violates constraints; \texttt{ServiceError} if downstream failure occurs.
@@ -995,6 +1080,8 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \noindent \texttt{handleMatchRequest(req)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: parses fragment identifier and forwards to \texttt{Svc.MatchOrch}.
     \item output: \texttt{HttpResponse} containing ranked match suggestions.
     \item exception: \texttt{ServiceError} if orchestrator fails or times out.
@@ -1002,6 +1089,8 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \noindent \texttt{handleSearchRequest(req)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: validates search query parameters; forwards to \texttt{Svc.Search}.
     \item output: \texttt{HttpResponse} containing search results page.
     \item exception: \texttt{ValidationError} for malformed queries; \texttt{ServiceError} on backend failures.
@@ -1009,6 +1098,8 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \noindent \texttt{handleSessionRequest(req)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: routes session save/load actions to \texttt{Svc.Session}.
     \item output: \texttt{HttpResponse} with session payload or confirmation.
     \item exception: \texttt{ServiceError} if the session operation fails.
@@ -1016,6 +1107,7 @@ This module exposes the backend functionality of the Sanskrit Manuscript Fragmen
 
 \subsubsection{Local Functions}
 \begin{itemize}
+    \item \texttt{initializeRouteTable()} – registers the handlers used by the application entrypoint.
     \item \texttt{parseJSONBody(req)} – extracts and validates JSON payload.
     \item \texttt{buildErrorResponse(code, msg)} – standardizes error responses.
 \end{itemize}
@@ -1080,6 +1172,8 @@ This module validates user credentials, issues and verifies session tokens, and 
 
 \noindent \texttt{authenticate(creds)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: verifies credentials against stored hash; updates \texttt{failedAttempts}.
     \item output: \texttt{AuthResult} containing success flag and token on success.
     \item exception: \texttt{AuthError} if user locked out or credentials invalid.
@@ -1087,12 +1181,16 @@ This module validates user credentials, issues and verifies session tokens, and 
 
 \noindent \texttt{validateToken(token)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{UserContext} if token valid and not expired.
     \item exception: \texttt{AuthError} if token invalid or expired.
 \end{itemize}
 
 \noindent \texttt{checkAccess(ctx, action)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{true} if user role in \texttt{ctx} is allowed to perform \texttt{action}.
     \item exception: \texttt{AuthError} if context invalid.
 \end{itemize}
@@ -1163,6 +1261,8 @@ This module manages user sessions, saved canvas layouts, and ongoing reconstruct
 
 \noindent \texttt{saveCanvasState(ctx, state)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: creates or updates an entry in \texttt{layoutStore} for the user.
     \item output: generated \texttt{LayoutID}.
     \item exception: \texttt{SessionError} if write fails or limit exceeded.
@@ -1170,12 +1270,16 @@ This module manages user sessions, saved canvas layouts, and ongoing reconstruct
 
 \noindent \texttt{loadCanvasState(ctx, id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{CanvasState} associated with user and layout ID.
     \item exception: \texttt{NotFoundError} if layout does not exist or not owned by user; \texttt{SessionError} on read failure.
 \end{itemize}
 
 \noindent \texttt{listLayouts(ctx)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: summaries of layouts owned by the user.
     \item exception: \texttt{SessionError} if retrieval fails.
 \end{itemize}
@@ -1246,6 +1350,8 @@ This module coordinates image preprocessing workflows such as orientation correc
 
 \noindent \texttt{enqueuePreprocessing(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: creates a preprocessing job for \texttt{id} and appends it to \texttt{jobQueue}.
     \item output: \texttt{JobID} for tracking.
     \item exception: \texttt{PreprocError} if job cannot be created.
@@ -1253,6 +1359,8 @@ This module coordinates image preprocessing workflows such as orientation correc
 
 \noindent \texttt{runPreprocessing(job)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: retrieves image by \texttt{ImageID}, applies normalization steps, and writes results back to storage.
     \item output: \texttt{PreprocResult} containing normalized image reference and metrics (for example, estimated orientation error).
     \item exception: \texttt{PreprocError} if any step fails.
@@ -1275,7 +1383,7 @@ This module coordinates AI models for fragment matching, aggregates model output
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{ML.EdgeMatch}, \texttt{ML.Damage}, \texttt{ML.TextSim}.
+    \item \texttt{ML.EdgeMatch}, \texttt{ML.Damage}.
     \item \texttt{Data.FragmentStore} – for retrieving fragment metadata.
 \end{itemize}
 
@@ -1324,6 +1432,8 @@ This module coordinates AI models for fragment matching, aggregates model output
 
 \noindent \texttt{generateMatches(frag)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: queries all relevant ML models; aggregates and sorts candidate matches; updates \texttt{recentResults}.
     \item output: \texttt{MatchResultList} of top candidates above threshold.
     \item exception: \texttt{MatchError} if models unavailable or response invalid.
@@ -1331,6 +1441,8 @@ This module coordinates AI models for fragment matching, aggregates model output
 
 \noindent \texttt{aggregateScores(scores)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: combined score (for example, weighted mean) over model scores.
     \item exception: \texttt{AggregationError} if sequence empty or weights invalid.
 \end{itemize}
@@ -1399,12 +1511,16 @@ This module executes queries over stored fragments and metadata, providing pagin
 
 \noindent \texttt{executeQuery(q, page)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{SearchResultPage} containing fragment summaries for the requested page.
     \item exception: \texttt{SearchError} if query invalid or backend failure occurs.
 \end{itemize}
 
 \noindent \texttt{exportResults(q, format)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{ExportPayload} that can be streamed to client as CSV or PDF.
     \item exception: \texttt{SearchError} on query failure; \texttt{ExportError} if export generation fails.
 \end{itemize}
@@ -1478,6 +1594,8 @@ This module is responsible for storing and retrieving logical fragment entities.
 
 \noindent \texttt{createFragment(rec)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: inserts a new record into \texttt{fragmentTable}.
     \item output: new \texttt{FragmentID}.
     \item exception: \texttt{FragmentError} if insert fails or constraints violated.
@@ -1485,12 +1603,16 @@ This module is responsible for storing and retrieving logical fragment entities.
 
 \noindent \texttt{getFragment(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: record associated with \texttt{id}.
     \item exception: \texttt{NotFoundError} if no record exists.
 \end{itemize}
 
 \noindent \texttt{updateFragment(id, rec)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: replaces existing record for \texttt{id} with \texttt{rec}.
     \item output: \texttt{true} if update successful.
     \item exception: \texttt{NotFoundError} if \texttt{id} unknown; \texttt{FragmentError} on write failure.
@@ -1498,6 +1620,8 @@ This module is responsible for storing and retrieving logical fragment entities.
 
 \noindent \texttt{deleteFragment(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: removes record associated with \texttt{id}.
     \item output: \texttt{true} if deletion successful.
     \item exception: \texttt{NotFoundError} if \texttt{id} unknown; \texttt{FragmentError} on delete failure.
@@ -1567,6 +1691,8 @@ This module maintains mappings between internal fragments and external catalogue
 
 \noindent \texttt{linkFragmentToCatalog(frag, catID)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: appends \texttt{catID} to the list of identifiers for \texttt{frag}.
     \item output: \texttt{true} on success.
     \item exception: \texttt{CatalogError} on write failure.
@@ -1574,12 +1700,16 @@ This module maintains mappings between internal fragments and external catalogue
 
 \noindent \texttt{getCatalogIDs(frag)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: all catalogue IDs associated with \texttt{frag}.
     \item exception: \texttt{CatalogError} if retrieval fails.
 \end{itemize}
 
 \noindent \texttt{findByCatalogID(catID)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: all \texttt{FragmentID} values linked to \texttt{catID}.
     \item exception: \texttt{CatalogError} if query fails.
 \end{itemize}
@@ -1650,6 +1780,8 @@ This module stores user accounts, credentials (hashed), roles, and profile infor
 
 \noindent \texttt{createUser(rec)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: inserts new user record; hashes password fields before storage.
     \item output: generated \texttt{UserID}.
     \item exception: \texttt{UserError} if constraints violated or write fails.
@@ -1657,18 +1789,24 @@ This module stores user accounts, credentials (hashed), roles, and profile infor
 
 \noindent \texttt{getUserByID(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: user record with \texttt{id}.
     \item exception: \texttt{NotFoundError} if no such user.
 \end{itemize}
 
 \noindent \texttt{getUserByEmail(email)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: user record whose email matches \texttt{email}.
     \item exception: \texttt{NotFoundError} if not found.
 \end{itemize}
 
 \noindent \texttt{updateUser(id, rec)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: updates record for \texttt{id}.
     \item output: \texttt{true} on success.
     \item exception: \texttt{NotFoundError} if \texttt{id} unknown; \texttt{UserError} on failure.
@@ -1740,6 +1878,8 @@ This module records reconstruction projects, including project metadata, associa
 
 \noindent \texttt{createProject(rec)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: inserts new row in \texttt{projectTable}.
     \item output: created \texttt{ProjectID}.
     \item exception: \texttt{ProjectError} on constraint violation or failure.
@@ -1747,12 +1887,16 @@ This module records reconstruction projects, including project metadata, associa
 
 \noindent \texttt{getProject(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: project record matching \texttt{id}.
     \item exception: \texttt{NotFoundError} if none exists.
 \end{itemize}
 
 \noindent \texttt{updateProject(id, rec)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: updates stored record.
     \item output: \texttt{true} on success.
     \item exception: \texttt{NotFoundError} or \texttt{ProjectError}.
@@ -1760,6 +1904,8 @@ This module records reconstruction projects, including project metadata, associa
 
 \noindent \texttt{listProjectsForUser(user)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: summaries of all projects owned by or shared with \texttt{user}.
     \item exception: \texttt{ProjectError} if query fails.
 \end{itemize}
@@ -1785,6 +1931,7 @@ This module provides model-based similarity estimates based on fragment edge con
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – to retrieve normalized images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1831,12 +1978,16 @@ This module provides model-based similarity estimates based on fragment edge con
 
 \noindent \texttt{computeEdgeSignature(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: fixed-length vector representing edge features for the image.
     \item exception: \texttt{ModelError} if image cannot be processed.
 \end{itemize}
 
 \noindent \texttt{scoreEdgeSimilarity(a, b)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: similarity score in \([0, 1]\) reflecting how well edges match.
     \item exception: \texttt{ModelError} if signatures invalid or incompatible.
 \end{itemize}
@@ -1857,7 +2008,8 @@ This module classifies the script type of a fragment (for example, Gupta Brāhm�
 
 \subsection{Uses}
 \begin{itemize}
-    \item \texttt{HW.ImageStorage}.
+    \item \texttt{HW.ImageStorage} – for retrieving fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1903,6 +2055,8 @@ This module classifies the script type of a fragment (for example, Gupta Brāhm�
 
 \noindent \texttt{classifyScript(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{ScriptPrediction} containing predicted script label and confidence.
     \item exception: \texttt{ModelError} if classification fails or confidence undefined.
 \end{itemize}
@@ -1924,6 +2078,7 @@ This module computes semantic similarity between text segments derived from tran
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{Data.FragmentStore} – for accessing fragment text content.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -1997,6 +2152,7 @@ This module performs image segmentation to identify and isolate individual fragm
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for retrieving images to segment.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2045,12 +2201,16 @@ This module performs image segmentation to identify and isolate individual fragm
 
 \noindent \texttt{segmentImage(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{SegmentationResult} containing binary masks and bounding boxes for detected fragments.
     \item exception: \texttt{ModelError} if segmentation fails or image cannot be processed.
 \end{itemize}
 
 \noindent \texttt{extractFragments(id, masks)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any required identifiers, state, or external resources referenced by this routine are valid and available.
+    \item post: if no exception is raised, the documented state transition is completed and the specified output is produced.
     \item transition: creates separate image files for each detected fragment region; stores them via \texttt{HW.ImageStorage}.
     \item output: sequence of new \texttt{ImageID} values for extracted fragments.
     \item exception: \texttt{ModelError} if extraction or storage fails.
@@ -2074,6 +2234,7 @@ This module detects circular marks, holes, or decorative elements in manuscript 
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2122,12 +2283,16 @@ This module detects circular marks, holes, or decorative elements in manuscript 
 
 \noindent \texttt{detectCircles(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{CircleList} containing center coordinates, radii, and confidence scores for detected circles.
     \item exception: \texttt{ModelError} if detection fails.
 \end{itemize}
 
 \noindent \texttt{matchCirclePatterns(a, b)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: similarity score in \([0, 1]\) based on spatial arrangement and properties of circles.
     \item exception: \texttt{ModelError} if matching algorithm fails.
 \end{itemize}
@@ -2150,6 +2315,7 @@ This module analyzes manuscript fragments to count the number of text lines pres
 \subsection{Uses}
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2197,12 +2363,16 @@ This module analyzes manuscript fragments to count the number of text lines pres
 
 \noindent \texttt{countLines(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{LineCountResult} containing the number of detected lines and confidence score.
     \item exception: \texttt{ModelError} if counting fails or image quality insufficient.
 \end{itemize}
 
 \noindent \texttt{detectLineRegions(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: sequence of \texttt{BoundingBox} objects defining the spatial extent of each text line.
     \item exception: \texttt{ModelError} if line detection fails.
 \end{itemize}
@@ -2226,6 +2396,7 @@ This module classifies fragment edges into categories such as torn, cut, origina
 \begin{itemize}
     \item \texttt{HW.ImageStorage} – for accessing fragment images.
     \item \texttt{ML.EdgeMatch} – edge signatures may be shared for classification.
+    \item \texttt{Util.Error} – for constructing \texttt{ModelError} exceptions.
 \end{itemize}
 
 \subsection{Syntax}
@@ -2274,12 +2445,16 @@ This module classifies fragment edges into categories such as torn, cut, origina
 
 \noindent \texttt{classifyEdges(id)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{EdgeClassificationResult} containing edge type predictions for all detected edges with confidence scores.
     \item exception: \texttt{ModelError} if classification fails.
 \end{itemize}
 
 \noindent \texttt{getEdgeType(id, edge)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: \texttt{EdgeTypePrediction} for a specific edge region containing predicted type and confidence.
     \item exception: \texttt{ModelError} if edge region invalid or classification fails.
 \end{itemize}
@@ -2352,12 +2527,16 @@ This module defines standard error types and helpers for constructing and handli
 
 \noindent \texttt{buildError(code, msg)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: structured error object capturing code and message.
     \item exception: none.
 \end{itemize}
 
 \noindent \texttt{toClientMessage(err)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: safe message for display at UI or API boundary.
     \item exception: none.
 \end{itemize}
@@ -2421,19 +2600,28 @@ This module provides structured logging for events, errors, and performance metr
 
 \noindent \texttt{logInfo(msg)}:
 \begin{itemize}
-    \item output: none; writes informational log entry.
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
+    \item transition: writes informational log entry.
+    \item output: none.
     \item exception: none.
 \end{itemize}
 
 \noindent \texttt{logWarn(msg)}:
 \begin{itemize}
-    \item output: none; writes warning log entry.
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
+    \item transition: writes warning log entry.
+    \item output: none.
     \item exception: none.
 \end{itemize}
 
 \noindent \texttt{logError(msg, err)}:
 \begin{itemize}
-    \item output: none; writes error entry including details from \texttt{err}.
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
+    \item transition: writes error entry including details from \texttt{err}.
+    \item output: none.
     \item exception: none.
 \end{itemize}
 
@@ -2495,12 +2683,16 @@ This module provides read-only access to configuration values such as database c
 
 \noindent \texttt{getValue(key)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: configuration value associated with \texttt{key}.
     \item exception: \texttt{ConfigError} if key missing.
 \end{itemize}
 
 \noindent \texttt{getBool(key)}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: parsed boolean value.
     \item exception: \texttt{ConfigError} if key missing or value not parseable.
 \end{itemize}
@@ -2563,12 +2755,16 @@ This module provides stub implementations of selected services and ML components
 
 \noindent \texttt{getFixedOCRStub()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: object implementing \texttt{runOCR} that returns predictable results for known inputs.
     \item exception: none.
 \end{itemize}
 
 \noindent \texttt{getFixedMatchStub()}:
 \begin{itemize}
+    \item pre: inputs satisfy the module assumptions, and any arguments or referenced identifiers used by this routine are valid.
+    \item post: if no exception is raised, the specified output is produced and module state is unchanged unless stated otherwise below.
     \item output: object implementing \texttt{generateMatches} with fixed candidate lists.
     \item exception: none.
 \end{itemize}
@@ -2612,7 +2808,7 @@ graduate attribute of Problem Analysis and Design.
   \item While creating the design doc, what parts of your other documents (e.g.
   requirements, hazard analysis, etc), it any, needed to be changed, and why?
 
-    \hspace{2em} Very few changes were needed to our previous documents. Because this is a pre-approved project with a well-defined problem and scope, many of the requirements and expectations were already laid out for us in the project description. As a result, our earlier documents, such as the SRS \citep{SRS-Sanskrit-Ciphers} and Hazard Analysis \citep{HazardAnalysis}, aligned naturally with the design work we did here. We did not need to revisit or adjust them significantly, beyond minor wording refinements and consistency updates.
+    \hspace{2em} Very few changes were needed to our previous documents. Because this is a pre-approved project with a well-defined problem and scope, many of the requirements and expectations were already laid out for us in the project description. As a result, our earlier documents, such as the \href{https://github.com/DylanG5/sanskrit-ciphers-requirements}{SRS} and \href{https://github.com/DylanG5/sanskrit-cipher/blob/main/docs/HazardAnalysis/HazardAnalysis.pdf}{Hazard Analysis}, aligned naturally with the design work we did here. We did not need to revisit or adjust them significantly, beyond minor wording refinements and consistency updates.
 
   \item What are the limitations of your solution?  Put another way, given
   unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)

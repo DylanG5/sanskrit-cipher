@@ -17,6 +17,7 @@ interface VirtualizedFragmentListProps {
   rotationByFragmentId?: Record<string, number>;
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
+  onFragmentFocus?: (fragment: ManuscriptFragment) => void;
   onToggleSelect: (fragment: ManuscriptFragment) => void;
   containerHeight: number;
   onLoadMore?: () => void;
@@ -25,6 +26,8 @@ interface VirtualizedFragmentListProps {
   scrollPosition?: number;
   onScrollPositionChange?: (position: number) => void;
   lastUsedId?: string | null;
+  focusedFragmentId?: string | null;
+  scrollToIndex?: number | null;
 }
 
 const ITEM_HEIGHT = 180;
@@ -35,14 +38,16 @@ interface FragmentRowData {
   rotationByFragmentId?: Record<string, number>;
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
+  onFragmentFocus?: (fragment: ManuscriptFragment) => void;
   onToggleSelect: (fragment: ManuscriptFragment) => void;
   lastUsedId?: string | null;
+  focusedFragmentId?: string | null;
 }
 
 const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRowData>) => {
   if (!data) return null;
 
-  const { fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onToggleSelect, lastUsedId } = data;
+  const { fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId } = data;
   const fragment = fragments[index];
 
   if (!fragment) return null;
@@ -50,11 +55,14 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
   const isSelected = selectedIds.has(fragment.id);
   const isLastUsed = lastUsedId === fragment.id;
   const rotation = rotationByFragmentId?.[fragment.id] ?? 0;
+  const isKeyboardFocused = focusedFragmentId === fragment.id;
 
   const handleClick = (e: React.MouseEvent) => {
     if (e.shiftKey || e.ctrlKey || e.metaKey) {
       e.preventDefault();
       onToggleSelect(fragment);
+    } else if (onFragmentFocus) {
+      onFragmentFocus(fragment);
     } else {
       onFragmentClick(fragment, e);
     }
@@ -77,8 +85,10 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
           background: isSelected ? '#eff6ff' : '#ffffff',
           borderColor: isSelected ? '#3b82f6' : '#e2e8f0',
           boxShadow: isSelected ? '0 0 0 2px rgba(59,130,246,0.3)' : undefined,
-          outline: isLastUsed && !isSelected ? '2px solid #f59e0b' : undefined,
-          outlineOffset: isLastUsed && !isSelected ? '2px' : undefined,
+          outline: isKeyboardFocused
+            ? '2px solid #ea580c'
+            : isLastUsed && !isSelected ? '2px solid #f59e0b' : undefined,
+          outlineOffset: (isKeyboardFocused || (isLastUsed && !isSelected)) ? '2px' : undefined,
         }}
       >
         {/* Selection checkbox indicator */}
@@ -150,6 +160,7 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   rotationByFragmentId,
   onDragStart,
   onFragmentClick,
+  onFragmentFocus,
   onToggleSelect,
   containerHeight,
   onLoadMore,
@@ -158,6 +169,8 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   scrollPosition = 0,
   onScrollPositionChange,
   lastUsedId,
+  focusedFragmentId,
+  scrollToIndex,
 }) => {
   const listRef = useRef<FixedSizeList>(null);
 
@@ -166,6 +179,12 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
       listRef.current.scrollTo(scrollPosition);
     }
   }, [scrollPosition]);
+
+  useEffect(() => {
+    if (listRef.current && scrollToIndex != null) {
+      listRef.current.scrollToItem(scrollToIndex, 'smart');
+    }
+  }, [scrollToIndex]);
 
   const handleItemsRendered = useCallback(
     ({ visibleStopIndex }: { visibleStopIndex: number }) => {
@@ -184,8 +203,8 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   );
 
   const itemData = useMemo<FragmentRowData>(
-    () => ({ fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onToggleSelect, lastUsedId }),
-    [fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onToggleSelect, lastUsedId]
+    () => ({ fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId }),
+    [fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId]
   );
 
   const itemCount = Math.max(0, fragments.length);

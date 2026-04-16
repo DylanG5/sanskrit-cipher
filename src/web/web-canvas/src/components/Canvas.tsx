@@ -1,10 +1,11 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import {
   Stage,
   Layer,
   Image as KonvaImage,
   Transformer,
   Line,
+  Rect,
 } from "react-konva";
 import { CanvasFragment } from "../types/fragment";
 import { useFragmentImage } from "../hooks/useFragmentImage";
@@ -24,6 +25,8 @@ interface CanvasProps {
   isGridVisible?: boolean;
   gridScale?: number; // pixels per cm
   onViewportChange?: (scale: number, position: { x: number; y: number }) => void;
+  previewFragment?: CanvasFragment | null;
+  onPreviewDismiss?: () => void;
 }
 
 interface FragmentImageProps {
@@ -156,6 +159,8 @@ const Canvas: React.FC<CanvasProps> = ({
   isGridVisible = false,
   gridScale = 25,
   onViewportChange,
+  previewFragment,
+  onPreviewDismiss,
 }) => {
   console.log("Canvas rendering with fragments:", fragments.length);
 
@@ -231,7 +236,7 @@ const Canvas: React.FC<CanvasProps> = ({
     memberStart: Record<string, { x: number; y: number }>;
   } | null>(null);
 
-  // Update stage size
+  // Update stage size — watch both window resize and container resize (e.g. when metadata panel opens)
   useEffect(() => {
     const updateSize = () => {
       const container = containerRef.current;
@@ -248,9 +253,15 @@ const Canvas: React.FC<CanvasProps> = ({
     // Use setTimeout to ensure DOM is ready
     const timer = setTimeout(updateSize, 0);
     window.addEventListener("resize", updateSize);
+
+    // Also observe the container itself so panel open/close triggers a resize
+    const ro = new ResizeObserver(updateSize);
+    if (containerRef.current) ro.observe(containerRef.current);
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener("resize", updateSize);
+      ro.disconnect();
     };
   }, []);
 
@@ -408,6 +419,7 @@ const Canvas: React.FC<CanvasProps> = ({
     // Deselect when clicking on empty area
     if (e.target === e.target.getStage()) {
       onSelectionChange([]);
+      onPreviewDismiss?.();
     }
   };
 
@@ -431,6 +443,32 @@ const Canvas: React.FC<CanvasProps> = ({
     setIsPanning(false);
     panStartRef.current = null;
   };
+
+  // Fit a preview fragment to the viewport
+  const fitFragmentToViewport = useCallback((fragment: CanvasFragment) => {
+    if (stageSize.width === 0) return;
+    const PADDING = 80;
+    // Scale to 80% of what would fill the viewport so the image stays comfortably clear of edges
+    const FIT_FACTOR = 0.80;
+    const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE,
+      Math.min(
+        (stageSize.width - PADDING * 2) / fragment.width,
+        (stageSize.height - PADDING * 2) / fragment.height
+      ) * FIT_FACTOR
+    ));
+    const cx = fragment.x + fragment.width / 2;
+    const cy = fragment.y + fragment.height / 2;
+    setStageScale(scale);
+    // Bias the horizontal center toward the left third of the canvas so the
+    // fragment doesn't drift under the right-side metadata panel
+    const horizontalCenter = stageSize.width * 0.42;
+    setStagePosition({ x: horizontalCenter - cx * scale, y: stageSize.height / 2 - cy * scale });
+  }, [stageSize]);
+
+  useEffect(() => {
+    if (previewFragment && stageSize.width > 0) fitFragmentToViewport(previewFragment);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewFragment, stageSize.width]);
 
   // Recenter view to the center of all fragments (keeps current zoom)
   const recenterToFragments = () => {
@@ -684,9 +722,29 @@ const Canvas: React.FC<CanvasProps> = ({
             }}
           />
         </Layer>
+
+        {/* Preview Layer — shown when navigating with arrow keys */}
+        {previewFragment && (
+          <Layer>
+            <Rect
+              x={-50000}
+              y={-50000}
+              width={100000}
+              height={100000}
+              fill="rgba(0,0,0,0.7)"
+              listening={false}
+            />
+            <FragmentImage
+              fragment={previewFragment}
+              isSelected={false}
+              onSelect={() => {}}
+              onChange={() => {}}
+            />
+          </Layer>
+        )}
       </Stage>
 
-      {/* Edge Match Button */}
+      {/* Edge Match Button — hidden until matching pipeline is validated
       {edgeMatchButtonPosition && !isDragging && (
         <button
           onClick={() => {
@@ -717,6 +775,7 @@ const Canvas: React.FC<CanvasProps> = ({
           Edge Match?
         </button>
       )}
+      */}
 
       {/* Grid Scale Indicator */}
       {isGridVisible && showGridReference && (

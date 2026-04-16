@@ -48,9 +48,13 @@
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-January 20 & 1.0 & Added sections 2-5\\
-January 20 & 1.1 & Added sections 6-8\\
-January 20 & 1.2 & Added sections 9-12\\
+November 13 & 1.0 & Added sections 2-5\\
+November 13 & 1.1 & Added sections 6-8\\
+November 13 & 1.2 & Added sections 9-12\\
+January 20 & 1.3 & Added sections 2-5\\
+January 20 & 1.4 & Added sections 6-8\\
+January 20 & 1.5 & Added sections 9-12\\
+April 6 & 1.6 & Added low-fidelity user interface wireframes to support workflow planning and frontend implementation\\
 \bottomrule
 \end{tabularx}
 
@@ -80,6 +84,7 @@ This section records information for easy reference.
   OCR & Optical Character Recognition\\
   OS & Operating System \\
   R & Requirement\\
+  SC & Sanskrit Ciphers\\
   SRS & Software Requirements Specification\\
   UI & User Interface\\
   UC & Unlikely Change \\
@@ -212,21 +217,21 @@ decisions will be changed.
 
 \begin{description}
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: Image files via web upload, Output: Screen display and file export).
+  (Input: Image files via web upload, Output: Screen display and file export). This is unlikely to change because the system is designed specifically for standard web-based input/output devices, and supporting alternative hardware would require a fundamental redesign.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucWebApp}:] The system will be
-  deployed as a web-based application accessible through standard browsers.
+  deployed as a local application running on a user's machine. This is unlikely to change because the system is intended to be used locally, and changing the deployment model would significantly alter the architecture.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucImageProc}:] The system will
-  process 2D images of manuscript fragments.
+  process 2D images of manuscript fragments. This is unlikely to change because the system is specifically designed for 2D manuscript fragment analysis, and extending to other formats would require major redesign.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucCollaborate}:] The system will
-  support collaborative work through shared projects and annotations.
+  support collaborative work through shared projects and annotations. This is unlikely to change because collaboration is a core requirement of the system and removing it would contradict the primary use case.
 \item[\refstepcounter{ucnum} \uctheucnum \label{ucMLCore}:] Machine learning will
-  be a core component for fragment matching and analysis.
+  be a core component for fragment matching and analysis. This is unlikely to change because the system fundamentally relies on machine learning techniques for reconstruction and analysis, and removing or replacing this would require a complete redesign of the system’s core functionality.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
 
 This section provides an overview of the module design. Modules are summarized
-in a hierarchy decomposed by secrets in Table \ref{TblMH}. The modules listed
+in a hierarchy decomposed by secrets, shown in Table~\ref{TblMH}. The modules listed
 below, which are leaves in the hierarchy tree, are the modules that will
 actually be implemented.
 
@@ -264,29 +269,40 @@ actually be implemented.
 
 \begin{table}[h!]
 \centering
-\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
+\caption{Module Hierarchy}
+\label{TblMH}
+\begin{tabularx}{\textwidth}{p{0.24\textwidth} X}
 \toprule
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
 
-{Hardware-Hiding} & Image Storage Interface \\
+Hardware-Hiding & -- \\
 \midrule
 
-\multirow{15}{0.3\textwidth}{Behaviour-Hiding} & User Interface: UI.Canvas, UI.Search, UI.Auth, UI.Upload,\\
-& \quad\quad\quad\quad\quad\quad UI.SaveSession, UI.LoadSession\\
-& Service Layer: Svc.API, Svc.Search, Svc.AuthZ, Svc.Session,\\
-& \quad\quad\quad\quad\quad\quad Svc.ProcOrch, Svc.MatchOrch\\
-& Data Management: Data.FragmentStore, Data.Catalog,\\
-& \quad\quad\quad\quad\quad\quad Data.User, Data.Project\\
-& Machine Learning Modules: ML.EdgeMatch, ML.ScriptClass,\\
-& \quad\quad\quad\quad\quad\quad ML.TextSim, ML.Segmentation, ML.CircleRecognition,\\
-& \quad\quad\quad\quad\quad\quad ML.LineCount, ML.EdgeClassification\\
+\multirow{19}{0.3\textwidth}{Behaviour-Hiding}
+& HW.ImageStorage \\
+\cmidrule{2-2}
+& \textit{User Interface}\\
+& \quad UI.Canvas, UI.Search, UI.Auth, UI.Upload,\\
+& \quad UI.SaveSession, UI.LoadSession\\
+\cmidrule{2-2}
+& \textit{Service Layer}\\
+& \quad Svc.API, Svc.Search, Svc.AuthZ, Svc.Session,\\
+& \quad Svc.ProcOrch, Svc.MatchOrch\\
+\cmidrule{2-2}
+& \textit{Data Management}\\
+& \quad Data.FragmentStore, Data.Catalog,\\
+& \quad Data.User, Data.Project\\
+\cmidrule{2-2}
+& \textit{Machine Learning}\\
+& \quad ML.EdgeMatch, ML.ScriptClass, ML.TextSim,\\
+& \quad ML.Segmentation, ML.CircleRecognition,\\
+& \quad ML.LineCount, ML.EdgeClassification\\
 \midrule
 
-\multirow{3}{0.3\textwidth}{Software Decision} & Utility and Support Modules (Error Handling, Logging,\\
-& Configuration Management, Test Stubs)\\
+Software Decision & Utility and Support Modules: Error Handling, Logging, Configuration Management, Test Stubs \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 \section{Connection Between Requirements and Design} \label{SecConnection}
 
@@ -317,6 +333,7 @@ implementing software is given under the \emph{Implemented By} title. If the
 entry is \emph{OS}, this means that the module is provided by the operating
 system or by standard programming language libraries.  \emph{\progname{}} means the
 module will be implemented by the \progname{} software.
+The \emph{Type of Module} field is used to explain why each module is shaped the way it is: \emph{Abstract Object} is used for stateful services, UI components, and ML components with hidden behaviour; \emph{Abstract Data Type} is used where operations must protect internal data representations; \emph{Record} is used for modules that primarily model structured stored entities; and \emph{Library} is used for shared, largely stateless helper functionality.
 
 Only the leaf modules in the hierarchy have to be implemented. If a dash
 (\emph{--}) is shown, this means that the module is not a leaf and will not have
@@ -333,15 +350,6 @@ to be implemented.
 \item[Implemented By:] OS
 \end{description}
 
-\subsubsection{HW.ImageStorage (\mref{mHWImageStorage})}
-
-\begin{description}
-\item[Secrets:] Data structure and algorithms used to implement the image storage
-\item[Services:] This module provides platform-specific file operations such as image storage and retrieval, and it serves as virtual hardware for the system.  
-\item[Implemented By:] Cloud or Local Storage Interface
-\item[Type of Module:] Abstract Object
-\end{description}
-
 
 
 \subsection{Behaviour-Hiding Module}
@@ -354,6 +362,15 @@ to be implemented.
   hardware-hiding module and the software decision module. The programs in this
   module will need to change if there are changes in the SRS.
 \item[Implemented By:] --
+\end{description}
+
+\subsubsection{HW.ImageStorage (\mref{mHWImageStorage})}
+
+\begin{description}
+\item[Secrets:] Data structure and algorithms used to implement the image storage
+\item[Services:] Provides the required behaviour for storing and retrieving fragment images while hiding the underlying storage mechanism.
+\item[Implemented By:] Cloud or Local Storage Interface
+\item[Type of Module:] Abstract Object
 \end{description}
 
 \subsubsection{UI.Canvas (\mref{mCanvas})}
@@ -738,7 +755,7 @@ NFR3.3 & \mref{mEdgeMatch}, \mref{mScriptClass}, \mref{mTextSim}, \mref{mSegment
 
 % Layer 0 - Foundation
 \node[layer, text width=2.5cm, align=left] at (-2,-10) {Layer 0:\\Foundation};
-\node[module] (HH) at (1.5,-10) {M1\\Hardware};
+\node[module] (HH) at (1.5,-10) {M1\\ImageStore};
 \node[module] (Error) at (4,-10) {M25\\Error};
 \node[module] (Logging) at (6.5,-10) {M26\\Logging};
 \node[module] (Config) at (9,-10) {M27\\Config};
@@ -808,15 +825,15 @@ The uses hierarchy follows a strict layered architecture where modules at each l
 \subsubsection{Layer 5: User Interface}
 All UI modules communicate exclusively through the API layer:
 \begin{itemize}
-\item \textbf{Canvas (M2), Search (M3), Auth (M4), Upload (M5), SaveSession (M6), LoadSession (M7)} all directly use \textbf{API (M8)}
+\item \hyperref[mCanvas]{\textbf{Canvas (\mref{mCanvas})}}, \hyperref[mSearch]{\textbf{Search (\mref{mSearch})}}, \hyperref[mAuth]{\textbf{Auth (\mref{mAuth})}}, \hyperref[mUpload]{\textbf{Upload (\mref{mUpload})}}, \hyperref[mSaveSession]{\textbf{SaveSession (\mref{mSaveSession})}}, and \hyperref[mLoadSession]{\textbf{LoadSession (\mref{mLoadSession})}} all directly use \hyperref[mAPI]{\textbf{API (\mref{mAPI})}}
 \item UI modules have no direct access to service, data, or ML layers, ensuring clean separation between presentation and business logic
-\item \textbf{SaveSession (M6)} and \textbf{LoadSession (M7)} provide dedicated interfaces for workspace persistence and retrieval
+\item \hyperref[mSaveSession]{\textbf{SaveSession (\mref{mSaveSession})}} and \hyperref[mLoadSession]{\textbf{LoadSession (\mref{mLoadSession})}} provide dedicated interfaces for workspace persistence and retrieval
 \end{itemize}
 
 \subsubsection{Layer 4: API Gateway}
 \textbf{API (M8)} serves as the central gateway and coordinates all service layer modules:
 \begin{itemize}
-\item Directly uses all five service modules: \textbf{SearchSvc (M9)}, \textbf{AuthZ (M10)}, \textbf{Session (M11)}, \textbf{ProcOrch (M12)}, and \textbf{MatchOrch (M13)}
+\item Directly uses all five service modules: \hyperref[mSearchSvc]{\textbf{SearchSvc (\mref{mSearchSvc})}}, \hyperref[mAuthZ]{\textbf{AuthZ (\mref{mAuthZ})}}, \hyperref[mSession]{\textbf{Session (\mref{mSession})}}, \hyperref[mProcOrch]{\textbf{ProcOrch (\mref{mProcOrch})}}, and \hyperref[mMatchOrch]{\textbf{MatchOrch (\mref{mMatchOrch})}}
 \item Provides unified RESTful interface to all backend services for the UI layer
 \item Handles request routing, validation, response formatting, and rate limiting
 \item Acts as the single entry point for all business logic operations
@@ -827,24 +844,24 @@ Service modules implement business logic and coordinate lower-level modules:
 
 \paragraph{Data Access Services:}
 \begin{itemize}
-\item \textbf{SearchSvc (M9)} uses \textbf{FragmentStore (M14)} and \textbf{Catalog (M15)} to perform search and filtering operations across fragments
-\item \textbf{AuthZ (M10)} uses \textbf{User (M16)} for credential verification and role-based authorization
-\item \textbf{Session (M11)} uses \textbf{User (M16)} and \textbf{Project (M17)} to manage user sessions and collaborative workspace state
+\item \hyperref[mSearchSvc]{\textbf{SearchSvc (\mref{mSearchSvc})}} uses \hyperref[mFragStore]{\textbf{FragmentStore (\mref{mFragStore})}} and \hyperref[mCatalog]{\textbf{Catalog (\mref{mCatalog})}} to perform search and filtering operations across fragments
+\item \hyperref[mAuthZ]{\textbf{AuthZ (\mref{mAuthZ})}} uses \hyperref[mUser]{\textbf{User (\mref{mUser})}} for credential verification and role-based authorization
+\item \hyperref[mSession]{\textbf{Session (\mref{mSession})}} uses \hyperref[mUser]{\textbf{User (\mref{mUser})}} and \hyperref[mProject]{\textbf{Project (\mref{mProject})}} to manage user sessions and collaborative workspace state
 \end{itemize}
 
 \paragraph{Orchestration Services:}
 \begin{itemize}
-\item \textbf{ProcOrch (M12)} orchestrates image processing pipelines by using:
+\item \hyperref[mProcOrch]{\textbf{ProcOrch (\mref{mProcOrch})}} orchestrates image processing pipelines by using:
   \begin{itemize}
-  \item \textbf{FragmentStore (M14)} for accessing fragment images
-  \item \textbf{EdgeMatch (M18)} for edge detection during preprocessing
-  \item \textbf{ScriptClass (M19)} for initial script classification
+  \item \hyperref[mFragStore]{\textbf{FragmentStore (\mref{mFragStore})}} for accessing fragment images
+  \item \hyperref[mEdgeMatch]{\textbf{EdgeMatch (\mref{mEdgeMatch})}} for edge detection during preprocessing
+  \item \hyperref[mScriptClass]{\textbf{ScriptClass (\mref{mScriptClass})}} for initial script classification
   \item \textbf{Segmentation (M21)} for isolating individual fragments from images
   \end{itemize}
-\item \textbf{MatchOrch (M13)} coordinates fragment matching by using:
+\item \hyperref[mMatchOrch]{\textbf{MatchOrch (\mref{mMatchOrch})}} coordinates fragment matching by using:
   \begin{itemize}
-  \item \textbf{EdgeMatch (M18)} for edge profile comparison
-  \item \textbf{ScriptClass (M19)} for script similarity comparison
+  \item \hyperref[mEdgeMatch]{\textbf{EdgeMatch (\mref{mEdgeMatch})}} for edge profile comparison
+  \item \hyperref[mScriptClass]{\textbf{ScriptClass (\mref{mScriptClass})}} for script similarity comparison
   \item \textbf{TextSim (M20)} for comparing extracted text between fragments
   \item \textbf{CircleRecognition (M22)} for matching circular marks and holes
   \item \textbf{LineCount (M23)} for filtering by text line count
@@ -857,29 +874,29 @@ Note that ProcOrch focuses on preprocessing and feature extraction, while MatchO
 \subsubsection{Layer 2: Machine Learning}
 ML modules provide specialized analysis capabilities:
 \begin{itemize}
-\item \textbf{EdgeMatch (M18)} uses \textbf{FragmentStore (M14)} to access fragment images for edge detection and comparison
-\item \textbf{ScriptClass (M19)} uses both \textbf{Catalog (M15)} for script taxonomy metadata and \textbf{FragmentStore (M14)} for fragment images
+\item \hyperref[mEdgeMatch]{\textbf{EdgeMatch (\mref{mEdgeMatch})}} uses \hyperref[mFragStore]{\textbf{FragmentStore (\mref{mFragStore})}} to access fragment images for edge detection and comparison
+\item \hyperref[mScriptClass]{\textbf{ScriptClass (\mref{mScriptClass})}} uses both \hyperref[mCatalog]{\textbf{Catalog (\mref{mCatalog})}} for script taxonomy metadata and \hyperref[mFragStore]{\textbf{FragmentStore (\mref{mFragStore})}} for fragment images
 \item \textbf{Segmentation (M21)} performs image segmentation to isolate individual fragments from scanned images
 \item \textbf{CircleRecognition (M22)} detects circular marks, holes, or decorative elements for matching
 \item \textbf{LineCount (M23)} counts text lines for filtering and matching criteria
 \item \textbf{EdgeClassification (M24)} classifies fragment edges (torn, cut, original, burned) to improve matching accuracy
-\item Other ML modules (\textbf{TextSim (M20)}) also use \textbf{FragmentStore (M14)} for data access (connections shown representatively to reduce visual complexity)
+\item Other ML modules (\hyperref[mTextSim]{\textbf{TextSim (\mref{mTextSim})}}) also use \hyperref[mFragStore]{\textbf{FragmentStore (\mref{mFragStore})}} for data access (connections shown representatively to reduce visual complexity)
 \item ML modules are always coordinated by service orchestrators (ProcOrch or MatchOrch), never invoked directly by the API
 \end{itemize}
 
 \subsubsection{Layer 1: Data Storage}
 Data modules encapsulate all persistence operations and provide CRUD interfaces:
 \begin{itemize}
-\item \textbf{FragmentStore (M14)} uses:
+\item \hyperref[mFragStore]{\textbf{FragmentStore (\mref{mFragStore})}} uses:
   \begin{itemize}
-  \item \textbf{Hardware Hiding (M1)} for file system and storage operations
+  \item \hyperref[mHWImageStorage]{\textbf{HW.ImageStorage (\mref{mHWImageStorage})}} for file system and storage operations
   \item \textbf{Error Handling (M25)} for exception management
   \item \textbf{Logging (M26)} for audit trails of fragment operations
   \item \textbf{Config (M27)} for storage configuration parameters
   \end{itemize}
-\item \textbf{Catalog (M15)} uses \textbf{Error Handling (M25)}, \textbf{Logging (M26)}, and \textbf{Config (M27)} for managing controlled vocabularies and metadata schemas
-\item \textbf{User (M16)} uses \textbf{Error Handling (M25)}, \textbf{Logging (M26)}, and \textbf{Config (M27)} for user profile management and authentication data
-\item \textbf{Project (M17)} uses \textbf{Error Handling (M25)}, \textbf{Logging (M26)}, and \textbf{Config (M27)} for collaborative workspace data
+\item \hyperref[mCatalog]{\textbf{Catalog (\mref{mCatalog})}} uses \hyperref[mError]{\textbf{Error Handling (\mref{mError})}}, \hyperref[mLogging]{\textbf{Logging (\mref{mLogging})}}, and \hyperref[mConfig]{\textbf{Config (\mref{mConfig})}} for managing controlled vocabularies and metadata schemas
+\item \hyperref[mUser]{\textbf{User (\mref{mUser})}} uses \hyperref[mError]{\textbf{Error Handling (\mref{mError})}}, \hyperref[mLogging]{\textbf{Logging (\mref{mLogging})}}, and \hyperref[mConfig]{\textbf{Config (\mref{mConfig})}} for user profile management and authentication data
+\item \hyperref[mProject]{\textbf{Project (\mref{mProject})}} uses \hyperref[mError]{\textbf{Error Handling (\mref{mError})}}, \hyperref[mLogging]{\textbf{Logging (\mref{mLogging})}}, and \hyperref[mConfig]{\textbf{Config (\mref{mConfig})}} for collaborative workspace data
 \end{itemize}
 
 All data modules depend heavily on foundation modules to ensure reliable, configurable, and auditable data operations.
@@ -887,10 +904,10 @@ All data modules depend heavily on foundation modules to ensure reliable, config
 \subsubsection{Layer 0: Foundation}
 Foundation modules provide cross-cutting system services with no dependencies on other system modules:
 \begin{itemize}
-\item \textbf{Hardware Hiding (M1)} abstracts operating system and file system operations, used by FragmentStore for persistent storage
-\item \textbf{Error Handling (M25)} provides exception management and error reporting, used by all data modules and propagated throughout upper layers
-\item \textbf{Logging (M26)} records system events, user actions, and audit trails, used extensively by data and service layers
-\item \textbf{Config (M27)} manages application configuration from files and environment variables, used by all data modules and some services
+\item \hyperref[mHWImageStorage]{\textbf{HW.ImageStorage (\mref{mHWImageStorage})}} abstracts file-system and storage operations, used by \hyperref[mFragStore]{\textbf{FragmentStore (\mref{mFragStore})}} for persistent storage
+\item \hyperref[mError]{\textbf{Error Handling (\mref{mError})}} provides exception management and error reporting, used by all data modules and propagated throughout upper layers
+\item \hyperref[mLogging]{\textbf{Logging (\mref{mLogging})}} records system events, user actions, and audit trails, used extensively by data and service layers
+\item \hyperref[mConfig]{\textbf{Config (\mref{mConfig})}} manages application configuration from files and environment variables, used by all data modules and some services
 \end{itemize}
 
 \subsubsection{Key Architectural Properties}
@@ -970,7 +987,6 @@ The Sanskrit Manuscript Reconstruction Platform provides a web-based interface d
 
 \subsubsection{Transcription Assistance}
 \begin{itemize}
-    \item \textbf{OCR Output Display:} Extracted text with character-level confidence indicators
     \item \textbf{Script Classification:} Display of identified script type (e.g., Gupta, Tibetan, Chinese) with confidence $\geq$ 70\%
     \item \textbf{Manual Correction:} Editable text fields for scholarly review and correction
 \end{itemize}
@@ -984,129 +1000,75 @@ The Sanskrit Manuscript Reconstruction Platform provides a web-based interface d
 
 \section{Design of Communication Protocols}
 
-The Sanskrit Manuscript Reconstruction Platform uses a client-server architecture with RESTful API communication between the frontend and backend services. This section describes the communication protocols and data exchange formats.
+The Sanskrit Manuscript Reconstruction Platform uses a client-server architecture in which the user interface communicates with backend services through a versioned service boundary. This section describes communication at the module-interface level, focusing on responsibilities and information flow rather than implementation syntax.
 
 \subsection{API Architecture}
 
 \subsubsection{Backend API Layer}
-The backend API is implemented using Flask, FastAPI, or Django (final selection to be determined during implementation) and provides versioned RESTful endpoints for all system operations.
+The backend API gateway provides a stable interface between UI modules and service modules. Its role is to route requests to the correct service module, enforce cross-cutting policies, and return standardized responses.
 
 \textbf{API Design Principles:}
 \begin{itemize}
-    \item \textbf{RESTful Convention:} Resource-based URLs with standard HTTP methods (GET, POST, PUT, DELETE)
-    \item \textbf{Versioning:} All endpoints include version prefix (e.g., \texttt{/api/v1/})
-    \item \textbf{Status Codes:} Proper HTTP status codes (200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error)
-    \item \textbf{JSON Format:} All request and response bodies use JSON
-    \item \textbf{Schema Validation:} Request/response schemas defined using Pydantic models (backend) and TypeScript interfaces (frontend)
+  \item \textbf{Versioned Interface:} Service contracts are versioned to allow interface evolution without breaking existing clients.
+  \item \textbf{Uniform Operations:} Interface operations are defined in terms of create, read, update, delete, and query actions over system resources.
+  \item \textbf{Standardized Responses:} All operations return a consistent response structure with either requested data or a categorized error.
+  \item \textbf{Input and Output Validation:} All module boundaries validate incoming arguments and outgoing results against agreed contracts.
+  \item \textbf{Separation of Concerns:} Transport concerns are isolated in the API gateway while domain logic remains in service modules.
 \end{itemize}
 
-\subsection{Core API Endpoints}
-
-\subsubsection{Authentication Endpoints}
+\subsection{Core API Capabilities}
+At the architectural level, API capabilities are grouped by service responsibility rather than by concrete route definitions:
 \begin{itemize}
-    \item \texttt{POST /api/v1/auth/login} - User authentication, returns session token
-    \item \texttt{POST /api/v1/auth/logout} - Session termination
-    \item \texttt{GET /api/v1/auth/verify} - Token validation
-\end{itemize}
-
-\subsubsection{Fragment Management Endpoints}
-\begin{itemize}
-    \item \texttt{POST /api/v1/fragments/upload} - Upload fragment image (multipart/form-data)
-    \item \texttt{GET /api/v1/fragments/\{id\}} - Retrieve fragment metadata and image URL
-    \item \texttt{GET /api/v1/fragments} - List/search fragments with query parameters
-    \item \texttt{DELETE /api/v1/fragments/\{id\}} - Delete fragment (authorized users only)
-\end{itemize}
-
-\subsubsection{Preprocessing Endpoints}
-\begin{itemize}
-    \item \texttt{POST /api/v1/preprocess/orientation} - Trigger orientation correction
-    \item \texttt{GET /api/v1/preprocess/status/\{job\_id\}} - Check preprocessing job status
-\end{itemize}
-
-\subsubsection{Matching and Similarity Endpoints}
-\begin{itemize}
-    \item \texttt{POST /api/v1/matching/suggest} - Generate match suggestions for fragment
-    \item \texttt{GET /api/v1/matching/results/\{fragment\_id\}} - Retrieve ranked match list
-\end{itemize}
-
-\subsubsection{OCR and Script Identification Endpoints}
-\begin{itemize}
-    \item \texttt{POST /api/v1/ocr/transcribe} - Extract text from fragment image
-    \item \texttt{POST /api/v1/classification/script} - Identify script type
-    \item \texttt{GET /api/v1/ocr/results/\{fragment\_id\}} - Retrieve OCR output
-\end{itemize}
-
-\subsubsection{Session and Workspace Endpoints}
-\begin{itemize}
-    \item \texttt{POST /api/v1/sessions} - Create new canvas workspace session
-    \item \texttt{PUT /api/v1/sessions/\{id\}} - Update/save workspace state
-    \item \texttt{GET /api/v1/sessions/\{id\}} - Restore workspace session
-    \item \texttt{DELETE /api/v1/sessions/\{id\}} - Delete session
+  \item \textbf{Authentication and Authorization Operations:} establish and validate user identity, and enforce access permissions.
+  \item \textbf{Fragment Lifecycle Operations:} ingest, retrieve, query, and remove fragment records and associated assets.
+  \item \textbf{Preprocessing Operations:} initiate and monitor image normalization workflows.
+  \item \textbf{Matching and Analysis Operations:} request candidate matches and retrieve ranked similarity outcomes.
+  \item \textbf{Session and Workspace Operations:} create, update, restore, list, and remove saved workspace states.
 \end{itemize}
 
 \subsection{Data Exchange Formats}
+Communication between modules uses typed request and response contracts with clear semantic fields.
 
-\subsubsection{Request Schema Example (Fragment Upload)}
-\begin{verbatim}
-POST /api/v1/fragments/upload
-Content-Type: multipart/form-data
+\subsubsection{Request Contract Categories}
+\begin{itemize}
+  \item \textbf{Identity and Access Inputs:} credentials, session tokens, and authorization context.
+  \item \textbf{Fragment Inputs:} image payload references and descriptive metadata required for storage and indexing.
+  \item \textbf{Query Inputs:} search filters, sorting choices, and pagination parameters.
+  \item \textbf{Workflow Inputs:} identifiers used to start or inspect preprocessing and matching jobs.
+\end{itemize}
 
-{
-    "file": <binary image data>,
-    "metadata": {
-        "collection": "British Library",
-        "shelfmark": "BL-12345",
-        "provenance": "Gandhara",
-        "notes": "Optional user notes"
-    }
-}
-\end{verbatim}
-
-\subsubsection{Response Schema Example (Match Suggestions)}
-\begin{verbatim}
-GET /api/v1/matching/results/{fragment_id}
-Response: 200 OK
-
-{
-    "fragment_id": "BL-12345",
-    "matches": [
-        {
-            "match_id": "BL-67890",
-            "similarity_score": 0.87,
-            "confidence": 0.92,
-            "match_features": ["edge_pattern", "damage_signature"],
-            "thumbnail_url": "/api/v1/fragments/BL-67890/thumbnail"
-        },
-        ...
-    ],
-    "timestamp": "2025-11-11T14:30:00Z"
-}
-\end{verbatim}
+\subsubsection{Response Contract Categories}
+\begin{itemize}
+  \item \textbf{Operation Result:} requested resource data or confirmation of completed action.
+  \item \textbf{Analysis Result:} ranked candidate lists with confidence or score summaries.
+  \item \textbf{Workflow Status:} lifecycle state, progress indicators, and completion metadata.
+  \item \textbf{Error Result:} normalized error category and diagnostic message suitable for UI handling.
+\end{itemize}
 
 \subsection{Inter-Service Communication}
 
 \subsubsection{Backend to ML/AI Cluster}
-The backend orchestration service communicates with AI/ML components using internal API calls or message queues:
+The backend orchestration services communicate with ML components through internal service contracts (synchronous calls for immediate results and asynchronous jobs for long-running analysis):
 \begin{itemize}
-    \item \textbf{OCR Service:} Asynchronous job queue for text extraction
-    \item \textbf{Matching Service:} Real-time or batch processing for similarity computation
-    \item \textbf{Script Classification Service:} Synchronous inference requests
+  \item \textbf{Text and Script Analysis:} model inference requests and prediction responses.
+  \item \textbf{Similarity and Matching:} feature and score exchange for candidate ranking.
+  \item \textbf{Long-Running Jobs:} queued execution with explicit status retrieval.
 \end{itemize}
 
 \subsubsection{Database Communication}
 \begin{itemize}
-    \item \textbf{ORM Layer:} SQLAlchemy for database abstraction (PostgreSQL or SQLite)
-    \item \textbf{Query Optimization:} Indexed searches for metadata filtering
-    \item \textbf{Connection Pooling:} Maintained for concurrent user support (target: 15+ concurrent users)
+  \item \textbf{Data Access Abstraction:} persistence is encapsulated behind data modules to isolate storage technology decisions.
+  \item \textbf{Query Performance Support:} indexing and query planning are applied to satisfy search and retrieval constraints.
+  \item \textbf{Concurrency Support:} data access is designed to support concurrent user workflows and collaborative use.
 \end{itemize}
 
 \subsection{Security and Data Integrity}
 
 \begin{itemize}
-    \item \textbf{Authentication:} Token-based authentication (JWT or similar)
+  \item \textbf{Authentication:} Session and token-based identity verification.
     \item \textbf{Authorization:} Role-based access control for sensitive operations
     \item \textbf{Input Validation:} Server-side validation of all API inputs
-    \item \textbf{SQL Injection Prevention:} Parameterized queries via ORM
+  \item \textbf{Data Access Safety:} Protected persistence operations through validated and parameterized data access patterns.
     \item \textbf{API Rate Limiting:} Throttling to prevent abuse
     \item \textbf{HTTPS:} Encrypted communication in production deployment
 \end{itemize}
@@ -1137,7 +1099,7 @@ The development of the Sanskrit Manuscript Reconstruction Platform follows a pha
 
 \subsubsection{Week 2-3: Data Layer Implementation}
 \begin{itemize}
-    \item \textbf{Hardware-Hiding Module}
+    \item \textbf{Behaviour-Hiding Module}
     \begin{itemize}
         \item M1: Implement file storage abstraction (local/cloud storage interface)
         \item \textit{Responsible: Omar El Aref}

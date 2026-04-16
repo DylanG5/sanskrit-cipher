@@ -62,6 +62,10 @@ function CanvasPage() {
   );
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'az' | 'za'>('az');
+  const [focusedFragmentIndex, setFocusedFragmentIndex] = useState<number | null>(null);
+  const [previewFragment, setPreviewFragment] = useState<CanvasFragment | null>(null);
+  const [previewMetadataFragment, setPreviewMetadataFragment] = useState<ManuscriptFragment | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [filterPanelWidth, setFilterPanelWidth] = useState(300);
   const [isGridVisible, setIsGridVisible] = useState(false);
@@ -593,6 +597,22 @@ function CanvasPage() {
   // Available scripts - use the defined script types
   const availableScripts = useMemo(() => [...SCRIPT_TYPES], []);
 
+  // Sorted fragments for keyboard navigation (mirrors Sidebar sort)
+  const sortedFragments = useMemo(() => {
+    const copy = [...fragments];
+    copy.sort((a, b) =>
+      sortOrder === 'az' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+    );
+    return copy;
+  }, [fragments, sortOrder]);
+
+  // Reset keyboard focus when fragments list changes
+  useEffect(() => {
+    setFocusedFragmentIndex(null);
+    setPreviewFragment(null);
+    setPreviewMetadataFragment(null);
+  }, [fragments]);
+
   // Handle drag start from sidebar (single fragment)
   const handleDragStart = (
     fragment: ManuscriptFragment,
@@ -702,6 +722,87 @@ function CanvasPage() {
     },
     [gridScale],
   );
+
+  // Arrow-key fragment navigation
+  const handleArrowNavigation = useCallback((direction: 1 | -1) => {
+    if (sortedFragments.length === 0) return;
+    const currentIndex = focusedFragmentIndex ?? -1;
+    const nextIndex = Math.max(0, Math.min(sortedFragments.length - 1, currentIndex + direction));
+    if (nextIndex === currentIndex && currentIndex !== -1) return;
+
+    const fragment = sortedFragments[nextIndex];
+    setFocusedFragmentIndex(nextIndex);
+    if (!isSidebarOpen) setIsSidebarOpen(true);
+    setIsFilterPanelOpen(false);
+
+    setPreviewMetadataFragment(fragment);
+    const img = new Image();
+    img.src = fragment.imagePath;
+    img.onload = () => {
+      const { width, height } = calculateDisplaySize(fragment, img.naturalWidth, img.naturalHeight);
+      const preview: CanvasFragment = {
+        id: '__preview__',
+        fragmentId: fragment.id,
+        name: fragment.name,
+        imagePath: fragment.imagePath,
+        segmentationCoords: fragment.segmentationCoords ?? undefined,
+        x: -width / 2,
+        y: -height / 2,
+        width,
+        height,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        isLocked: true,
+        isSelected: false,
+        showSegmented: false,
+      };
+      setPreviewFragment(preview);
+    };
+  }, [sortedFragments, focusedFragmentIndex, calculateDisplaySize, isSidebarOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); handleArrowNavigation(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); handleArrowNavigation(-1); }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleArrowNavigation]);
+
+  // Handle sidebar card body click — sets focus index + preview (same as arrow nav)
+  const handleSidebarFragmentFocus = useCallback((fragment: ManuscriptFragment) => {
+    const idx = sortedFragments.findIndex(f => f.id === fragment.id);
+    if (idx === -1) return;
+    setFocusedFragmentIndex(idx);
+    setPreviewMetadataFragment(fragment);
+    if (!isSidebarOpen) setIsSidebarOpen(true);
+    setIsFilterPanelOpen(false);
+    const img = new Image();
+    img.src = fragment.imagePath;
+    img.onload = () => {
+      const { width, height } = calculateDisplaySize(fragment, img.naturalWidth, img.naturalHeight);
+      setPreviewFragment({
+        id: '__preview__',
+        fragmentId: fragment.id,
+        name: fragment.name,
+        imagePath: fragment.imagePath,
+        segmentationCoords: fragment.segmentationCoords ?? undefined,
+        x: -width / 2,
+        y: -height / 2,
+        width,
+        height,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        isLocked: true,
+        isSelected: false,
+        showSegmented: false,
+      });
+    };
+  }, [sortedFragments, calculateDisplaySize, isSidebarOpen]);
 
   // Auto-place fragment in center of canvas (for search results)
   const autoPlaceFragment = useCallback(
@@ -1559,6 +1660,12 @@ function CanvasPage() {
           onDragStartSelected={handleDragStartSelected}
           onFragmentsDeleted={loadFragments}
           onSelectionChange={setSelectedSidebarFragmentIds}
+          sortedFragments={sortedFragments}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          focusedFragmentId={focusedFragmentIndex != null ? sortedFragments[focusedFragmentIndex]?.id : null}
+          scrollToIndex={focusedFragmentIndex}
+          onFragmentFocus={handleSidebarFragmentFocus}
         />
 
         <div
@@ -1578,8 +1685,28 @@ function CanvasPage() {
             onViewportChange={(scale, position) => {
               viewportRef.current = { scale, position };
             }}
+            previewFragment={previewFragment}
+            onPreviewDismiss={() => { setPreviewFragment(null); setPreviewMetadataFragment(null); setFocusedFragmentIndex(null); }}
           />
         </div>
+
+        {/* Preview Metadata Panel — slides in alongside canvas when a fragment is focused */}
+        {previewMetadataFragment && previewFragment && (
+          <div
+            style={{ width: '360px', flexShrink: 0 }}
+            className="h-full overflow-y-auto border-l border-slate-200 bg-white shadow-lg"
+          >
+            <FragmentMetadata
+              fragment={previewMetadataFragment}
+              onClose={() => { setPreviewFragment(null); setPreviewMetadataFragment(null); setFocusedFragmentIndex(null); }}
+              onUpdate={loadFragments}
+              canvasFragment={canvasFragments.find(cf => cf.fragmentId === previewMetadataFragment.id) ?? null}
+              gridScale={gridScale}
+              customFilters={customFilters}
+              inline={true}
+            />
+          </div>
+        )}
 
         <FilterPanel
           filters={filters}

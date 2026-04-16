@@ -9,6 +9,7 @@
     "build": "electron-forge make",
     "package": "electron-forge package",
     "lint": "eslint .",
+    "annotate:edges": "node scripts/annotate-edges.ts",
     "seed:database": "tsx scripts/seed-database.ts",
     "smoke:test": "tsx scripts/smoke-test.ts",
     "perf:test2": "tsx scripts/perf_test_nfr_perf_2.ts",

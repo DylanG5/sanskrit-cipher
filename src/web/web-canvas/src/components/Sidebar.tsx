@@ -36,6 +36,12 @@ interface SidebarProps {
   onDragStartSelected?: (selectedFragments: ManuscriptFragment[]) => void;
   onFragmentsDeleted?: () => void;
   onSelectionChange?: (fragmentIds: string[]) => void;
+  sortedFragments?: ManuscriptFragment[];
+  sortOrder?: 'az' | 'za';
+  onSortOrderChange?: (order: 'az' | 'za') => void;
+  focusedFragmentId?: string | null;
+  scrollToIndex?: number | null;
+  onFragmentFocus?: (fragment: ManuscriptFragment) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -67,6 +73,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDragStartSelected,
   onFragmentsDeleted,
   onSelectionChange,
+  sortedFragments: sortedFragmentsProp,
+  sortOrder: sortOrderProp,
+  onSortOrderChange,
+  focusedFragmentId,
+  scrollToIndex,
+  onFragmentFocus,
 }) => {
   const [selectedFragment, setSelectedFragment] = useState<ManuscriptFragment | null>(null);
 
@@ -76,10 +88,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   const autoSelectReverseRef = useRef(false);
   const fragmentsRef = useRef(fragments);
 
-  // Sort order
-  const [sortOrder, setSortOrder] = useState<'az' | 'za'>('az');
+  // Sort order — use lifted props when provided, otherwise manage internally
+  const [sortOrderInternal, setSortOrderInternal] = useState<'az' | 'za'>('az');
+  const sortOrder = sortOrderProp ?? sortOrderInternal;
+  const setSortOrder = (order: 'az' | 'za') => {
+    if (onSortOrderChange) onSortOrderChange(order);
+    else setSortOrderInternal(order);
+  };
 
-  const sortedFragments = useMemo(() => {
+  const sortedFragmentsInternal = useMemo(() => {
     const copy = [...fragments];
     copy.sort((a, b) =>
       sortOrder === 'az'
@@ -88,6 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
     return copy;
   }, [fragments, sortOrder]);
+  const sortedFragments = sortedFragmentsProp ?? sortedFragmentsInternal;
 
   const rotationByFragmentId = useMemo<Record<string, number>>(() => {
     const byId: Record<string, number> = {};
@@ -584,6 +602,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   rotationByFragmentId={rotationByFragmentId}
                   onDragStart={handleDragStartInternal}
                   onFragmentClick={handleFragmentClick}
+                  onFragmentFocus={onFragmentFocus}
                   onToggleSelect={handleToggleSelect}
                   containerHeight={containerHeight - (selectedSidebarIds.size > 0 ? 80 : 0)}
                   onLoadMore={onLoadMore}
@@ -592,6 +611,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   scrollPosition={scrollPosition}
                   onScrollPositionChange={setScrollPosition}
                   lastUsedId={lastUsedId}
+                  focusedFragmentId={focusedFragmentId}
+                  scrollToIndex={scrollToIndex}
                 />
               </div>
             )}
