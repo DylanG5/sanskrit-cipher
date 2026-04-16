@@ -40,8 +40,9 @@ export function mapToManuscriptFragment(
     id: record.fragment_id,
     name: record.fragment_id,
     // Use electron-image protocol for loading images from data folder
-    imagePath: `electron-image://${record.image_path}`,
-    thumbnailPath: `electron-image://${record.image_path}`,
+    imagePath: `electron-image://${encodeURIComponent(record.image_path)}`,
+    thumbnailPath: `electron-image://${encodeURIComponent(record.image_path)}`,
+    rotation: record.ui_rotation ?? 0,
     // Include segmentation coordinates for on-demand rendering
     segmentationCoords: record.segmentation_coords ?? undefined,
     metadata: {

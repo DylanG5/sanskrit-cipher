@@ -341,6 +341,7 @@ export function registerIpcHandlers(): void {
       'scale_unit',
       'pixels_per_unit',
       'scale_detection_status',
+      'ui_rotation',
       'transcription',
       'notes'
     ];
@@ -397,7 +398,8 @@ export function registerIpcHandlers(): void {
       'script_type',
       'scale_unit',
       'pixels_per_unit',
-      'scale_detection_status'
+      'scale_detection_status',
+      'ui_rotation'
     ];
     const customKeys = db.prepare('SELECT filter_key FROM custom_filters').all() as Array<{ filter_key: string }>;
     const allowedFields = new Set<string>([
@@ -432,6 +434,43 @@ export function registerIpcHandlers(): void {
       return { success: true, changes };
     } catch (error) {
       console.error('Error bulk updating fragments:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  /**
+   * Persist UI rotation for multiple fragments.
+   */
+  ipcMain.handle('fragments:bulkUpdateRotation', async (_event, rotations: Record<string, number>) => {
+    try {
+      const entries = Object.entries(rotations).filter(
+        ([fragmentId, rotation]) => Boolean(fragmentId) && Number.isFinite(rotation),
+      );
+
+      if (entries.length === 0) {
+        return { success: true, changes: 0 };
+      }
+
+      const update = db.prepare(`
+        UPDATE fragments
+        SET ui_rotation = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE fragment_id = ?
+      `);
+
+      const tx = db.transaction((pairs: Array<[string, number]>) => {
+        let changes = 0;
+        for (const [fragmentId, rotation] of pairs) {
+          const normalized = ((rotation % 360) + 360) % 360;
+          const result = update.run(normalized, fragmentId);
+          changes += result.changes;
+        }
+        return changes;
+      });
+
+      const changes = tx(entries as Array<[string, number]>);
+      return { success: true, changes };
+    } catch (error) {
+      console.error('Error persisting fragment rotations:', error);
       return { success: false, error: String(error) };
     }
   });

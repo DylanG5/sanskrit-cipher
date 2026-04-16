@@ -35,6 +35,7 @@ interface SidebarProps {
   onBulkEditSidebarMetadata?: (fragmentIds: string[]) => void;
   onDragStartSelected?: (selectedFragments: ManuscriptFragment[]) => void;
   onFragmentsDeleted?: () => void;
+  onSelectionChange?: (fragmentIds: string[]) => void;
   sortedFragments?: ManuscriptFragment[];
   sortOrder?: 'az' | 'za';
   onSortOrderChange?: (order: 'az' | 'za') => void;
@@ -71,6 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onBulkEditSidebarMetadata,
   onDragStartSelected,
   onFragmentsDeleted,
+  onSelectionChange,
   sortedFragments: sortedFragmentsProp,
   sortOrder: sortOrderProp,
   onSortOrderChange,
@@ -105,6 +107,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [fragments, sortOrder]);
   const sortedFragments = sortedFragmentsProp ?? sortedFragmentsInternal;
 
+  const rotationByFragmentId = useMemo<Record<string, number>>(() => {
+    const byId: Record<string, number> = {};
+
+    for (const fragment of fragments) {
+      byId[fragment.id] = fragment.rotation ?? 0;
+    }
+
+    return byId;
+  }, [fragments]);
+
   // Last-used amber highlight
   const [lastUsedId, setLastUsedId] = useState<string | null>(null);
 
@@ -129,6 +141,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange(Array.from(selectedSidebarIds));
+    }
+  }, [selectedSidebarIds, onSelectionChange]);
 
   const handleBulkDelete = useCallback(async () => {
     const ids = Array.from(selectedSidebarIds);
@@ -581,6 +599,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <VirtualizedFragmentList
                   fragments={sortedFragments}
                   selectedIds={selectedSidebarIds}
+                  rotationByFragmentId={rotationByFragmentId}
                   onDragStart={handleDragStartInternal}
                   onFragmentClick={handleFragmentClick}
                   onFragmentFocus={onFragmentFocus}

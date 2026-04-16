@@ -21,6 +21,7 @@ export interface FragmentRecord {
   id: number;
   fragment_id: string;
   image_path: string;
+  ui_rotation?: number | null;
   edge_piece: number;
   has_top_edge: number;
   has_bottom_edge: number;
@@ -146,6 +147,8 @@ const electronAPI = {
       ipcRenderer.invoke('fragments:updateMetadata', id, metadata),
     bulkUpdateMetadata: (ids: string[], metadata: Record<string, unknown>): Promise<ApiResponse<null>> =>
       ipcRenderer.invoke('fragments:bulkUpdateMetadata', ids, metadata),
+    bulkUpdateRotation: (rotations: Record<string, number>): Promise<ApiResponse<null>> =>
+      ipcRenderer.invoke('fragments:bulkUpdateRotation', rotations),
     bulkDelete: (ids: string[]): Promise<ApiResponse<null>> =>
       ipcRenderer.invoke('fragments:bulkDelete', ids),
     uploadFiles: (filePaths: string[]): Promise<UploadResponse> =>

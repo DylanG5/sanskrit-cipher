@@ -52,6 +52,7 @@ function runMigrations(database: Database.Database): void {
   ensureFragmentColumn('scale_model_version', 'TEXT');
   ensureFragmentColumn('transcription', 'TEXT');
   ensureFragmentColumn('notes', 'TEXT');
+  ensureFragmentColumn('ui_rotation', 'REAL DEFAULT 0');
 
   // Create common indexes if columns exist
   const ensureIndex = (indexName: string, table: string, column: string) => {

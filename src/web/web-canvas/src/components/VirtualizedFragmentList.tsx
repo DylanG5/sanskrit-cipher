@@ -14,6 +14,7 @@ import { ManuscriptFragment } from '../types/fragment';
 interface VirtualizedFragmentListProps {
   fragments: ManuscriptFragment[];
   selectedIds: Set<string>;
+  rotationByFragmentId?: Record<string, number>;
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
   onFragmentFocus?: (fragment: ManuscriptFragment) => void;
@@ -34,6 +35,7 @@ const ITEM_HEIGHT = 180;
 interface FragmentRowData {
   fragments: ManuscriptFragment[];
   selectedIds: Set<string>;
+  rotationByFragmentId?: Record<string, number>;
   onDragStart: (fragment: ManuscriptFragment, e: React.DragEvent) => void;
   onFragmentClick: (fragment: ManuscriptFragment, e: React.MouseEvent) => void;
   onFragmentFocus?: (fragment: ManuscriptFragment) => void;
@@ -45,13 +47,14 @@ interface FragmentRowData {
 const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRowData>) => {
   if (!data) return null;
 
-  const { fragments, selectedIds, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId } = data;
+  const { fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId } = data;
   const fragment = fragments[index];
 
   if (!fragment) return null;
 
   const isSelected = selectedIds.has(fragment.id);
   const isLastUsed = lastUsedId === fragment.id;
+  const rotation = rotationByFragmentId?.[fragment.id] ?? 0;
   const isKeyboardFocused = focusedFragmentId === fragment.id;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -107,6 +110,7 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
           src={fragment.thumbnailPath}
           alt={fragment.name}
           className="w-full h-32 object-contain mb-2 pointer-events-none"
+          style={{ transform: `rotate(${rotation}deg)` }}
           draggable={false}
         />
         <div className="flex justify-between items-center gap-2">
@@ -153,6 +157,7 @@ const FragmentRow = ({ index, style, data }: ListChildComponentProps<FragmentRow
 const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   fragments,
   selectedIds,
+  rotationByFragmentId,
   onDragStart,
   onFragmentClick,
   onFragmentFocus,
@@ -198,8 +203,8 @@ const VirtualizedFragmentList: React.FC<VirtualizedFragmentListProps> = ({
   );
 
   const itemData = useMemo<FragmentRowData>(
-    () => ({ fragments, selectedIds, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId }),
-    [fragments, selectedIds, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId]
+    () => ({ fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId }),
+    [fragments, selectedIds, rotationByFragmentId, onDragStart, onFragmentClick, onFragmentFocus, onToggleSelect, lastUsedId, focusedFragmentId]
   );
 
   const itemCount = Math.max(0, fragments.length);
